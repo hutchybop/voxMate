@@ -1,8 +1,6 @@
 import os
 import sounddevice as sd
 import queue
-import vosk
-import json
 import re
 from gtts import gTTS
 from openai import OpenAI
@@ -10,26 +8,41 @@ from dotenv import load_dotenv
 import tempfile
 import time
 import subprocess
+import signal
+import atexit
+import sys
 
 
-# Pre-initialize models and clients
-vosk.SetLogLevel(-1)  # Optional: reduce log output
-vosk_model = vosk.Model("../../models/vosk-model-en-us-0.22")
-recognizer = vosk.KaldiRecognizer(vosk_model, 16000)
+# Audio Configuration
+SAMPLE_RATE = 16000
+CHANNELS = 1
+DTYPE = 'int16'
+BLOCKSIZE = 16000
 audio_queue = queue.Queue()
-audio_buffer_size = 64000
+sound_process = None
 
+# Initialize OpenAI client
 load_dotenv("../../.env")
 client = OpenAI(
     base_url="https://api.groq.com/openai/v1",
     api_key=os.getenv("OPENAI_API_KEY")
 )
 
+def cleanup():
+    global sound_process
+    stop_looping_sound(sound_process)
+    print("Cleaned up and exiting.")
+
+atexit.register(cleanup)
+signal.signal(signal.SIGTERM, lambda signum, frame: sys.exit(0))
+signal.signal(signal.SIGINT, lambda signum, frame: sys.exit(0))  # Ctrl+C
+
+
 def start_looping_sound():
     return subprocess.Popen(
         ["mpg321", "-q", "--loop", "-1", "../../audio/generating.mp3"],
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL
+        stderr=subprocess.DEVNULL,
     )
 
 def stop_looping_sound(process):
@@ -41,48 +54,59 @@ def audio_callback(indata, frames, time, status):
         print("Input overflow: increase blocksize")
     audio_queue.put(bytes(indata))
 
-def record_and_transcribe():
+def record_audio_to_file():
+    """Record audio to temporary WAV file for Whisper"""
     print("\nPress Enter to start recording...")
     input()
     print("Recording... Press Enter again to stop.")
     
-    while not audio_queue.empty():
-        audio_queue.get()
+    # Create temp file
+    temp_audio = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
     
-    # Only suppresses warning during this block
-    with sd.RawInputStream(samplerate=16000, blocksize=16000, dtype='int16', channels=1, callback=audio_callback):
-        input()
+    try:
+        with sd.RawInputStream(samplerate=SAMPLE_RATE, blocksize=BLOCKSIZE,
+                             dtype=DTYPE, channels=CHANNELS, callback=audio_callback):
+            input()
+        
+        # Convert raw audio to WAV format
+        import wave
+        with wave.open(temp_audio.name, 'wb') as wf:
+            wf.setnchannels(CHANNELS)
+            wf.setsampwidth(2)  # 16-bit = 2 bytes
+            wf.setframerate(SAMPLE_RATE)
+            while not audio_queue.empty():
+                wf.writeframes(audio_queue.get())
+        
+        return temp_audio.name
+    
+    except Exception as e:
+        temp_audio.close()
+        os.unlink(temp_audio.name)
+        raise e
 
+def transcribe_with_whisper(audio_path):
+    """Use Whisper for transcription"""
     start_time = time.time()
     sound_process = start_looping_sound()
     
-    transcription_parts = []
-    audio_data = bytearray()
-    while not audio_queue.empty():
-        data = audio_queue.get()
-        audio_data.extend(data)
-        if len(audio_data) >= audio_buffer_size:
-            if recognizer.AcceptWaveform(bytes(audio_data)):
-                result = json.loads(recognizer.Result())
-                if text := result.get("text", ""):
-                    transcription_parts.append(text)
-            audio_data = bytearray()
-    
-    if audio_data:
-        if recognizer.AcceptWaveform(bytes(audio_data)):
-            result = json.loads(recognizer.Result())
-            if text := result.get("text", ""):
-                transcription_parts.append(text)
-    
-    final_result = json.loads(recognizer.FinalResult())
-    if final_text := final_result.get("text", ""):
-        transcription_parts.append(final_text)
-    
-    transcription = " ".join(transcription_parts).strip()
+    try:
+        with open(audio_path, "rb") as audio_file:
+            transcript = client.audio.transcriptions.create(
+                model="whisper-large-v3-turbo",
+                file=audio_file,
+                language="en",
+                response_format="text"
+            )
+        return transcript.strip(), time.time() - start_time, sound_process
+    finally:
+        os.unlink(audio_path)  # Clean up temp file
+
+def record_and_transcribe():
+    audio_file = record_audio_to_file()
+    transcription, stt_time, sound_process = transcribe_with_whisper(audio_file)
     if transcription:
         print(f"You asked: {transcription}")
-    
-    return transcription, time.time() - start_time, sound_process
+    return transcription, stt_time, sound_process
 
 def ai_call(prompt):
     try:
@@ -147,5 +171,8 @@ if __name__ == "__main__":
             
             print("\nPress Enter to start again or Ctrl+C to quit")
             input()
-    except KeyboardInterrupt:
+
+    except Exception as e:
         print("\nExiting smart speaker...")
+    finally:
+        cleanup()

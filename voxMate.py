@@ -9,15 +9,15 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import tempfile
 import time
-import threading
 import subprocess
 
 
 # Pre-initialize models and clients
 vosk.SetLogLevel(-1)  # Optional: reduce log output
-vosk_model = vosk.Model("../../models/vosk-model-small-en-us-0.15")
+vosk_model = vosk.Model("../../models/vosk-model-en-us-0.22")
 recognizer = vosk.KaldiRecognizer(vosk_model, 16000)
 audio_queue = queue.Queue()
+audio_buffer_size = 64000
 
 load_dotenv("../../.env")
 client = OpenAI(
@@ -25,8 +25,16 @@ client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY")
 )
 
-def play_wait_sound():
-    os.system("mpg321 -q ../../audio/generating.mp3 &")
+def start_looping_sound():
+    return subprocess.Popen(
+        ["mpg321", "-q", "--loop", "-1", "../../audio/generating.mp3"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL
+    )
+
+def stop_looping_sound(process):
+    if process and process.poll() is None:
+        process.terminate()
 
 def audio_callback(indata, frames, time, status):
     if status and status.input_overflow:
@@ -46,15 +54,14 @@ def record_and_transcribe():
         input()
 
     start_time = time.time()
-    wait_thread = threading.Thread(target=play_wait_sound)
-    wait_thread.start()
+    sound_process = start_looping_sound()
     
     transcription_parts = []
     audio_data = bytearray()
     while not audio_queue.empty():
         data = audio_queue.get()
         audio_data.extend(data)
-        if len(audio_data) >= 32000:
+        if len(audio_data) >= audio_buffer_size:
             if recognizer.AcceptWaveform(bytes(audio_data)):
                 result = json.loads(recognizer.Result())
                 if text := result.get("text", ""):
@@ -75,7 +82,7 @@ def record_and_transcribe():
     if transcription:
         print(f"You asked: {transcription}")
     
-    return transcription, time.time() - start_time
+    return transcription, time.time() - start_time, sound_process
 
 def ai_call(prompt):
     try:
@@ -95,10 +102,10 @@ def ai_call(prompt):
         print(f"API Error: {e}")  # This will still show!
         return "Sorry, I encountered an error."
 
-def text_to_speech(message):
+def text_to_speech(message, sound_process):
     if not message:
         return 0
-    
+
     start_time = time.time()
     clean_message = re.sub(r"[_*~]", "", message)
     
@@ -107,6 +114,7 @@ def text_to_speech(message):
             tts = gTTS(text=clean_message, lang='en', slow=False)
             tts.save(f.name)
             stop_time = time.time()
+            stop_looping_sound(sound_process)
             os.system(f"mpg321 -q {f.name}")
     except Exception as e:
         print(f"TTS Error: {e}")  # This will still show!
@@ -118,7 +126,7 @@ if __name__ == "__main__":
     try:
         while True:
             start_total_stt = time.time()
-            transcription, stt_time = record_and_transcribe()
+            transcription, stt_time, sound_process = record_and_transcribe()
             total_stt = time.time() - start_total_stt
             
             if transcription:
@@ -127,7 +135,7 @@ if __name__ == "__main__":
                 ai_time = time.time() - ai_start
                 
                 tts_start = time.time()
-                tts_time = text_to_speech(ai_response)
+                tts_time = text_to_speech(ai_response, sound_process)
                 total_tts_time = time.time() - tts_start
                 
                 print(f"\nPerformance Metrics:")

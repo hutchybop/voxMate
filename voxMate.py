@@ -11,7 +11,22 @@ import subprocess
 import signal
 import atexit
 import sys
+import pvporcupine
+import pyaudio
+import struct
+from ctypes import *
 
+
+# ALSA error handler
+ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
+def py_error_handler(filename, line, function, err, fmt):
+    pass
+c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
+try:
+    asound = cdll.LoadLibrary('libasound.so')
+    asound.snd_lib_error_set_handler(c_error_handler)
+except:
+    pass  # Skip if not on Linux
 
 # Audio Configuration
 SAMPLE_RATE = 16000
@@ -21,6 +36,8 @@ BLOCKSIZE = 16000
 audio_queue = queue.Queue()
 sound_process = None
 
+cleanup_done = False
+
 # Initialize OpenAI client
 load_dotenv("../../.env")
 client = OpenAI(
@@ -28,10 +45,58 @@ client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY")
 )
 
+access_key = os.getenv("PORCUPINE_API_KEY")
+
+# Initialize Porcupine
+porcupine = pvporcupine.create(access_key=access_key, keyword_paths=['../../models/porcupine_keywords/hey-bop_en_raspberry-pi_v3_0_0.ppn'])
+
+# Initialize PyAudio with suppressed errors
+with open(os.devnull, 'w') as devnull:
+    old_stderr = os.dup(sys.stderr.fileno())
+    os.dup2(devnull.fileno(), sys.stderr.fileno())
+    
+    pa = pyaudio.PyAudio()
+    
+    os.dup2(old_stderr, sys.stderr.fileno())
+
+stream = pa.open(
+    rate=porcupine.sample_rate,
+    channels=1,
+    format=pyaudio.paInt16,
+    input=True,
+    frames_per_buffer=porcupine.frame_length,
+)
+
+
 def cleanup():
-    global sound_process
+    global sound_process, cleanup_done
+    if cleanup_done:
+        return
+    cleanup_done = True
+
     stop_looping_sound(sound_process)
+
+    try:
+        if stream and stream.is_active():
+            stream.stop_stream()
+        stream.close()
+    except Exception as e:
+        print(f"Stream cleanup error: {e}")
+
+    try:
+        if pa:
+            pa.terminate()
+    except Exception as e:
+        print(f"PyAudio cleanup error: {e}")
+
+    try:
+        if porcupine:
+            porcupine.delete()
+    except Exception as e:
+        print(f"Porcupine cleanup error: {e}")
+
     print("Cleaned up and exiting.")
+
 
 atexit.register(cleanup)
 signal.signal(signal.SIGTERM, lambda signum, frame: sys.exit(0))
@@ -54,11 +119,32 @@ def audio_callback(indata, frames, time, status):
         print("Input overflow: increase blocksize")
     audio_queue.put(bytes(indata))
 
+def wake_word():
+    print("Listening for wake word... (say 'Hey Bop')")
+
+    try:
+        while True:
+            pcm = stream.read(porcupine.frame_length, exception_on_overflow=False)
+            pcm = struct.unpack_from("h" * porcupine.frame_length, pcm)
+
+            keyword_index = porcupine.process(pcm)
+            if keyword_index >= 0:
+                print("Wake word detected!")
+                subprocess.run(
+                    ["mpg321", "-q", "../../audio/greeting.mp3"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    check=False
+                )
+                break
+
+    except KeyboardInterrupt:
+        print("Stopping...")
+
+
 def record_audio_to_file():
-    """Record audio to temporary WAV file for Whisper"""
-    print("\nPress Enter to start recording...")
-    input()
-    print("Recording... Press Enter again to stop.")
+    # Record audio to temporary WAV file for Whisper
+    print("\nRecording, press enter to stop...")
     
     # Create temp file
     temp_audio = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
@@ -139,7 +225,12 @@ def text_to_speech(message, sound_process):
             tts.save(f.name)
             stop_time = time.time()
             stop_looping_sound(sound_process)
-            os.system(f"mpg321 -q {f.name}")
+            subprocess.run(
+                ["mpg321", "-q", f.name],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False
+            )
     except Exception as e:
         print(f"TTS Error: {e}")  # This will still show!
         return 0
@@ -149,6 +240,7 @@ def text_to_speech(message, sound_process):
 if __name__ == "__main__":
     try:
         while True:
+            wake_word()
             start_total_stt = time.time()
             transcription, stt_time, sound_process = record_and_transcribe()
             total_stt = time.time() - start_total_stt

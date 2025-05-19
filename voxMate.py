@@ -1,22 +1,36 @@
+import os
 import sounddevice as sd
 import queue
 import vosk
 import json
 import re
 from gtts import gTTS
-import os
 from openai import OpenAI
 from dotenv import load_dotenv
 import tempfile
 import time
+import threading
+import subprocess
 
 
-# Initialize models
+# Pre-initialize models and clients
+vosk.SetLogLevel(-1)  # Optional: reduce log output
 vosk_model = vosk.Model("../../models/vosk-model-small-en-us-0.15")
 recognizer = vosk.KaldiRecognizer(vosk_model, 16000)
 audio_queue = queue.Queue()
 
+load_dotenv("../../.env")
+client = OpenAI(
+    base_url="https://api.groq.com/openai/v1",
+    api_key=os.getenv("OPENAI_API_KEY")
+)
+
+def play_wait_sound():
+    os.system("mpg321 -q ../../audio/generating.mp3 &")
+
 def audio_callback(indata, frames, time, status):
+    if status and status.input_overflow:
+        print("Input overflow: increase blocksize")
     audio_queue.put(bytes(indata))
 
 def record_and_transcribe():
@@ -24,99 +38,105 @@ def record_and_transcribe():
     input()
     print("Recording... Press Enter again to stop.")
     
-    with sd.RawInputStream(samplerate=16000, blocksize=8000,
-                         dtype='int16', channels=1, callback=audio_callback):
-        input()  # Wait for Enter to stop
+    while not audio_queue.empty():
+        audio_queue.get()
     
-    start_stt = time.time()
-    # Process all audio data
-    transcription = ""
+    # Only suppresses warning during this block
+    with sd.RawInputStream(samplerate=16000, blocksize=16000, dtype='int16', channels=1, callback=audio_callback):
+        input()
+
+    start_time = time.time()
+    wait_thread = threading.Thread(target=play_wait_sound)
+    wait_thread.start()
+    
+    transcription_parts = []
+    audio_data = bytearray()
     while not audio_queue.empty():
         data = audio_queue.get()
-        if recognizer.AcceptWaveform(data):
+        audio_data.extend(data)
+        if len(audio_data) >= 32000:
+            if recognizer.AcceptWaveform(bytes(audio_data)):
+                result = json.loads(recognizer.Result())
+                if text := result.get("text", ""):
+                    transcription_parts.append(text)
+            audio_data = bytearray()
+    
+    if audio_data:
+        if recognizer.AcceptWaveform(bytes(audio_data)):
             result = json.loads(recognizer.Result())
-            text = result.get("text", "")
-            if text:
-                transcription += text + " "
+            if text := result.get("text", ""):
+                transcription_parts.append(text)
     
     final_result = json.loads(recognizer.FinalResult())
-    final_text = final_result.get("text", "")
-    print(f"You asked: {final_text}")
-    if final_text:
-        transcription += final_text
+    if final_text := final_result.get("text", ""):
+        transcription_parts.append(final_text)
     
-    stop_stt = time.time()
-    total_stt = stop_stt - start_stt
+    transcription = " ".join(transcription_parts).strip()
+    if transcription:
+        print(f"You asked: {transcription}")
     
-    return transcription.strip(), total_stt
+    return transcription, time.time() - start_time
 
-def ai_api(prompt):
-    load_dotenv("../../.env")
-    
-    client = OpenAI(
-        base_url="https://api.groq.com/openai/v1",
-        api_key=os.getenv("OPENAI_API_KEY")
-    )
-    
-    response = client.chat.completions.create(
-        model="mistral-saba-24b",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant. Respond with only the answer to the question, without repeating the question or adding extra information."},
-            {"role": "user", "content": f"Answer this question briefly and clearly: {prompt}"}
-        ]
-    )
-    
-    message = response.choices[0].message.content
-    print(f"The answer is: {message}")
-    return re.sub(r"<think>.*?</think>", "", message, flags=re.DOTALL).strip()
+def ai_call(prompt):
+    try:
+        response = client.chat.completions.create(
+            model="mistral-saba-24b",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": f"Answer briefly: {prompt}"}
+            ],
+            max_tokens=100,
+            temperature=0.7
+        )
+        message = response.choices[0].message.content
+        print(f"The answer is: {message}")
+        return re.sub(r"<think>.*?</think>", "", message, flags=re.DOTALL).strip()
+    except Exception as e:
+        print(f"API Error: {e}")  # This will still show!
+        return "Sorry, I encountered an error."
 
 def text_to_speech(message):
-
-    start_tts = time.time()
-
-    clean_message = re.sub(r"[_*~]", "", message)
-    tts = gTTS(text=clean_message, lang='en')
+    if not message:
+        return 0
     
-    with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as f:
-        temp_path = f.name
-        tts.save(temp_path)
-
-    stop_tts = time.time()
-
+    start_time = time.time()
+    clean_message = re.sub(r"[_*~]", "", message)
+    
     try:
-        os.system(f"mpg321 -q {temp_path}")
-    finally:
-        try:
-            os.unlink(temp_path)
-        except:
-            pass
-        
-    total_tts = stop_tts - start_tts
-
-    return total_tts
+        with tempfile.NamedTemporaryFile(suffix='.mp3', delete=True) as f:
+            tts = gTTS(text=clean_message, lang='en', slow=False)
+            tts.save(f.name)
+            stop_time = time.time()
+            os.system(f"mpg321 -q {f.name}")
+    except Exception as e:
+        print(f"TTS Error: {e}")  # This will still show!
+        return 0
+    
+    return stop_time - start_time
 
 if __name__ == "__main__":
     try:
         while True:
-            start_rec_trans = time.time()
-            transcription, total_stt = record_and_transcribe()
-            finish_rec_trans = time.time()
-            if transcription:
-                start_ai = time.time()
-                ai_response = ai_api(transcription)
-                finish_ai = time.time()
-                start_tts_pb = time.time()
-                total_tts = text_to_speech(ai_response)
-                finish_tts_pb = time.time()
+            start_total_stt = time.time()
+            transcription, stt_time = record_and_transcribe()
+            total_stt = time.time() - start_total_stt
             
-
-            print(f"stt time: {total_stt:.2f} seconds")
-            print(f"Rec and Trans time: {finish_rec_trans - start_rec_trans:.2f} seconds")
-            print(f"AI response time: {finish_ai - start_ai:.2f} seconds")
-            print(f"tts time: {total_tts:.2f} seconds")
-            print(f"tts and playback time: {finish_tts_pb - start_tts_pb:.2f} seconds")
-
-
+            if transcription:
+                ai_start = time.time()
+                ai_response = ai_call(transcription)
+                ai_time = time.time() - ai_start
+                
+                tts_start = time.time()
+                tts_time = text_to_speech(ai_response)
+                total_tts_time = time.time() - tts_start
+                
+                print(f"\nPerformance Metrics:")
+                print(f"- STT Processing: {stt_time:.2f}s")
+                print(f"- STT & Playback: {total_stt:.2f}")
+                print(f"- AI Response: {ai_time:.2f}s")
+                print(f"- TTS & Playback: {total_tts_time:.2f}s")
+                print(f"- TTS Generation: {tts_time:.2f}s")
+            
             print("\nPress Enter to start again or Ctrl+C to quit")
             input()
     except KeyboardInterrupt:

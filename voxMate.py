@@ -15,6 +15,7 @@ import pvporcupine
 import pyaudio
 import struct
 from ctypes import *
+import numpy as np
 
 
 # ALSA error handler
@@ -35,6 +36,12 @@ DTYPE = 'int16'
 BLOCKSIZE = 16000
 audio_queue = queue.Queue()
 sound_process = None
+
+# Silence detection setup
+CHUNK = 1024
+RATE = 16000
+SILENCE_THRESHOLD = 2600
+SILENCE_DURATION = 1.5
 
 cleanup_done = False
 
@@ -141,34 +148,58 @@ def wake_word():
     except KeyboardInterrupt:
         print("Stopping...")
 
-
 def record_audio_to_file():
     # Record audio to temporary WAV file for Whisper
-    print("\nRecording, press enter to stop...")
+    print("\nRecording, what do you want to say?")
     
     # Create temp file
     temp_audio = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
+
+    silence_start = None
+    audio_data = []
     
+    def callback(indata, frames, time_info, status):
+        nonlocal silence_start, audio_data
+        if status and status.input_overflow:
+            print("Input overflow")
+        
+        audio_chunk = indata.copy()
+        volume = np.linalg.norm(audio_chunk)
+        audio_data.append(audio_chunk)
+
+        if volume < SILENCE_THRESHOLD:
+            if silence_start is None:
+                silence_start = time.time()
+            elif time.time() - silence_start > SILENCE_DURATION:
+                raise sd.CallbackStop()
+        else:
+            silence_start = None
+
     try:
-        with sd.RawInputStream(samplerate=SAMPLE_RATE, blocksize=BLOCKSIZE,
-                             dtype=DTYPE, channels=CHANNELS, callback=audio_callback):
-            input()
+        stream = sd.InputStream(samplerate=SAMPLE_RATE, dtype=DTYPE, channels=CHANNELS, callback=callback)
+        try:
+            stream.start()
+            while stream.active:
+                time.sleep(0.1)  # Small sleep to avoid busy-waiting
+        except sd.CallbackStop:
+            pass
+        finally:
+            stream.stop()
+            stream.close()
+    except sd.CallbackStop:
+        pass
         
-        # Convert raw audio to WAV format
-        import wave
-        with wave.open(temp_audio.name, 'wb') as wf:
-            wf.setnchannels(CHANNELS)
-            wf.setsampwidth(2)  # 16-bit = 2 bytes
-            wf.setframerate(SAMPLE_RATE)
-            while not audio_queue.empty():
-                wf.writeframes(audio_queue.get())
-        
-        return temp_audio.name
+    # Convert raw audio to WAV format
+    import wave
+    with wave.open(temp_audio.name, 'wb') as wf:
+        wf.setnchannels(CHANNELS)
+        wf.setsampwidth(2)  # 16-bit = 2 bytes
+        wf.setframerate(SAMPLE_RATE)
+        for chunk in audio_data:
+            wf.writeframes(chunk.tobytes())
     
-    except Exception as e:
-        temp_audio.close()
-        os.unlink(temp_audio.name)
-        raise e
+    return temp_audio.name
+
 
 def transcribe_with_whisper(audio_path):
     """Use Whisper for transcription"""
@@ -200,7 +231,7 @@ def ai_call(prompt):
             model="mistral-saba-24b",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": f"Answer briefly: {prompt}"}
+                {"role": "user", "content": f"Answer very briefly: {prompt}"}
             ],
             max_tokens=100,
             temperature=0.7
@@ -260,9 +291,6 @@ if __name__ == "__main__":
                 print(f"- AI Response: {ai_time:.2f}s")
                 print(f"- TTS & Playback: {total_tts_time:.2f}s")
                 print(f"- TTS Generation: {tts_time:.2f}s")
-            
-            print("\nPress Enter to start again or Ctrl+C to quit")
-            input()
 
     except Exception as e:
         print("\nExiting smart speaker...")

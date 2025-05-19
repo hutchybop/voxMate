@@ -1,23 +1,20 @@
-# Need to install piper locally
-# Instructions at: https://github.com/rhasspy/piper
-# Slow on RPi4
-
 import sounddevice as sd
 import queue
 import vosk
 import sys
 import json
+import re
 from gtts import gTTS
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
 import subprocess
 import time
-
+import tempfile
 
 q = queue.Queue()
 
-voskModel = vosk.Model("../../models/vosk-model-small-en-us-0.15")
+voskModel = vosk.Model("/../../models/vosk-model-small-en-us-0.15")
 recognizer = vosk.KaldiRecognizer(voskModel, 16000)
 # aiModel = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 # aiModel = "deepseek-ai/DeepSeek-R1"
@@ -57,51 +54,78 @@ def record_and_transcribe():
     print(f"\nRecognized: {transcription.strip()}")
     return transcription.strip()
 
-def ai_api_stream(prompt):
+def ai_api(prompt):
 
     load_dotenv("../../.env")
+
     client = OpenAI(
         base_url="https://api.groq.com/openai/v1",
         api_key=os.getenv("OPENAI_API_KEY")
     )
 
-    stream = client.chat.completions.create(
-        model="mistral-saba-24b",
+    response = client.chat.completions.create(
+        model=aiModel,
         messages=[
-            {"role": "system", "content": "Short, concise, speaker-only replies."},
+            {"role": "system", "content": "You are to give short concise answers to questions, which will only be played back on a speraker."},
             {"role": "user", "content": prompt}
-        ],
-        stream=True
+        ]
     )
-
-    buffer = ""
-    for chunk in stream:
-        if chunk.choices[0].delta.content:
-            token = chunk.choices[0].delta.content
-            buffer += token
-            if token.endswith(('.', '!', '?')):  # speak sentence by sentence
-                yield buffer.strip()
-                buffer = ""
-    if buffer:
-        yield buffer.strip()
+    message = response.choices[0].message.content
+    message = re.sub(r"<think>.*?</think>", "", message, flags=re.DOTALL).strip()
+    print(message)
+    return message
 
 
-def speak_piper(text):
-    process = subprocess.Popen(
-        ['piper', '--model', '../../models/voices/en_GB-alba-medium.onnx', '--output-raw'],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE
-    )
-    process.stdin.write(text.encode('utf-8'))
-    process.stdin.close()
+def text_to_speech(message):
+    clean_message = re.sub(r"\*\*(.*?)\*\*", r"\1", message)
+    clean_message = re.sub(r"[_*`~]", "", clean_message)
 
-    # Play audio with aplay or ffplay or stream directly to a player
-    subprocess.run(['aplay', '-f', 'S16_LE', '-r', '22050'], input=process.stdout.read())
+    # Create a temporary WAV file
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_wav:
+        wav_path = tmp_wav.name
+
+    try:
+        
+        # Run piper to synthesize the speech
+        piper_proc = subprocess.Popen([
+            "piper",
+            "--model", "../../models/voices/en_GB-alba-medium.onnx",
+            "--output_raw",
+            "--text", message
+        ], stdout=subprocess.PIPE)
+
+        # Play raw audio piped from Piper
+        aplay_proc = subprocess.Popen(["aplay", "-r", "22050", "-f", "S16_LE", "-t", "raw"], stdin=piper_proc.stdout)
+
+        # Wait for both to finish
+        aplay_proc.wait()
+        piper_proc.wait()
+
+    finally:
+        # Clean up
+        if os.path.exists(wav_path):
+            os.remove(wav_path)
 
 
 if __name__ == "__main__":
     import select
+
+    
     result = record_and_transcribe()
-    for sentence in ai_api_stream(result):
-        print(f">> {sentence}")
-        speak_piper(sentence)
+
+
+    start_processing = time.time()
+    message = ai_api(result)
+    end_processing = time.time()
+
+    start_tts = time.time()
+    text_to_speech(message)
+    end_tts = time.time()
+
+    end_total = time.time()
+
+    # --- Print timing results ---
+    # print(f"Speech Recognition Time: {end_sr - start_sr:.2f} seconds")
+    print(f"AI Response time:         {end_processing - start_processing:.2f} seconds")
+    print(f"Text-to-Speech Time:     {end_tts - start_tts:.2f} seconds")
+    print(f"Total Time (not including STT):              {end_total - start_total:.2f} seconds")

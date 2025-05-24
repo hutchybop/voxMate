@@ -21,18 +21,25 @@ from dotenv import load_dotenv
 from contextlib import contextmanager
 from typing import Optional, Tuple, Generator
 
+# ================= CONFIGURATION =================
 # Constants
 SAMPLE_RATE = 16000
 CHANNELS = 1
 DTYPE = 'int16'
 BLOCKSIZE = 16000
-SILENCE_THRESHOLD = 10100
+SILENCE_THRESHOLD = 10500
 SILENCE_DURATION = 1.0
-KEYWORD_PATH = '../../modelsporcupine_keywords/hey-bop_en_raspberry-pi_v3_0_0.ppn'
+NOISE_REDUCTION_ENABLED = True  # Toggle this for noise reduction
+STT_MODEL = "whisper-large-v3-turbo"
+AI_MODEL = "mistral-saba-24b"
+
+# Paths
+KEYWORD_PATH = '../../models/porcupine_keywords/hey-bop_en_raspberry-pi_v3_0_0.ppn'
 GENERATING_SOUND = '../../audio/generating.mp3'
 GREETING_SOUND = '../../audio/greeting.mp3'
 ENV_PATH = '../../.env'
 
+# ================= INITIALIZATION =================
 # Setup logging with more detailed format
 logging.basicConfig(
     level=logging.INFO,
@@ -44,28 +51,26 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ALSA Error Handler Suppression (Linux-only)
+# ALSA Error Handler Supression (Linux-only)
 ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
 def py_error_handler(filename, line, function, err, fmt): 
     pass
-
 try:
     cdll.LoadLibrary('libasound.so').snd_lib_error_set_handler(ERROR_HANDLER_FUNC(py_error_handler))
 except Exception as e:
     logger.debug(f"Couldn't set ALSA error handler: {e}")
 
 class AudioProcessor:
-    """Handles all audio-related operations"""
+    """Handles all audio operations with configurable noise reduction"""
     
     @staticmethod
     def start_looping_sound() -> subprocess.Popen:
-        """Start background looping sound indicating processing"""
         try:
             return subprocess.Popen(
                 ["mpg321", "-q", "--loop", "-1", GENERATING_SOUND],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                stdin=subprocess.PIPE  # Prevents hanging on terminate
+                stdin=subprocess.PIPE   # Prevents hanging on terminate
             )
         except FileNotFoundError:
             logger.error("mpg321 not found. Please install mpg321 for audio playback.")
@@ -101,24 +106,33 @@ class AudioProcessor:
         """Record audio until silence is detected and save to temporary WAV file"""
         silence_start = None
         audio_data = []
+        consecutive_silent_chunks = 0
         
         def callback(indata, frames, time_info, status):
-            nonlocal silence_start
-            if status:
-                if status.input_overflow:
-                    logger.warning("Input overflow in audio stream")
+            nonlocal silence_start, consecutive_silent_chunks
+            if status and status.input_overflow:
+                logger.warning("Input overflow in audio stream detected")
             
-            audio_chunk = indata.copy()
-            volume = np.linalg.norm(audio_chunk)
-            audio_data.append(audio_chunk)
-
-            if volume < SILENCE_THRESHOLD:
-                if silence_start is None:
-                    silence_start = time.time()
-                elif time.time() - silence_start > SILENCE_DURATION:
-                    raise sd.CallbackStop()
+            chunk = indata.copy()
+            volume = np.linalg.norm(chunk)
+            
+            if NOISE_REDUCTION_ENABLED:
+                if volume > SILENCE_THRESHOLD:
+                    audio_data.append(chunk)
+                    consecutive_silent_chunks = 0
+                elif audio_data:
+                    consecutive_silent_chunks += 1
+                    if consecutive_silent_chunks > int(SILENCE_DURATION * SAMPLE_RATE / BLOCKSIZE):
+                        raise sd.CallbackStop()
             else:
-                silence_start = None
+                audio_data.append(chunk)
+                if volume < SILENCE_THRESHOLD:
+                    if silence_start is None:
+                        silence_start = time.time()
+                    elif time.time() - silence_start > SILENCE_DURATION:
+                        raise sd.CallbackStop()
+                else:
+                    silence_start = None
 
         try:
             with sd.InputStream(
@@ -131,23 +145,19 @@ class AudioProcessor:
                 logger.info("\nRecording... (speak now)")
                 while stream.active:
                     time.sleep(0.1)
-        except sd.PortAudioError as e:
-            logger.error(f"Audio device error: {e}")
-            raise
-        except Exception as e:
-            logger.error(f"Recording error: {e}")
-            raise
 
-        # Save to temp WAV file
-        temp_audio = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
-        try:
+            # Save to temp WAV file
+            temp_audio = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
             with wave.open(temp_audio.name, 'wb') as wf:
                 wf.setnchannels(CHANNELS)
                 wf.setsampwidth(2)  # 16-bit = 2 bytes
                 wf.setframerate(SAMPLE_RATE)
                 for chunk in audio_data:
                     wf.writeframes(chunk.tobytes())
+            
+            logger.debug(f"Recorded {len(audio_data)} chunks (Noise reduction: {'ON' if NOISE_REDUCTION_ENABLED else 'OFF'})")
             return temp_audio.name
+            
         except Exception as e:
             logger.error(f"Error saving audio file: {e}")
             os.unlink(temp_audio.name)
@@ -155,7 +165,7 @@ class AudioProcessor:
 
 class AIService:
     """Handles all AI-related operations"""
-    
+
     def __init__(self):
         load_dotenv(ENV_PATH)
         self.client = OpenAI(
@@ -163,25 +173,25 @@ class AIService:
             api_key=os.getenv("OPENAI_API_KEY")
         )
         self.access_key = os.getenv("PORCUPINE_API_KEY")
-        
+
         if not self.access_key:
             logger.error("Porcupine API key not found in environment variables")
-            raise ValueError("Missing API keys")
-
+            raise ValueError("Missing API key")
+        
     def transcribe_audio(self, audio_path: str) -> Tuple[str, float, subprocess.Popen]:
         """Transcribe audio using Whisper API"""
         sound_process = AudioProcessor.start_looping_sound()
         start_time = time.time()
-        
+
         try:
             with open(audio_path, "rb") as audio_file:
                 transcript = self.client.audio.transcriptions.create(
-                    model="whisper-large-v3-turbo",
+                    model=STT_MODEL,
                     file=audio_file,
                     language="en",
                     response_format="text"
                 )
-            
+
             if transcript:
                 logger.info(f"Transcription: {transcript.strip()}")
             return transcript.strip(), time.time() - start_time, sound_process
@@ -199,7 +209,7 @@ class AIService:
         """Generate AI response using chat completion"""
         try:
             response = self.client.chat.completions.create(
-                model="mistral-saba-24b",
+                model=AI_MODEL,
                 messages=[
                     {
                         "role": "system",
@@ -226,9 +236,9 @@ class AIService:
         """Convert text to speech and play it"""
         if not message:
             return 0
-            
-        start_time = time.time()
         
+        start_time = time.time()
+
         try:
             with tempfile.NamedTemporaryFile(suffix='.mp3', delete=True) as f:
                 # Clean special characters that might cause TTS issues
@@ -248,7 +258,7 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
     pa = None
     porcupine = None
     stream = None
-    
+
     try:
         pa = pyaudio.PyAudio()
         porcupine = pvporcupine.create(
@@ -306,13 +316,14 @@ def main() -> None:
 
     try:
         ai_service = AIService()
+        logger.info(f"Noise reduction: {'ENABLED' if NOISE_REDUCTION_ENABLED else 'DISABLED'}")
         
         with audio_wake_stream(ai_service.access_key) as (porcupine, pa, stream):
             while True:
                 try:
                     # Wake word detection phase
                     wake_word_detection(porcupine, stream)
-                    
+
                     # Recording and processing phase
                     start_total = time.time()
                     audio_file = AudioProcessor.record_audio_to_file()

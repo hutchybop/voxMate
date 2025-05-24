@@ -24,10 +24,10 @@ from typing import Optional, Tuple, Generator
 # ================= CONFIGURATION =================
 # Constants
 SAMPLE_RATE = 16000
-CHANNELS = 1
+CHANNELS = 2
 DTYPE = 'int16'
 BLOCKSIZE = 16000
-SILENCE_THRESHOLD = 10500
+SILENCE_THRESHOLD = 14200
 SILENCE_DURATION = 1.0
 NOISE_REDUCTION_ENABLED = True  # Toggle this for noise reduction
 STT_MODEL = "whisper-large-v3-turbo"
@@ -67,7 +67,7 @@ class AudioProcessor:
     def start_looping_sound() -> subprocess.Popen:
         try:
             return subprocess.Popen(
-                ["mpg321", "-q", "--loop", "-1", GENERATING_SOUND],
+                ["mpg321", "-o", "pulse", "--stereo", "-q", "--loop", "-1", GENERATING_SOUND],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 stdin=subprocess.PIPE   # Prevents hanging on terminate
@@ -90,16 +90,26 @@ class AudioProcessor:
 
     @staticmethod
     def play_sound(file_path: str) -> None:
-        """Play a single sound file"""
+        """Play sound with explicit stereo output"""
         try:
-            subprocess.run(
-                ["mpg321", "-q", file_path],
+            result = subprocess.run(
+                ["mpg321", "-o", "pulse", "--stereo", "-q", file_path],
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,  # Capture stderr for debugging
                 check=True
             )
         except subprocess.CalledProcessError as e:
-            logger.error(f"Error playing sound {file_path}: {e}")
+            logger.error(f"Error playing sound {file_path}: {e.stderr.decode().strip()}")
+            # Fallback to non-stereo mode if needed
+            try:
+                subprocess.run(
+                    ["mpg321", "-o", "pulse", "-q", file_path],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    check=True
+                )
+            except subprocess.CalledProcessError as fallback_e:
+                logger.error(f"Fallback playback failed: {fallback_e}")
 
     @staticmethod
     def record_audio_to_file() -> str:
@@ -115,6 +125,7 @@ class AudioProcessor:
             
             chunk = indata.copy()
             volume = np.linalg.norm(chunk)
+            print(f'Volume: {volume}')
             
             if NOISE_REDUCTION_ENABLED:
                 if volume > SILENCE_THRESHOLD:

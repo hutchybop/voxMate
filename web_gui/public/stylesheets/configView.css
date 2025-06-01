@@ -1,0 +1,12 @@
+img {
+    width: 40%;
+}
+
+.aTag {
+    color: white;
+}
+
+.aTag:hover {
+    color: grey;
+    text-decoration: underline; /* Adds underline on hover */
+  }

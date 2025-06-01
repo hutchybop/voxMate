@@ -35,9 +35,9 @@ AI_MODEL = "mistral-saba-24b"
 
 # Paths
 KEYWORD_PATH = '../../models/porcupine_keywords/hey-bop_en_raspberry-pi_v3_0_0.ppn'
-GENERATING_SOUND = '../../audio/generating.mp3'
-GREETING_SOUND = '../../audio/greeting.mp3'
-ENV_PATH = '../../.env'
+GENERATING_SOUND = '../audio/generating.mp3'
+GREETING_SOUND = '../audio/greeting.mp3'
+ENV_PATH = '.env'
 
 # ================= INITIALIZATION =================
 # Setup logging with more detailed format

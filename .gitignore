@@ -50,6 +50,8 @@ coverage.xml
 .env
 .venv
 .voxenv
+voxenv/
+venv3/
 myenv/
 env/
 venv/
@@ -75,3 +77,4 @@ venv.bak/
 # Others
 transfer.sh
 node_modules/
+.flaskenv

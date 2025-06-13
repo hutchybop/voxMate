@@ -1,5 +1,5 @@
 <p>
-  <img src="voxMate_web_app/static/images/voxMate.png" alt="voxMate Logo" width="40" style="vertical-align: middle; border-radius: 8px; margin-right: 10px;">
+  <img src="voxMate_web_app/static/images/voxMate.png" alt="voxMate Logo" width="40" style="vertical-align: middle; border-radius: 50%; margin-right: 10px;">
   <span style="font-size: 2em; font-weight: bold; vertical-align: middle;">voxMate</span>
 </p>
 

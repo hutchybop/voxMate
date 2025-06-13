@@ -49,6 +49,7 @@ coverage.xml
 # Environments
 .env
 .venv
+.voxenv
 myenv/
 env/
 venv/

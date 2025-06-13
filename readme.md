@@ -1,4 +1,4 @@
-# voxMate 🎙️
+# voxMate ![voxMate Logo](voxMate_web_app/static/images/voxMate.png)
 
 **voxMate** is a Python-powered smart speaker program that listens to your voice, processes it with AI, and responds with natural speech. It currently uses [Whisper](https://github.com/openai/whisper) via the [Groq API](https://groq.com/), sends your query to [Mistral AI](https://mistral.ai/) via the Groq API for intelligent responses, and speaks back using [gTTS](https://pypi.org/project/gTTS/).
 

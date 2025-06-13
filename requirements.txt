@@ -1,0 +1,20 @@
+# Add user installed packages here with: pip3 list --not-required --format=freeze > requirements.txt
+# Install with: pip3 install -r requirements.txt
+
+setuptools
+wheel
+numpy
+sounddevice
+pyaudio # Requires portaudio, on mac: brew install portaudio
+gTTS
+openai
+python-dotenv
+huggingface_hub
+wavio
+vosk
+pyttsx3
+pvporcupine
+flask
+pymongo
+flask_wtf
+passlib

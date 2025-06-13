@@ -1,0 +1,37 @@
+body {
+    font-family: "Ubuntu", sans-serif;
+}
+
+.navbar-brand img {
+    height: 2.5rem; /* Adjust this value as needed */
+    width: auto; /* Maintain aspect ratio */
+    border-radius: 50%; /* Makes the logo circular - adjust as needed */
+    object-fit: contain; /* Ensures the image fits properly */
+    transition: all 0.3s ease; /* Smooth hover effect */
+}
+
+/* Logo hover effect */
+.navbar-brand img:hover {
+    transform: scale(1.05);
+}
+
+/* Navbar height control */
+.navbar {
+    min-height: 60px; /* Set your preferred navbar height */
+}
+
+/* Stack buttons vertically in mobile */
+/* @media (max-width: 991.98px) {
+    .user-menu {
+        border-top: 1px solid white;
+    }
+
+    .navbar-collapse .btn-group-vertical {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+    .navbar-collapse .btn-group-vertical .btn {
+        margin-bottom: 0.5rem;
+        width: 100%;
+    }
+} */

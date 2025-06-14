@@ -1,4 +1,5 @@
 {% from "macros/nav.html" import header%}
+{% from "macros/footer.html" import footer %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -24,11 +25,25 @@
         {% block head_content %} {% endblock %}
     </head>
     
-    <body>
+    <body class="d-flex flex-column h-100">
+
         {{ header(session.get("_id"), session.get("email")) }}
-        <main class="main mt-5">
-            {% block main_content %} {% endblock %}
+
+        <main class="main mt-5 mb-5 flex-shrink-0">
+            <div class="mt-5">
+                {% block main_content %} {% endblock %}
+            </div>
+
+            
+
         </main>
+
+        <div class="mt-5">
+            {{ footer() }}
+        </div>
+        
+
+        
 
         <!-- Bootstrap JavaScript -->
         <script src="{{ url_for('static', filename='java/bootstrap.bundle.min.js') }}"></script>

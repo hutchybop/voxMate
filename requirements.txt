@@ -17,4 +17,5 @@ pvporcupine
 flask
 pymongo
 flask_wtf
+email_validator
 passlib

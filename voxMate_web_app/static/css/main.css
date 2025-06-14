@@ -1,5 +1,6 @@
 body {
     font-family: "Ubuntu", sans-serif;
+    min-height: 100vh;
 }
 
 .navbar-brand img {
@@ -12,26 +13,39 @@ body {
 
 /* Logo hover effect */
 .navbar-brand img:hover {
-    transform: scale(1.05);
+    transform: scale(1.10);
 }
 
-/* Navbar height control */
-.navbar {
-    min-height: 60px; /* Set your preferred navbar height */
+.nav-link:hover:not(.no-transform) {
+    transform: scale(1.10);
+    transition: all 0.3s ease;
+    color: #adb5bd !important;
 }
 
-/* Stack buttons vertically in mobile */
-/* @media (max-width: 991.98px) {
-    .user-menu {
-        border-top: 1px solid white;
-    }
+.footer-link {
+    display: inline-block;
+    transition: transform 0.3s ease; /* More specific than 'all' */
+}
 
-    .navbar-collapse .btn-group-vertical {
-        width: 100%;
-        margin-top: 0.5rem;
-    }
-    .navbar-collapse .btn-group-vertical .btn {
-        margin-bottom: 0.5rem;
-        width: 100%;
-    }
-} */
+.footer-link:hover {
+    transform: scale(1.10);
+    color: #adb5bd !important;
+}
+
+.card-shadow-left-bottom {
+    box-shadow: -4px 4px 8px rgba(248, 26, 26, 0.8);
+}
+
+.form__link {
+  color: rgba(248, 26, 26, 0.8); /* Bootstrap's primary */
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1px dashed rgba(248, 26, 26, 0.8);
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.form__link:hover {
+  color: #0a58ca; /* Slightly darker */
+  border-bottom-color: #0a58ca;
+  text-decoration: none;
+}

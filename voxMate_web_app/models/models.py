@@ -6,4 +6,4 @@ class User:
     _id: str
     email: str
     password: str
-    movies: list[str] = field(default_factory=list)
+    appSettings_id: str = field(default_factory=lambda: "default")

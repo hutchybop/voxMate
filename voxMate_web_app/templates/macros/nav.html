@@ -1,44 +1,44 @@
 {% macro header(_id, email) %}
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+<nav class="navbar navbar-expand-lg bg-secondary text-white py-2 fixed-top">
     <div class="container-fluid">
         <!-- Logo -->
-        <a class="navbar-brand" href="#">
-            <img class="d-inline-block align-text-top" src="static/images/voxMate.png" alt="voxMate Logo">
+        <a class="navbar-brand p-0" href="{{ url_for('main.index') }}">
+            <img class="d-inline-block align-text-top" src="static/images/voxMate.png" alt="voxMate" height="30">
         </a>
         
-        <!-- Mobile toggle -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <!-- Mobile toggle - simplified -->
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
         
         <!-- Navbar content -->
         <div class="collapse navbar-collapse" id="navbarNav">
-            <!-- Main nav links -->
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Config</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Spotify Setup</a></li>
+            <!-- Main nav links - simplified -->
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link text-white" href="{{ url_for('main.index') }}">Home</a></li>
+                <li class="nav-item"><a class="nav-link text-white" href="{{ url_for('appSettings.settings') }}">Settings</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="#">Spotify Setup</a></li>
             </ul>
-            
+
             <!-- Divider -->
-            <hr class="d-lg-none my-2 mx-2 text-white-50">
+            <hr class="d-lg-none my-2 mx-2 text-white">
             
-            <!-- User menu - properly styled -->
+            <!-- User menu - simplified -->
             <ul class="navbar-nav">
                 {% if email %}  
                     <li class="nav-item">
-                        <span class="nav-link text-white">Logged in as {{ email }}</span>
+                        <span class="nav-link no-transform text-white-50">Logged in as {{ email }}</span>
                     </li>
                     <li class="nav-item">
-                        <a href="/logout" class="nav-link">Logout</a>
+                        <a href="{{ url_for('users.logout') }}" class="nav-link text-white">Logout</a>
                     </li>
                 {% else %}
                     <li class="nav-item">
-                        <a href="#" class="nav-link">Login</a>
+                        <a href="{{ url_for('users.login') }}" class="nav-link text-white">Login</a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link">Register</a>
+                        <a href="{{ url_for('users.register') }}" class="nav-link text-white">Register</a>
                     </li>
                 {% endif %}
             </ul>

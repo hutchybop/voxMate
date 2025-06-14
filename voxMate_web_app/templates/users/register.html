@@ -1,0 +1,47 @@
+{% from "macros/fields.html" import render_text_field %}
+
+{% extends "layouts/boilerplate.html" %}
+
+{% block main_content %}
+
+<div class="container d-flex justify-content-center align-items-center">
+    <div class="row">
+        <div class="col">
+            <div class="card card-shadow-left-bottom">
+                <div class="d-flex justify-content-center">
+                    <h4 class="card-title text-center text-wrap w-75 mt-3">
+                        Register to access all features of voxMate
+                    </h4>
+                </div>
+
+                <hr>
+
+                <div class="card-shadow">
+                    <div class="card-body">
+                        <form name="register" method="POST" novalidate>
+
+                            {{ form.hidden_tag() }}
+                            {{ render_text_field(form.email) }}
+                            {{ render_text_field(form.password) }}
+                            {{ render_text_field(form.confirm_password) }}
+                            
+                            <div class="d-flex flex-column">
+                                <div class="mb-2">
+                                    <span class="small">
+                                        Already have an account? <a href="{{ url_for('users.login') }}" class="form__link">Login</a>.
+                                    </span>
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    {{ form.submit(class="btn btn-success") }}
+                                </div>
+                            </div>
+                            
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>   
+    </div>
+</div>
+
+{% endblock %}

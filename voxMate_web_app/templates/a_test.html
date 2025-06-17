@@ -1,0 +1,196 @@
+<!-- Used for testing and backup code. To be removed in production.<div class="container">
+    <div class="row">
+        <div class="col-md-12 text-center">
+            <h1 class="mt-5">Welcome to voxMate</h1>
+            <p class="lead">Your one-stop solution for voice-based applications.</p>
+            <p>Use the options below to fine tune voxMate</p>
+            <p>This is settings.html</p>
+        </div>
+    </div>
+
+    <div class="row">
+
+        <form name="settings" method="post" novalidate>
+
+            <div class="col-12 col-md-6 col-lg-4 mb-4">
+                <div class="card card-shadow-left-bottom">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">
+                            Silence Detection
+                        </h5>
+                        <hr>
+                        <p class="card-text">
+                            Configure the silence detection. Once you have finished asking a question, 
+                            this setting will dictate how quiet the audio must be before the question is considered complete.
+                        </p>
+                        <p>Current Setting: <strong>{{ settings.silence_threshold }}</strong></p>
+
+                        <div class="container mt-5">
+                            <div class="container-fluid">
+                                <div class="row">
+                                    <div class="col-4">
+                                        <label for="silence_threshold_input" class="form-label pt-2">
+                                            Noise Level:
+                                        </label>
+                                    </div>
+                                    <div class="col-8 d-flex align-items-center">
+                                        <span class="editable-label me-1">
+                                            ✏️
+                                        </span>
+                                        {{ settingsForm.silence_threshold(
+                                            type="number",
+                                            id="silence_threshold_input",
+                                            class="form-control no_border flex-grow-1",
+                                            value=settings.silence_threshold,
+                                            step="50"
+                                        ) }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <input
+                                            type="range"
+                                            id="silence_threshold_slider"
+                                            class="form-range"
+                                            min="-500"
+                                            max="500"
+                                            step="50"
+                                            value="0">
+
+                                        <div class="d-flex justify-content-between">
+                                            <small>Quiet</small>
+                                            <small>Noisy</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-4 mb-4">
+                <div class="card card-shadow-left-bottom">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">
+                            Silence Detection
+                        </h5>
+                        <hr>
+                        <p class="card-text">
+                            Configure the silence duration. When the silence threshold is reached, this is the time required in seconds for the question to be consider complete.
+                        </p>
+                        <p>Current Setting: <strong>{{ settings.silence_duration }}</strong></p>
+                        <div class="mt-5">
+
+                            <label for="silence_duration" class="form-label pt-2">
+                                Silence Duration (s):
+                            </label>
+                            {{ settingsForm.silence_duration(
+                                type="",
+                                id="silence_duration",
+                                class="form-control",
+                                vlaue=settings.silence_duration
+                            ) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </form>
+    </div>
+</div> -->
+
+
+
+<div class="col-12 col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <!-- Description -->
+                        <div class="flex-fill mb-3">
+                            <h5 class="card-title text-center">Silence Detection</h5>
+                            <hr>
+                            <p class="card-text">
+                                Configure the silence detection. This sets how quiet the room needs to be before the app 
+                                knows you’ve finished speaking. <span class="text-danger">Lower values make the app more sensitive to sound.</span> 
+                                You might need to adjust this depending on your background noise.
+                            </p>
+                        </div>
+
+                        <!-- Current Setting -->
+                        <div class="flex-fill mb-3">
+                            <p>Current Setting: <strong>{{ settings.silence_threshold }}</strong></p>
+                        </div>
+
+                        <!-- Input Controls -->
+                        <div class="flex-fill">
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <label for="silence_threshold_input" class="form-label pt-2">
+                                        Noise Level:
+                                    </label>
+                                </div>
+                                <div class="col-8 d-flex align-items-center">
+                                    <span class="editable-label me-1">✏️</span>
+                                    {{ settingsForm.silence_threshold(
+                                        type="number",
+                                        id="silence_threshold_input",
+                                        class="form-control no_border flex-grow-1",
+                                        value=settings.silence_threshold,
+                                        step="50"
+                                    ) }}
+                                </div>
+                            </div>
+
+                            <input type="range" id="silence_threshold_slider" class="form-range" min="-500" max="500" step="50" value="0">
+                            <div class="d-flex justify-content-between">
+                                <small>Quiet</small>
+                                <small>Noisy</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <!-- Description -->
+                        <div class="flex-fill mb-3">
+                            <h5 class="card-title text-center">Silence Duration</h5>
+                            <hr>
+                            <p class="card-text">
+                                This is how long the app waits (in seconds) after things go quiet before it responds. 
+                                <span class="text-danger">Increase it if you want more thinking time, or decrease it 
+                                if you want faster replies.</span>
+                            </p>
+                        </div>
+
+                        <!-- Current Setting -->
+                        <div class="flex-fill mb-3">
+                            <p>Current Setting: <strong>{{ settings.silence_duration }} second(s)</strong></p>
+                        </div>
+
+                        <!-- Input Controls -->
+                        <div class="flex-fill">
+                            <div class="row">
+                                <div class="col-auto">
+                                    <label for="silence_duration" class="form-label pt-2">
+                                        Silence Duration (s):
+                                    </label>
+                                </div>
+                                <div class="col-auto">
+                                    {{ settingsForm.silence_duration(
+                                        type="number",
+                                        id="silence_duration",
+                                        class="form-control",
+                                        value=settings.silence_duration
+                                    ) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>

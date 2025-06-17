@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField
-from wtforms.validators import InputRequired, Email, Length, EqualTo
-
+from flask import request
+from wtforms import StringField, SubmitField, PasswordField, IntegerField, BooleanField, FloatField
+from wtforms.validators import InputRequired, Email, Length, EqualTo, ValidationError
 
 class RegisterForm(FlaskForm):
     email = StringField("Email", validators=[InputRequired(), Email()])
@@ -14,3 +14,12 @@ class LoginForm(FlaskForm):
     email = StringField("Email", validators=[InputRequired(), Email()])
     password = PasswordField("Password", validators=[InputRequired()])
     submit = SubmitField("Login")
+
+
+class SettingsForm(FlaskForm):
+    silence_threshold = IntegerField("Silence Threshold", validators=[InputRequired()])
+    silence_duration = FloatField("Silence Duration (s)", validators=[InputRequired()])
+    noise_reduction = BooleanField("Noise Reduction")
+    stt_model = StringField("STT Model", validators=[InputRequired()])
+    ai_model = StringField("AI Model", validators=[InputRequired()])
+    submit = SubmitField("Save Settings")

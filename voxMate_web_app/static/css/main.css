@@ -49,3 +49,7 @@ body {
   border-bottom-color: #0a58ca;
   text-decoration: none;
 }
+
+.no_border {
+    border: none;
+}

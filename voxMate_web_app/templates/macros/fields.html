@@ -1,16 +1,62 @@
 {% macro render_text_field(field) %}
-
-<div class="form-group mb-3">
-
+<div class="mb-3">
     {{ field.label(class="form-label") }}
-    {{ field(class="form-control") }}
-
-    {% for error in field.errors %}
-        <div class="invalid-feeback">
+    {{ field(
+        class="form-control " + ("is-invalid" if field.errors else ""),
+        **kwargs
+    ) }}
+    <!-- Bootstrap & WTForms validation -->
+    {% if field.errors %}
+        {% for error in field.errors %}
+        <div class="invalid-feedback">
             {{ error }}
         </div>
-    {% endfor %}
-
+        {% endfor %}
+    {% endif %}
+    {% if field.description %}
+    <div class="form-text">{{ field.description }}</div>
+    {% endif %}
 </div>
-
 {% endmacro %}
+
+
+{% macro render_settings_card_field(title, description, current_setting, input_controls, field=None) %}
+<div class="col-12 col-md-6 col-lg-4 mb-3">
+    <div class="card card-shadow-left-bottom h-100">
+        <div class="card-body d-flex flex-column">
+
+            <!-- Title + Description container -->
+            <div class="flex-fill d-flex flex-column mb-3 section-title-desc">
+                <h5 class="card-title text-center">{{ title }}</h5>
+                <hr>
+                <p class="card-text">{{ description|safe }}</p>
+            </div>
+
+            <hr>
+
+            <!-- Current Setting -->
+            <div class="flex-fill d-flex align-items-center section-current-setting">
+                <p class="mb-0">{{ current_setting|safe }}</p>
+            </div>
+
+            <hr>
+
+            <div class="flex-fill d-flex align-items-center justify-content-center section-input-controls">
+                <div class="w-100">
+                    {{ input_controls|safe }}
+                    {% if field and field.errors %}
+                        {% for error in field.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+

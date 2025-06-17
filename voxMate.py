@@ -20,18 +20,63 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from contextlib import contextmanager
 from typing import Optional, Tuple, Generator
+from pymongo import MongoClient
+import json
+from pathlib import Path
+from typing import Dict, Any
+
 
 # ================= CONFIGURATION =================
-# Constants
+# Constants for default values
+DEFAULT_CONFIG = {
+    "SILENCE_THRESHOLD": 14200,
+    "SILENCE_DURATION": 1.0,
+    "NOISE_REDUCTION_ENABLED": True,
+    "STT_MODEL": "whisper-large-v3-turbo",
+    "AI_MODEL": "mistral-saba-24b"
+}
+
+def load_config() -> Dict[str, Any]:
+    """Load configuration from user file and MongoDB with fallbacks."""
+    # Load user config if exists
+    config_path = Path(__file__).resolve().parent / "config" / "user_config.json"
+    user_config = {}
+    if config_path.exists():
+        with open(config_path, "r") as f:
+            user_config = json.load(f)
+
+    # Connect to MongoDB
+    mongodb = MongoClient(os.getenv("MONGODB_URI")).get_default_database()
+    
+    # Try user settings first, then fall back to default settings
+    settings = mongodb.appSettings.find_one({"_id": user_config.get("user_id")}) or {}
+    if not settings:
+        settings = mongodb.appSettings.find_one({"_id": "default"}) or {}
+
+    # Build final config with proper fallback order
+    return {
+        "SILENCE_THRESHOLD": settings.get('silence_threshold', DEFAULT_CONFIG["SILENCE_THRESHOLD"]),
+        "SILENCE_DURATION": settings.get('silence_duration', DEFAULT_CONFIG["SILENCE_DURATION"]),
+        "NOISE_REDUCTION_ENABLED": settings.get('noise_reduction', DEFAULT_CONFIG["NOISE_REDUCTION_ENABLED"]),
+        "STT_MODEL": settings.get('stt_model', DEFAULT_CONFIG["STT_MODEL"]),
+        "AI_MODEL": settings.get('ai_model', DEFAULT_CONFIG["AI_MODEL"]),
+    }
+
+# Load configuration when module is imported
+CONFIG = load_config()
+
+# Make settings available as module-level constants
+SILENCE_THRESHOLD = CONFIG["SILENCE_THRESHOLD"]
+SILENCE_DURATION = CONFIG["SILENCE_DURATION"]
+NOISE_REDUCTION_ENABLED = CONFIG["NOISE_REDUCTION_ENABLED"]
+STT_MODEL = CONFIG["STT_MODEL"]
+AI_MODEL = CONFIG["AI_MODEL"]
+
+# Other default variables
 SAMPLE_RATE = 16000
 CHANNELS = 2
 DTYPE = 'int16'
 BLOCKSIZE = 16000
-SILENCE_THRESHOLD = 14200
-SILENCE_DURATION = 1.0
-NOISE_REDUCTION_ENABLED = True  # Toggle this for noise reduction
-STT_MODEL = "whisper-large-v3-turbo"
-AI_MODEL = "mistral-saba-24b"
 
 # Paths
 KEYWORD_PATH = 'models/porcupine_keywords/hey-bop_en_raspberry-pi_v3_0_0.ppn'

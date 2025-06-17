@@ -1,3 +1,5 @@
+{% from "macros/fields.html" import render_settings_card_field %}
+
 {% extends "layouts/boilerplate.html" %}
 
 {% block main_content %}
@@ -8,40 +10,221 @@
             <h1 class="mt-5">Welcome to voxMate</h1>
             <p class="lead">Your one-stop solution for voice-based applications.</p>
             <p>Use the options below to fine tune voxMate</p>
-            <p>This is settings.html</p>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title text-center">
-                        Silence Detection
-                    </h5>
-                    <hr>
-                    <p class="card-text">
-                        Configure the silence detection. Once you have finished asking a question, 
-                        this setting will dictate how quiet the audio must be before the question is considered complete.
-                    </p>
-                    <div class="container mt-5">
-                        <form>
-                            <div class="mb-3">
-                            <label for="noiseLevel" class="form-label">Noise Level</label>
-                            <input type="range" class="form-range" id="noiseLevel" min="0" max="100">
-                            <div class="d-flex justify-content-between">
-                                <small>Quiet</small>
-                                <small>Noisy</small>
-                            </div>
-                            </div>
-                        </form>
+    <form name="settings" method="post" novalidate>
+
+        <!-- Required hidden tag for CRSF -->
+        {{ settingsForm.hidden_tag() }}
+
+        <!-- 1st submit button -->
+        <div class="d-flex flex-row-reverse mb-4">
+            {{ settingsForm.submit(
+                class="btn btn-success"
+            )}}
+        </div>
+
+        <div class="row mt-2 mb-2">
+
+            <!-- Silence Threshold Card -->
+            {% set silence_threshold_title %}
+                Slience Threshold
+            {% endset %}
+            {% set silence_threshold_description %}
+                Configure the silence threshold. This sets how quiet the room needs to be before the app knows 
+                you have finished speaking. <span class="text-danger">Lower values make the app more sensitive 
+                to sound.</span> You might need to adjust this depending on your background noise.
+            {% endset %}
+            {% set silence_threshold_current_setting %}
+                Current Setting: <strong>{{ settings.silence_threshold }}</strong>
+            {% endset %}
+            {% set silence_threshold_input_controls %}
+                <div class="row mb-3">
+                    <div class="col-4">
+                        <label for="silence_threshold_input" class="form-label pt-2">Noise Level:</label>
                     </div>
-
-                
+                    <div class="col-8 d-flex align-items-center">
+                        <span class="editable-label me-1">✏️</span>
+                        {{ settingsForm.silence_threshold(
+                            type="number",
+                            id="silence_threshold_input",
+                            class="form-control no_border flex-grow-1" + (" is-invalid" if settingsForm.silence_threshold.errors else ""),
+                            value=settings.silence_threshold,
+                            step="50"
+                        ) }}
+                    </div>
                 </div>
-            </div>
+                <input type="range" id="silence_threshold_slider" class="form-range" min="-500" max="500" step="50" value="0">
+                <div class="d-flex justify-content-between"><small>Quiet</small><small>Noisy</small></div>
+            {% endset %}
+            {{ render_settings_card_field(
+                silence_threshold_title,
+                silence_threshold_description,
+                silence_threshold_current_setting,
+                silence_threshold_input_controls
+            ) }}
+            
+
+            <!-- Silence Duration Card -->
+            {% set silence_duration_title %}
+                Silence Duration
+            {%  endset %}
+            {% set silence_duration_description %}
+                This is how long the app waits (in seconds) after things go quiet before it responds. 
+                <span class="text-danger">Increase it if you want more thinking time, or decrease it 
+                if you want faster replies.</span>
+            {%  endset %}
+            {% set silence_duration_current_setting %}
+                Current Setting: <strong>{{ settings.silence_duration }} second(s)</strong>
+            {%  endset %}
+            {% set silence_duration_input_controls %}
+                <div class="row">
+                    <div class="col-auto">
+                        <label for="silence_duration" class="form-label pt-2">
+                            Silence Duration (s):
+                        </label>
+                    </div>
+                    <div class="col">
+                        {{ settingsForm.silence_duration(
+                            type="number",
+                            id="silence_duration",
+                            class="form-control" + (" is-invalid" if settingsForm.silence_duration.errors else ""),
+                            value=settings.silence_duration,
+                            step="any"
+                        ) }}
+                    </div>
+                </div>
+            {%  endset %}
+            {{ render_settings_card_field(
+                silence_duration_title,
+                silence_duration_description,
+                silence_duration_current_setting,
+                silence_duration_input_controls
+            ) }}
+
+            <!-- Noise Reduction Card -->
+            {% set noise_reduction_title %}
+                Noise Reduction
+            {%  endset %}
+            {% set noise_reduction_description %}
+                Noise Reduction: [ON/OFF]<br>  
+                <span class="d-block ms-3">- <span class="text-danger">ON</span>: Ignores background noise for cleaner recordings (recommended).</span>
+                <span class="d-block ms-3">- <span class="text-danger">OFF</span>: Captures all sounds, useful in very quiet environments.</span>
+            {%  endset %}
+            {% set noise_reduction_current_setting %}
+                Current Setting: <strong>{{ "On" if settings.noise_reduction else "Off" }}</strong>
+            {%  endset %}
+            {% set noise_reduction_input_controls %}
+                <div class="d-flex align-items-center gap-2">
+                    <label for="noise_reduction" class="form-check-label mb-0">
+                        Noise Reduction:
+                    </label>
+                    <div class="form-check form-switch m-0">
+                        {{ settingsForm.noise_reduction(
+                            id="noise_reduction",
+                            class="form-check-input" + (" is-invalid" if settingsForm.noise_reduction.errors else ""),
+                            checked="checked" if settings.noise_reduction else False
+                        ) }}
+                    </div>
+                </div>
+            {%  endset %}
+            {{ render_settings_card_field(
+                noise_reduction_title,
+                noise_reduction_description,
+                noise_reduction_current_setting,
+                noise_reduction_input_controls
+            ) }}
+
+            <!-- STT Model -->
+            {% set stt_model_title %}
+                Speech To Text Model
+            {%  endset %}
+            {% set stt_model_description %}
+                Choose your Speach To Text (STT) model. <br> 
+                voxMate uses <a class="form__link" href="https://console.groq.com/docs/models">groq</a> to access Whisper STT models. <br>
+                You will need to add your groq API key <a class="form__link" href="">here</a>, 
+                if you have not already. <br>
+                More information can be found on the <a class="form__link" href="#">about</a> page.
+            {%  endset %}
+            {% set stt_model_current_setting %}
+                Current Setting: <strong>{{ settings.stt_model }}</strong>
+            {%  endset %}
+            {% set stt_model_input_controls %}
+                <div class="row">
+                    <div class="col-auto">
+                        <label for="stt_model" class="form-label pt-2">
+                            STT Model:
+                        </label>
+                    </div>
+                    <div class="col">
+                        {{ settingsForm.stt_model(
+                            id="stt_model",
+                            class="form-control" + (" is-invalid" if settingsForm.stt_model.errors else ""),
+                            value=settings.stt_model
+                        ) }}
+                    </div>
+                </div>
+            {%  endset %}
+            {{ render_settings_card_field(
+                stt_model_title,
+                stt_model_description,
+                stt_model_current_setting,
+                stt_model_input_controls
+            ) }}
+
+             <!-- ai Model -->
+            {% set ai_model_title %}
+                AI Model
+            {%  endset %}
+            {% set ai_model_description %}
+                Choose your Artifical Intelligence (AI) model. <br> 
+                voxMate uses <a class="form__link" href="https://console.groq.com/docs/models">groq</a> to access AI models. <br>
+                You will need to add your groq API key <a class="form__link" href="">here</a>, 
+                if you have not already. <br>
+                More information can be found on the <a class="form__link" href="#">about</a> page.
+            {%  endset %}
+            {% set ai_model_current_setting %}
+                Current Setting: <strong>{{ settings.ai_model }}</strong>
+            {%  endset %}
+            {% set ai_model_input_controls %}
+                <div class="row">
+                    <div class="col-auto">
+                        <label for="ai_model" class="form-label pt-2">
+                            AI Model:
+                        </label>
+                    </div>
+                    <div class="col">
+                        {{ settingsForm.ai_model(
+                            id="stt_model",
+                            class="form-control" + (" is-invalid" if settingsForm.ai_model.errors else ""),
+                            value=settings.ai_model
+                        ) }}
+                    </div>
+                </div>
+            {%  endset %}
+            {{ render_settings_card_field(
+                ai_model_title,
+                ai_model_description,
+                ai_model_current_setting,
+                ai_model_input_controls
+            ) }}
+            
+        </div> <!-- end .row -->
+        <div class="mt-3">
+            {{ settingsForm.submit(
+                class="btn btn-success"
+            )}}
         </div>
-    </div>
-</div>
+
+    </form>
+</div> <!-- end .container -->
 
 {% endblock %}
+
+{% block script_content %}
+<script src="{{ url_for('static', filename='java/bootstrap_form_validation.js') }}"></script>
+<script src="{{ url_for('static', filename='java/settings.js') }}"></script>
+{% endblock %}
+
+

@@ -3,7 +3,7 @@
   <span style="font-size: 2em; font-weight: bold; vertical-align: middle;">voxMate</span>
 </p>
 
-**voxMate** is a Python-powered smart speaker program that listens to your voice, processes it with AI, and responds with natural speech. It currently uses [Whisper](https://github.com/openai/whisper) via the [Groq API](https://groq.com/), sends your query to [Mistral AI](https://mistral.ai/) via the Groq API for intelligent responses, and speaks back using [gTTS](https://pypi.org/project/gTTS/).
+**voxMate** is a Python-powered smart speaker program that listens to your voice, processes it with AI, and responds with natural speech. It currently uses [Whisper](https://github.com/openai/whisper) via the [Groq API](https://groq.com/), sends your query to an AI model via the Groq API for intelligent responses, and speaks back using [gTTS](https://pypi.org/project/gTTS/).
 
 > Think of it as your own DIY voice assistant — local, hackable, and growing.
 
@@ -15,20 +15,10 @@
 
 - 🎤 **Voice input** with your microphone (via `sounddevice`)
 - 🧠 **Speech-to-text** with Whisper using the Groq API
-- 💬 **Conversational AI** with Mistral via Groq
+- 💬 **Conversational AI** with AI models via Groq
 - 🔊 **Text-to-speech** using gTTS (Google Text-to-Speech)
 - 💻 Built entirely in **Python**
 - 🚧 Extensible for future features (Spotify, smart home control, web GUI, etc.)
-
-<br>
-
----
-
-## 📦 Requirements
-
-- Python 3.9+
-- Groq API key (for Whisper & Mistral)
-- Internet connection (for gTTS and API calls)
 
 <br>
 
@@ -38,10 +28,21 @@
 
 voxMate will:
 
-- Listen to your voice
-- Transcribe it
-- Send it to Mistral for a response
-- Speak the reply aloud
+1. Listens for a wake word (via Porcupine)
+2. Records speech
+3. Transcribes with Whisper via Groq
+4. Sends transcript to an AI model via Groq
+5. Speaks the response aloud using gTTS
+
+<br>
+
+---
+
+## 📦 Requirements
+
+- Python 3.9+
+- Groq API key (for Whisper & AI models)
+- Internet connection (for gTTS and API calls)
 
 <br>
 
@@ -53,7 +54,7 @@ voxMate will:
 
 - 🐍 Python 3.9 or higher
 - 🌐 [MongoDB Atlas](https://www.mongodb.com/atlas/database) account and database (or [local MongoDB](https://www.mongodb.com/docs/manual/installation/))
-- 🧠 [Groq API key](https://console.groq.com/keys) for Whisper & Mistral
+- 🧠 [Groq API key](https://console.groq.com/keys) for Whisper & AI models
 - 🗣 [Picovoice Porcupine API key](https://console.picovoice.ai/) for wake word detection
 - 🔑 A `SECRET_KEY` for Flask session handling
 - 🧪 Raspberry Pi 4 (tested) running Ubuntu Server 22.04 or higher
@@ -238,29 +239,6 @@ cd <voxMate root path location>
 python3 voxmate.py
 ```
 Say `<Wake word/phase>` to ask a question
-
-<br>
-
----
-
-## 🧠 How voxMate Works
-
-1. Listens for a wake word (via Porcupine)
-2. Records speech
-3. Transcribes with Whisper via Groq
-4. Sends transcript to Mistral via Groq
-5. Speaks the response aloud using gTTS
-
-<br>
-
----
-
-## 📍 Roadmap
-
-- 🎵 Spotify voice integration
-- 🧠 Personality modes
-- 🏡 Smart home features
-- 🌐 Improved Web UI
 
 <br>
 

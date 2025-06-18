@@ -31,6 +31,26 @@
         <main class="flex-grow-1 mt-5 mb-5">
             <div class="mt-5">
 
+                <!-- Cookie Alert -->
+                <div class="container mt-3" id="cookieAlert">
+                    <div class="row">
+                        <div class="col">
+                        <div class="alert alert-warning alert-dismissible fade show d-flex flex-wrap justify-content-between align-items-start" role="alert">
+                            <div class="alert-text flex-grow-1 me-3">
+                            This site uses essential cookies for functionality. By continuing to use our site, you agree to their use.
+                            <br>
+                            <a href="/cookie-policy">Cookie Policy</a>
+                            </div>
+                            <div class="alert-close mt-2 mt-sm-0">
+                                <button id="cookieAlertBtn" type="button" class="btn border-0 bg-transparent p-0" data-bs-dismiss="alert" aria-label="Close">
+                                    <span class="cookie_thumb" aria-hidden="true">👍</span>
+                                </button>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Flash messages -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -53,6 +73,9 @@
         
         <!-- Bootstrap JavaScript -->
         <script src="{{ url_for('static', filename='java/bootstrap.bundle.min.js') }}"></script>
+
+        <!-- Boilerplate JavaScript -->
+        <script src="{{ url_for('static', filename='java/boilerplate.js') }}"></script>
 
         <!-- Custom JavaScript -->
         {% block script_content %} {% endblock %}

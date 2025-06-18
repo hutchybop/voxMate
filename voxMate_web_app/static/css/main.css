@@ -53,3 +53,13 @@ body {
 .no_border {
     border: none;
 }
+
+.cookie_thumb {
+    display: inline-block;
+    transition: transform 0.3s ease;
+    font-size: 2rem
+}
+
+.cookie_thumb:hover {
+    transform: scale(1.5);
+}

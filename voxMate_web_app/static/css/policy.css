@@ -1,0 +1,25 @@
+.cardTitles {
+    font-size: 1.6em;
+    color: #1E3A8A; /* Navy Blue */
+}
+.cardHeadings {
+    font-size: 1.2em;
+    color: #319795;
+    margin-bottom: 20px;
+}
+
+.sub_heading {
+    font-size: 1.05em;
+    color: #234728;
+    white-space: nowrap;
+}
+
+.info_heading {
+    font-size: 1.05em;
+    color: #2C7A7B;
+    white-space: nowrap;
+}
+.cardBodies {
+    color: #6B7280;
+    margin: 0;
+}

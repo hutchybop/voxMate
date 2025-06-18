@@ -1,0 +1,117 @@
+{% extends "layouts/boilerplate.html" %}
+
+{% block head_content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/policy.css') }}" />
+{% endblock %}
+
+{% block main_content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h2 id="tancTop" class="cardTitles">Terms and Conditions</h2>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+
+                        <li class="list-group-item">
+                            <h4 class="cardHeadings">Introduction</h4>
+                            <div class="cardBodies">
+                                Welcome to voxMate. By accessing and using our web application, 
+                                you agree to be bound by the following Terms and Conditions. Please read them carefully 
+                                before using the service.
+                            </div>
+                        </li>
+
+                        <li class="list-group-item">
+                            <h4 class="cardHeadings">About the Web App</h4>
+                            <div class="cardBodies">
+                                The voxMate web interface allows users to adjust settings for their personal voxMate 
+                                smart speaker app. It is designed to configure features such as speech and ai models, 
+                                connecting a Spotify account and other preferences for a self-hosted instance of voxMate 
+                                running on your own device.
+                            </div>
+                        </li>
+
+                        <li class="list-group-item">
+                            <h4 class="cardHeadings">User Obligations</h4>
+                            <div class="cardBodies">
+                                By using this application, you agree to:
+                                <span class="d-block ms-4">Use the web app responsibly and only for lawful purposes.</span>
+                                <span class="d-block ms-4">Not attempt to exploit, hack, or reverse engineer the web application or associated services.</span>
+                                <span class="d-block ms-4">Keep your login credentials confidential and secure.</span>
+                            </div>
+                        </li>
+
+                        <li class="list-group-item">
+                            <h4 class="cardHeadings">Account and Session</h4>
+                            <div class="cardBodies">
+                                The application uses a cookie called voxMate_session to maintain your login session 
+                                and provide access to your personal configuration interface. This is a functional cookie 
+                                and is essential for the operation of the web app.
+                            </div>
+                        </li>
+
+                        <li class="list-group-item">
+                            <h4 class="cardHeadings">Data Storage and Privacy</h4>
+                            <div class="cardBodies">
+                                The voxMate web app does not collect or store any personally identifiable information unless 
+                                explicitly entered by you (e.g., configuration settings). <br>
+                                All settings are stored securely in a connected database, accessible only to your authenticated session. <br>
+                                No analytics, marketing, or tracking cookies are used. <br>
+                                <br>
+                                For more information, please refer to our <a class="form__link" href="{{url_for('policy.cookie')}}">Cookie Policy</a>.
+                            </div>
+                        </li>
+
+                        <li class="list-group-item">
+                            <h4 class="cardHeadings">Intellectual Property</h4>
+                            <div class="cardBodies">
+                                The content, design, and code of the voxMate web interface and smart speaker application are 
+                                owned by the developer. You may not reproduce, redistribute, or modify any part of 
+                                the service without prior written permission.
+                            </div>
+                        </li>
+
+                        <li class="list-group-item">
+                            <h4 class="cardHeadings">Limitation of Liability</h4>
+                            <div class="cardBodies">
+                                The voxMate web app is provided “as is” without warranties of any kind. We do not guarantee uptime, 
+                                reliability, or suitability for any particular purpose. You use the app at your own risk. We are 
+                                not responsible for any loss, damage, or third-party liability resulting from its use.
+                            </div>
+                        </li>
+
+                        <li class="list-group-item">
+                            <h4 class="cardHeadings">Discontinuation and Changes</h4>
+                            <div class="cardBodies">
+                                We may modify or discontinue the web app at any time without prior notice. These Terms and Conditions 
+                                may also be updated periodically. Continued use of the web app constitutes acceptance of the updated terms.
+                            </div>
+                        </li>
+
+                        <li class="list-group-item">
+                            <h4 class="cardHeadings">Governing Law</h4>
+                            <div class="cardBodies">
+                                These Terms and Conditions are governed by and construed in accordance with the laws of the United Kingdom. Any 
+                                disputes arising out of or in connection with these terms shall be subject to the exclusive jurisdiction 
+                                of the courts of the United Kingdom.
+                            </div>
+                        </li>
+
+                        <li class="list-group-item">
+                            <h4 class="cardHeadings">More Details</h4>
+                            <div class="cardBodies">
+                                More details and information can be found at the 
+                                <a class="form__link" href="https://github.com/hutchybop/voxMate">GitHub</a> page.
+                            </div>
+                        </li>
+
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

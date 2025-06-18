@@ -7,6 +7,7 @@ from datetime import timedelta
 from controllers.main import main
 from controllers.users import users
 from controllers.appSettings import appSettings
+from controllers.policy import policy
 
 
 load_dotenv("../.env")
@@ -39,5 +40,6 @@ def create_app():
     app.register_blueprint(main)
     app.register_blueprint(users)
     app.register_blueprint(appSettings)
+    app.register_blueprint(policy)
 
     return app

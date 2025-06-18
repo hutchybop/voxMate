@@ -1,72 +1,6 @@
-<p>
-  <img src="voxMate_web_app/static/images/voxMate.png" alt="voxMate Logo" width="40" style="vertical-align: middle; border-radius: 50%; margin-right: 10px;">
-  <span style="font-size: 2em; font-weight: bold; vertical-align: middle;">voxMate</span>
-</p>
-
-**voxMate** is a Python-powered smart speaker program that listens to your voice, processes it with AI, and responds with natural speech. It currently uses [Whisper](https://github.com/openai/whisper) via the [Groq API](https://groq.com/), sends your query to [Mistral AI](https://mistral.ai/) via the Groq API for intelligent responses, and speaks back using [gTTS](https://pypi.org/project/gTTS/).
-
-> Think of it as your own DIY voice assistant — local, hackable, and growing.
-
----
-
-## 🔧 Features
-
-- 🎤 **Voice input** with your microphone (via `sounddevice`)
-- 🧠 **Speech-to-text** with Whisper using the Groq API
-- 💬 **Conversational AI** with Mistral via Groq
-- 🔊 **Text-to-speech** using gTTS (Google Text-to-Speech)
-- 💻 Built entirely in **Python**
-- 🚧 Extensible for future features (Spotify, smart home control, web GUI, etc.)
-
----
-
-## 📦 Requirements
-
-- Python 3.9+
-- Groq API key (for Whisper & Mistral)
-- Internet connection (for gTTS and API calls)
-
----
-
-## Current Workflow
-
-voxMate will:
-- Listen to your voice
-- Transcribe it
-- Send it to Mistral for a response
-- Speak the reply aloud
-
----
-
-## 📍 Roadmap
-
-Planned features:
-
-🎵 Spotify voice control
-🌐 Web GUI for settings & logs
-🏠 Smart home integration (e.g., lights, thermostat)
-🧠 Personality modes (e.g., witty, helpful, quiet)
-🗂 Local/remote database for commands or memory
-
----
-
-## Contributing
-
-This project is still a work in progress. Feedback, feature requests, and contributions are welcome!
-
-Feel free to open issues or submit pull requests with:
-
-- Suggestions for UI/UX improvements.
-- New feature ideas.
-- Bug reports.
-
----
-
-
 ## 🚀 Deployment
-<br>
 
-#### 🧰 Requirements
+### 🧰 Requirements
 
 - 🐍 Python 3.9 or higher
 - 🌐 [MongoDB Atlas](https://www.mongodb.com/atlas/database) account and database (or [local MongoDB](https://www.mongodb.com/docs/manual/installation/))
@@ -75,9 +9,9 @@ Feel free to open issues or submit pull requests with:
 - 🔑 A `SECRET_KEY` for Flask session handling
 - 🧪 Raspberry Pi 4 (tested) running Ubuntu Server 22.04 or higher
 
-<br>
+---
 
-#### 📦 Install System Dependencies
+### 📦 Install System Dependencies
 
 If deploying on a Raspberry Pi (or similar Debian-based system):
 
@@ -94,9 +28,9 @@ sudo apt install -y \
 
 > ✅ Raspberry Pi OS users may also need: `libatlas-base-dev` and `libespeak-ng-dev`
 
-<br>
+---
 
-#### 🐍 Python Setup
+### 🐍 Python Setup
 
 ```bash
 python3 -m venv venv
@@ -104,9 +38,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-<br>
+---
 
-#### 🛠 Environment Variables
+### 🛠 Environment Variables
 
 Copy the example file and edit it with your settings:
 
@@ -114,18 +48,18 @@ Copy the example file and edit it with your settings:
 cp .env.example .env
 ```
 
-##### Required `.env` values:
+#### Required `.env` values:
 
-| Key                 | Description                                                     |
-|---------------------|-----------------------------------------------------------------|
-| `MONGO_URI`         | Your MongoDB connection URI (Atlas or local)                    |
-| `GROQ_API_KEY`      | API key from [Groq Console](https://console.groq.com/)          |
-| `WAKE_API_KEY`      | API key from [Picovoice Console](https://console.picovoice.ai/) |
-| `SECRET_KEY`        | A secret string for Flask session signing                       |
+| Key             | Description                                           |
+|----------------|-------------------------------------------------------|
+| `MONGO_URI`     | Your MongoDB connection URI (Atlas or local)         |
+| `GROQ_API_KEY`  | API key from [Groq Console](https://console.groq.com/) |
+| `WAKE_API_KEY`  | API key from [Picovoice Console](https://console.picovoice.ai/) |
+| `SECRET_KEY`    | A secret string for Flask session signing            |
 
-<br>
+---
 
-#### 🌐 MongoDB Setup
+### 🌐 MongoDB Setup
 
 - If using [MongoDB Atlas](https://www.mongodb.com/atlas/database):
   - Create a free-tier cluster
@@ -135,9 +69,9 @@ cp .env.example .env
 
 - Alternatively, install [MongoDB Community Edition](https://www.mongodb.com/docs/manual/installation/) locally.
 
-<br>
+---
 
-#### 🔑 API Keys
+### 🔑 API Keys
 
 - **Groq API Key**:
   - Sign up at [Groq](https://groq.com/)
@@ -149,9 +83,9 @@ cp .env.example .env
   - Create a Porcupine access key
   - Download the `.ppn` file for your platform (e.g. Raspberry Pi)
 
-<br>
+---
 
-#### ⚙️ Using the Web App (Optional)
+### ⚙️ Using the Web App (Optional)
 
 The web app is used to set custom `voxMate` settings and persists them in MongoDB.
 
@@ -167,9 +101,9 @@ Settings currently supported:
 
 🟡 **Note**: No API keys are stored or managed through the web app.
 
-<br>
+---
 
-#### 🤖 STT & AI Models (via Groq)
+### 🤖 STT & AI Models (via Groq)
 
 - **STT Model**: [Whisper](https://github.com/openai/whisper) (use `"whisper-large"` or other variants)
 - **AI Model**: [Mistral](https://mistral.ai/news/mixtral-of-experts/), served via Groq
@@ -178,9 +112,9 @@ Settings currently supported:
 - [Groq Docs](https://docs.groq.com/)
 - [Groq Playground](https://console.groq.com/playground)
 
-<br>
+---
 
-#### 📡 Running on Raspberry Pi
+### 📡 Running on Raspberry Pi
 
 voxMate has been tested on a Raspberry Pi 4 using Ubuntu Server. To configure audio:
 
@@ -189,7 +123,7 @@ aplay -l   # List speaker devices
 arecord -l # List mic devices
 ```
 
-##### Set Default Audio Device
+#### Set Default Audio Device
 
 Create or edit `~/.asoundrc`:
 
@@ -198,16 +132,16 @@ defaults.pcm.card 1
 defaults.ctl.card 1
 ```
 
-##### Test recording/playback:
+#### Test recording/playback:
 
 ```bash
 arecord -D plughw:<card>,<device> -f cd -d 5 test.wav
 aplay test.wav
 ```
 
-<br>
+---
 
-#### 🧠 How voxMate Works
+### 🧠 How voxMate Works
 
 1. Listens for a wake word (via Porcupine)
 2. Records speech
@@ -215,13 +149,11 @@ aplay test.wav
 4. Sends transcript to Mistral via Groq
 5. Speaks the response aloud using gTTS
 
-<br>
+---
 
-#### 📍 Future Plans
+### 📍 Future Plans
 
 - 🎵 Spotify voice integration
 - 🧠 Personality modes
 - 🏡 Smart home features
 - 🌐 Improved Web UI
-
----

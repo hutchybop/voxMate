@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, url_for
 import markdown
 import os
 from flask import current_app
+import re
 
 policy = Blueprint(
     "policy", __name__, template_folder="templates", static_folder="static"
@@ -29,5 +30,9 @@ def about():
         f'src="{url_for("static", filename="images/voxMate.png")}"'
     )
 
-    html_content = markdown.markdown(md_content, extensions=["fenced_code", "tables"])
+    html_content = markdown.markdown(
+        md_content,
+        extensions=["fenced_code", "codehilite", "tables", "attr_list"]
+    )
+
     return render_template("policy/about.html", content=html_content)

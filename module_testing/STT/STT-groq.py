@@ -7,7 +7,7 @@ load_dotenv("../../.env")
 
 client = OpenAI(
     base_url="https://api.groq.com/openai/v1",
-    api_key=os.getenv("OPENAI_API_KEY")
+    api_key=os.getenv("GROQ_API_KEY")
 )
 
 # Path to your audio file

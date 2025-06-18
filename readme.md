@@ -7,6 +7,8 @@
 
 > Think of it as your own DIY voice assistant — local, hackable, and growing.
 
+<br>
+
 ---
 
 ## 🔧 Features
@@ -18,6 +20,8 @@
 - 💻 Built entirely in **Python**
 - 🚧 Extensible for future features (Spotify, smart home control, web GUI, etc.)
 
+<br>
+
 ---
 
 ## 📦 Requirements
@@ -26,45 +30,24 @@
 - Groq API key (for Whisper & Mistral)
 - Internet connection (for gTTS and API calls)
 
+<br>
+
 ---
 
 ## Current Workflow
 
 voxMate will:
+
 - Listen to your voice
 - Transcribe it
 - Send it to Mistral for a response
 - Speak the reply aloud
 
----
-
-## 📍 Roadmap
-
-Planned features:
-
-🎵 Spotify voice control
-🌐 Web GUI for settings & logs
-🏠 Smart home integration (e.g., lights, thermostat)
-🧠 Personality modes (e.g., witty, helpful, quiet)
-🗂 Local/remote database for commands or memory
+<br>
 
 ---
-
-## Contributing
-
-This project is still a work in progress. Feedback, feature requests, and contributions are welcome!
-
-Feel free to open issues or submit pull requests with:
-
-- Suggestions for UI/UX improvements.
-- New feature ideas.
-- Bug reports.
-
----
-
 
 ## 🚀 Deployment
-<br>
 
 #### 🧰 Requirements
 
@@ -114,13 +97,15 @@ Copy the example file and edit it with your settings:
 cp .env.example .env
 ```
 
+<br>
+
 ##### Required `.env` values:
 
 | Key                 | Description                                                     |
 |---------------------|-----------------------------------------------------------------|
 | `MONGO_URI`         | Your MongoDB connection URI (Atlas or local)                    |
 | `GROQ_API_KEY`      | API key from [Groq Console](https://console.groq.com/)          |
-| `WAKE_API_KEY`      | API key from [Picovoice Console](https://console.picovoice.ai/) |
+| `PORCUPINE_API_KEY` | API key from [Picovoice Console](https://console.picovoice.ai/) |
 | `SECRET_KEY`        | A secret string for Flask session signing                       |
 
 <br>
@@ -131,23 +116,50 @@ cp .env.example .env
   - Create a free-tier cluster
   - Whitelist your IP
   - Create a user and database
-  - Copy the connection string and set it as `MONGO_URI` in `.env`
 
 - Alternatively, install [MongoDB Community Edition](https://www.mongodb.com/docs/manual/installation/) locally.
+
+- Copy the connection string and set it as `MONGO_URI` in `.env`
 
 <br>
 
 #### 🔑 API Keys
 
-- **Groq API Key**:
+**Groq API Key**:
+
   - Sign up at [Groq](https://groq.com/)
   - Go to [Groq Console](https://console.groq.com/)
   - Generate an API key
+  - Set it as `GROQ_API_KEY` in `.env`
 
-- **Porcupine Wake Word API Key**:
+
+**Porcupine Wake Word API Key**:
+
   - Sign up at [Picovoice Console](https://console.picovoice.ai/)
   - Create a Porcupine access key
-  - Download the `.ppn` file for your platform (e.g. Raspberry Pi)
+  - Set it as `PORCUPINE_API_KEY` in `.env`
+
+**Add custom Porcupine wake word**:
+
+  - Create a Wake Word from the Start Building section
+  - Download the `.ppn` and `LICENSE.txt` files for your platform (e.g. Raspberry Pi)
+  - Add the files to `voxMate/models/porcupine_keywords`
+
+<br>
+
+#### 🤖 STT & AI Models (via Groq)
+
+- STT and AI models can be amended via the Web App
+
+- The STT and AI models are seved via [Groq](https://console.groq.com).
+- A list of models can be found at [Groq Models](https://console.groq.com/docs/models)
+- [Whisper](https://github.com/openai/whisper) models have worked well in testing.
+
+
+
+🆓 Groq’s free-tier gives access to powerful models for developers. More info:
+- [Groq Docs](https://docs.groq.com/)
+- [Groq Playground](https://console.groq.com/playground)
 
 <br>
 
@@ -169,17 +181,6 @@ Settings currently supported:
 
 <br>
 
-#### 🤖 STT & AI Models (via Groq)
-
-- **STT Model**: [Whisper](https://github.com/openai/whisper) (use `"whisper-large"` or other variants)
-- **AI Model**: [Mistral](https://mistral.ai/news/mixtral-of-experts/), served via Groq
-
-🆓 Groq’s free-tier gives access to powerful models for developers. More info:
-- [Groq Docs](https://docs.groq.com/)
-- [Groq Playground](https://console.groq.com/playground)
-
-<br>
-
 #### 📡 Running on Raspberry Pi
 
 voxMate has been tested on a Raspberry Pi 4 using Ubuntu Server. To configure audio:
@@ -188,26 +189,61 @@ voxMate has been tested on a Raspberry Pi 4 using Ubuntu Server. To configure au
 aplay -l   # List speaker devices
 arecord -l # List mic devices
 ```
+<br>
 
 ##### Set Default Audio Device
 
 Create or edit `~/.asoundrc`:
 
 ```
-defaults.pcm.card 1
-defaults.ctl.card 1
+defaults.pcm.card <pcm card number>
+defaults.ctl.card <ctl card number>
 ```
+<br>
 
 ##### Test recording/playback:
 
-```bash
-arecord -D plughw:<card>,<device> -f cd -d 5 test.wav
-aplay test.wav
-```
+- Start a test 5 second record:
+  
+    ```
+    arecord -D plughw:<card>,<device> -f cd -d 5 test.wav
+    ```
+
+- Play the recording back:
+  
+    ```
+    aplay test.wav
+    ```
 
 <br>
 
-#### 🧠 How voxMate Works
+---
+
+### 🏃‍♂️ Run voxMate.py and voxMate_web_app
+
+Open two separate terminal screens.
+
+In the first one:
+```bash
+cd <voxMate/voxMate_web_app path location>
+flask run
+```
+Access the web app at `http://127.0.0.1:5000/`
+
+
+
+In the second one:
+```bash
+cd <voxMate root path location>
+python3 voxmate.py
+```
+Say `<Wake word/phase>` to ask a question
+
+<br>
+
+---
+
+## 🧠 How voxMate Works
 
 1. Listens for a wake word (via Porcupine)
 2. Records speech
@@ -217,11 +253,40 @@ aplay test.wav
 
 <br>
 
-#### 📍 Future Plans
+---
+
+## 📍 Roadmap
 
 - 🎵 Spotify voice integration
 - 🧠 Personality modes
 - 🏡 Smart home features
 - 🌐 Improved Web UI
+
+<br>
+
+---
+
+## 🔮 Future Plans
+
+- 🎵 Spotify voice integration
+- 🧠 Personality modes
+- 🏡 Smart home features
+- 🌐 Improved Web UI
+
+<br>
+
+---
+
+## 🤝 Contributing
+
+This project is still a work in progress. Feedback, feature requests, and contributions are welcome!
+
+Feel free to open issues or submit pull requests with:
+
+- Suggestions for UI/UX improvements.
+- New feature ideas.
+- Bug reports.
+
+<br>
 
 ---

@@ -38,16 +38,6 @@ voxMate will:
 
 ---
 
-## 📦 Requirements
-
-- Python 3.9+
-- Groq API key (for Whisper & AI models)
-- Internet connection (for gTTS and API calls)
-
-<br>
-
----
-
 ## 🚀 Deployment
 
 #### 🧰 Requirements
@@ -58,6 +48,7 @@ voxMate will:
 - 🗣 [Picovoice Porcupine API key](https://console.picovoice.ai/) for wake word detection
 - 🔑 A `SECRET_KEY` for Flask session handling
 - 🧪 Raspberry Pi 4 (tested) running Ubuntu Server 22.04 or higher
+- Internet connection (for gTTS and API calls)
 
 <br>
 
@@ -83,8 +74,8 @@ sudo apt install -y \
 #### 🐍 Python Setup
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -92,7 +83,7 @@ pip install -r requirements.txt
 
 #### 🛠 Environment Variables
 
-Copy the example file and edit it with your settings:
+Copy the env example file and edit it with your settings:
 
 ```bash
 cp .env.example .env
@@ -154,7 +145,7 @@ cp .env.example .env
 
 - The STT and AI models are seved via [Groq](https://console.groq.com).
 - A list of models can be found at [Groq Models](https://console.groq.com/docs/models)
-- [Whisper](https://github.com/openai/whisper) models have worked well in testing.
+- [Whisper](https://github.com/openai/whisper) TTS models have worked well in testing.
 
 
 
@@ -194,7 +185,7 @@ arecord -l # List mic devices
 
 ##### Set Default Audio Device
 
-Create or edit `~/.asoundrc`:
+Create or edit `~/.asoundrc` and set default audio devices:
 
 ```
 defaults.pcm.card <pcm card number>

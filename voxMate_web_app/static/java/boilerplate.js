@@ -5,7 +5,7 @@ const cookieAlertBtn = document.getElementById('cookieAlertBtn');
 cookieAlertBtn.addEventListener('click', () => {
   localStorage.setItem('hasVisited', 'true');
 });
-let cookieAlertCheck =localStorage.getItem('hasVisited');
+let cookieAlertCheck = localStorage.getItem('hasVisited');
 if (!cookieAlertCheck) {
     cookieAlert.style.display = 'block';
   } else {

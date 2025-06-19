@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, current_app, session, redirect, url_for, flash
 from models.decorators import isLoggedIn
 from models.forms import SettingsForm
-from dataclasses import asdict
 
 appSettings = Blueprint(
     "appSettings", __name__, template_folder="templates", static_folder="static"
@@ -34,6 +33,6 @@ def settings():
         return redirect(url_for("appSettings.settings"))
     
 
-    return render_template("appSettings/settings.html", settings=settings, settingsForm=settingsForm)
+    return render_template("appSettings/settings.html", title="voxMate - Settings", settings=settings, settingsForm=settingsForm)
 
 

@@ -26,6 +26,35 @@ from pathlib import Path
 from typing import Dict, Any
 
 
+# ================= ENVIRONMENT CHECK =================
+def check_environment():
+    """Check required environment variables and play warning sounds if missing"""
+    load_dotenv(ENV_PATH)
+    
+    # Define warning sounds
+    WARNING_SOUND_MONGODB = 'audio/warning_mongodb.mp3'
+    WARNING_SOUND_API_KEYS = 'audio/warning_api_keys.mp3'
+    
+    # Check MONGODB_URI
+    if not os.getenv("MONGODB_URI"):
+        logger.error("MONGODB_URI environment variable is not set")
+        AudioProcessor.play_sound(WARNING_SOUND_MONGODB)
+        logger.warning("Continuing with default configuration (MongoDB not available)")
+    
+    # Check GROQ_API_KEY and PORCUPINE_API_KEY
+    missing_keys = []
+    if not os.getenv("GROQ_API_KEY"):
+        missing_keys.append("GROQ_API_KEY")
+    if not os.getenv("PORCUPINE_API_KEY"):
+        missing_keys.append("PORCUPINE_API_KEY")
+    
+    if missing_keys:
+        logger.error(f"Missing required API keys: {', '.join(missing_keys)}")
+        AudioProcessor.play_sound(WARNING_SOUND_API_KEYS)
+        logger.critical("Exiting due to missing API keys")
+        sys.exit(1)
+
+
 # ================= CONFIGURATION =================
 # Constants for default values
 DEFAULT_CONFIG = {
@@ -45,22 +74,31 @@ def load_config() -> Dict[str, Any]:
         with open(config_path, "r") as f:
             user_config = json.load(f)
 
-    # Connect to MongoDB
-    mongodb = MongoClient(os.getenv("MONGODB_URI")).get_default_database()
-    
-    # Try user settings first, then fall back to default settings
-    settings = mongodb.appSettings.find_one({"_id": user_config.get("user_id")}) or {}
-    if not settings:
-        settings = mongodb.appSettings.find_one({"_id": "default"}) or {}
+    # Try to connect to MongoDB if URI is available
+    mongodb_uri = os.getenv("MONGODB_URI")
+    if mongodb_uri:
+        try:
+            mongodb = MongoClient(mongodb_uri).get_default_database()
+            
+            # Try user settings first, then fall back to default settings
+            settings = mongodb.appSettings.find_one({"_id": user_config.get("user_id")}) or {}
+            if not settings:
+                settings = mongodb.appSettings.find_one({"_id": "default"}) or {}
 
-    # Build final config with proper fallback order
-    return {
-        "SILENCE_THRESHOLD": settings.get('silence_threshold', DEFAULT_CONFIG["SILENCE_THRESHOLD"]),
-        "SILENCE_DURATION": settings.get('silence_duration', DEFAULT_CONFIG["SILENCE_DURATION"]),
-        "NOISE_REDUCTION_ENABLED": settings.get('noise_reduction', DEFAULT_CONFIG["NOISE_REDUCTION_ENABLED"]),
-        "STT_MODEL": settings.get('stt_model', DEFAULT_CONFIG["STT_MODEL"]),
-        "AI_MODEL": settings.get('ai_model', DEFAULT_CONFIG["AI_MODEL"]),
-    }
+            # Build final config with proper fallback order
+            return {
+                "SILENCE_THRESHOLD": settings.get('silence_threshold', DEFAULT_CONFIG["SILENCE_THRESHOLD"]),
+                "SILENCE_DURATION": settings.get('silence_duration', DEFAULT_CONFIG["SILENCE_DURATION"]),
+                "NOISE_REDUCTION_ENABLED": settings.get('noise_reduction', DEFAULT_CONFIG["NOISE_REDUCTION_ENABLED"]),
+                "STT_MODEL": settings.get('stt_model', DEFAULT_CONFIG["STT_MODEL"]),
+                "AI_MODEL": settings.get('ai_model', DEFAULT_CONFIG["AI_MODEL"]),
+            }
+        except Exception as e:
+            logger.error(f"Failed to connect to MongoDB: {e}")
+            logger.warning("Using default configuration")
+    
+    # Fallback to defaults if MongoDB not available
+    return DEFAULT_CONFIG
 
 # Load configuration when module is imported
 CONFIG = load_config()
@@ -369,6 +407,9 @@ def main() -> None:
     signal.signal(signal.SIGTERM, lambda s, f: sys.exit(0))
     signal.signal(signal.SIGINT, lambda s, f: sys.exit(0))
     atexit.register(cleanup)
+
+    # Check environment variables before proceeding
+    check_environment()
 
     try:
         ai_service = AIService()

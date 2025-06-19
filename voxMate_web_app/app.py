@@ -3,6 +3,7 @@ from flask import Flask
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from datetime import timedelta
+from flask import session, g, request
 
 from controllers.main import main
 from controllers.users import users
@@ -35,6 +36,31 @@ def create_app():
     app.config["SESSION_PERMANENT"] = True
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=48)
     app.config["WTF_CSRF_ENABLED"] = True
+
+    REQUIRED_ENV_VARS = ['GROQ_API_KEY', 'PORCUPINE_API_KEY', 'MONGODB_URI', 'SECRET_KEY', 'FAKE_MISSING_VAR']
+
+
+    @app.before_request
+    def check_env_variables():
+
+        # Skip static files and assets
+        if request.endpoint in ('static', None) or not request.accept_mimetypes.accept_html:
+            return
+
+        g.missing_env_vars = None
+
+        if session.get('env_checked'):
+            return
+
+        missing = [var for var in REQUIRED_ENV_VARS if not os.getenv(var)]
+        if missing:
+            g.missing_env_vars = missing
+
+
+    @app.route('/dismiss-env-warning', methods=['POST'])
+    def dismiss_env_warning():
+        session['env_checked'] = True
+        return '', 204  # No Content
     
     # Using the imported routes
     app.register_blueprint(main)

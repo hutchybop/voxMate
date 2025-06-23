@@ -117,7 +117,7 @@ DTYPE = 'int16'
 BLOCKSIZE = 16000
 
 # Paths
-KEYWORD_PATH = 'models/porcupine_keywords/hey-bop_en_raspberry-pi_v3_0_0.ppn'
+KEYWORD_PATH = Path('models/porcupine_keywords') / os.getenv('PORCUPINE_KEYWORD_FILE_NAME', '')
 GENERATING_SOUND = 'audio/generating.mp3'
 GREETING_SOUND = 'audio/greeting.mp3'
 ENV_PATH = '.env'

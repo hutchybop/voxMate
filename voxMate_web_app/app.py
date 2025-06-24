@@ -37,7 +37,7 @@ def create_app():
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=48)
     app.config["WTF_CSRF_ENABLED"] = True
 
-    REQUIRED_ENV_VARS = ['GROQ_API_KEY', 'PORCUPINE_API_KEY', 'MONGODB_URI', 'SECRET_KEY', 'FAKE_MISSING_VAR']
+    REQUIRED_ENV_VARS = ['GROQ_API_KEY', 'PORCUPINE_API_KEY', 'MONGODB_URI', 'SECRET_KEY']
 
 
     @app.before_request
@@ -69,3 +69,7 @@ def create_app():
     app.register_blueprint(policy)
 
     return app
+
+if __name__ == "__main__":
+    app = create_app()
+    app.run(host="0.0.0.0", port=5000, debug=True)

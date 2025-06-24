@@ -81,3 +81,4 @@ node_modules/
 *.ppn
 LICENSE.txt
 push.sh
+user_config.json

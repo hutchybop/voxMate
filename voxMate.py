@@ -117,7 +117,8 @@ DTYPE = 'int16'
 BLOCKSIZE = 16000
 
 # Paths
-KEYWORD_PATH = Path('models/porcupine_keywords') / os.getenv('PORCUPINE_KEYWORD_FILE_NAME', '')
+# Get absolute path to be safe
+KEYWORD_PATH = 'models/porcupine_keywords/hey-Vox-mate_en_raspberry-pi_v3_0_0.ppn'
 GENERATING_SOUND = 'audio/generating.mp3'
 GREETING_SOUND = 'audio/greeting.mp3'
 ENV_PATH = '.env'
@@ -267,6 +268,7 @@ class AIService:
             api_key=os.getenv("GROQ_API_KEY")
         )
         self.access_key = os.getenv("PORCUPINE_API_KEY")
+        print("DEBUG: PORCUPINE_API_KEY=" + self.access_key)
 
         if not self.access_key:
             logger.error("Porcupine API key not found in environment variables")

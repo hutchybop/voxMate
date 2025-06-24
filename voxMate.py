@@ -84,6 +84,15 @@ def load_config() -> Dict[str, Any]:
             settings = mongodb.appSettings.find_one({"_id": user_config.get("user_id")}) or {}
             if not settings:
                 settings = mongodb.appSettings.find_one({"_id": "default"}) or {}
+            
+            #=============================Testing++++++++++++++++++++++++++++++++
+            print({
+                "SILENCE_THRESHOLD": settings.get('silence_threshold', DEFAULT_CONFIG["SILENCE_THRESHOLD"]),
+                "SILENCE_DURATION": settings.get('silence_duration', DEFAULT_CONFIG["SILENCE_DURATION"]),
+                "NOISE_REDUCTION_ENABLED": settings.get('noise_reduction', DEFAULT_CONFIG["NOISE_REDUCTION_ENABLED"]),
+                "STT_MODEL": settings.get('stt_model', DEFAULT_CONFIG["STT_MODEL"]),
+                "AI_MODEL": settings.get('ai_model', DEFAULT_CONFIG["AI_MODEL"])
+            })
 
             # Build final config with proper fallback order
             return {
@@ -268,7 +277,6 @@ class AIService:
             api_key=os.getenv("GROQ_API_KEY")
         )
         self.access_key = os.getenv("PORCUPINE_API_KEY")
-        print("DEBUG: PORCUPINE_API_KEY=" + self.access_key)
 
         if not self.access_key:
             logger.error("Porcupine API key not found in environment variables")

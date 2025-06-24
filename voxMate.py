@@ -108,7 +108,7 @@ def load_config() -> Dict[str, Any]:
             logger.warning("Using default configuration")
 
 #=============================Testing++++++++++++++++++++++++++++++++==================================================================================
-    print("Default config settings: " +DEFAULT_CONFIG)
+    print("Default config settings: ", DEFAULT_CONFIG)
 #=============================Testing++++++++++++++++++++++++++++++++==================================================================================
 
     # Fallback to defaults if MongoDB not available

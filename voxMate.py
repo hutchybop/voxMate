@@ -86,7 +86,7 @@ def load_config() -> Dict[str, Any]:
                 settings = mongodb.appSettings.find_one({"_id": "default"}) or {}
             
 #=============================Testing++++++++++++++++++++++++++++++++==================================================================================
-            print({
+            print("User config settings: " +{
                 "SILENCE_THRESHOLD": settings.get('silence_threshold', DEFAULT_CONFIG["SILENCE_THRESHOLD"]),
                 "SILENCE_DURATION": settings.get('silence_duration', DEFAULT_CONFIG["SILENCE_DURATION"]),
                 "NOISE_REDUCTION_ENABLED": settings.get('noise_reduction', DEFAULT_CONFIG["NOISE_REDUCTION_ENABLED"]),
@@ -106,9 +106,9 @@ def load_config() -> Dict[str, Any]:
         except Exception as e:
             logger.error(f"Failed to connect to MongoDB: {e}")
             logger.warning("Using default configuration")
-            
+
 #=============================Testing++++++++++++++++++++++++++++++++==================================================================================
-    print(DEFAULT_CONFIG)
+    print("Default config settings: " +DEFAULT_CONFIG)
 #=============================Testing++++++++++++++++++++++++++++++++==================================================================================
 
     # Fallback to defaults if MongoDB not available

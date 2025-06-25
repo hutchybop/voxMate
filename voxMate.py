@@ -30,6 +30,28 @@ from typing import Dict, Any
 load_dotenv()
 
 
+# ================= INITIALIZATION =================
+# Setup logging with more detailed format
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('/tmp/smart_speaker.log')
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# ALSA Error Handler Supression (Linux-only)
+ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
+def py_error_handler(filename, line, function, err, fmt): 
+    pass
+try:
+    cdll.LoadLibrary('libasound.so').snd_lib_error_set_handler(ERROR_HANDLER_FUNC(py_error_handler))
+except Exception as e:
+    logger.debug(f"Couldn't set ALSA error handler: {e}")
+
+
 # ================= ENVIRONMENT CHECK =================
 def check_environment():
     """Check required environment variables and play warning sounds if missing."""
@@ -165,26 +187,6 @@ KEYWORD_PATH = 'models/porcupine_keywords/hey-Vox-mate_en_raspberry-pi_v3_0_0.pp
 GENERATING_SOUND = 'audio/generating.mp3'
 GREETING_SOUND = 'audio/greeting.mp3'
 
-# ================= INITIALIZATION =================
-# Setup logging with more detailed format
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('/tmp/smart_speaker.log')
-    ]
-)
-logger = logging.getLogger(__name__)
-
-# ALSA Error Handler Supression (Linux-only)
-ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
-def py_error_handler(filename, line, function, err, fmt): 
-    pass
-try:
-    cdll.LoadLibrary('libasound.so').snd_lib_error_set_handler(ERROR_HANDLER_FUNC(py_error_handler))
-except Exception as e:
-    logger.debug(f"Couldn't set ALSA error handler: {e}")
 
 class AudioProcessor:
     """Handles all audio operations with configurable noise reduction"""

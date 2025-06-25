@@ -134,10 +134,13 @@ def load_config() -> Dict[str, Any]:
             print("DEBUG: settings: ", settings)
 #+++++++++++++++++++++++++++++Testing++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
             if not settings:
+#=============================Testing==================================================================================================================
+                print("DEBUG: Inside 'if not settings'")
+#+++++++++++++++++++++++++++++Testing++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 settings = mongodb.appSettings.find_one({"_id": "default"}) or {}
             
 #=============================Testing==================================================================================================================
-            print("User config settings: " +{
+            print("DEBUG User config settings: ", {
                 "SILENCE_THRESHOLD": settings.get('silence_threshold', DEFAULT_CONFIG["SILENCE_THRESHOLD"]),
                 "SILENCE_DURATION": settings.get('silence_duration', DEFAULT_CONFIG["SILENCE_DURATION"]),
                 "NOISE_REDUCTION_ENABLED": settings.get('noise_reduction', DEFAULT_CONFIG["NOISE_REDUCTION_ENABLED"]),

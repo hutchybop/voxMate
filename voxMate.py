@@ -99,6 +99,9 @@ def load_config() -> Dict[str, Any]:
             
             # Try user settings first, then fall back to default settings
             settings = mongodb.appSettings.find_one({"_id": user_config.get("user_id")}) or {}
+#=============================Testing==================================================================================================================
+            print(user_config)
+#+++++++++++++++++++++++++++++Testing++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
             if not settings:
                 settings = mongodb.appSettings.find_one({"_id": "default"}) or {}
             

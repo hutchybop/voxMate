@@ -26,10 +26,13 @@ from pathlib import Path
 from typing import Dict, Any
 
 
+# ================= Load env Variables=================
+load_dotenv()
+
+
 # ================= ENVIRONMENT CHECK =================
 def check_environment():
     """Check required environment variables and play warning sounds if missing."""
-    load_dotenv(ENV_PATH)
     
     ENV_CHECKS = {
         "warnings": {
@@ -161,7 +164,6 @@ BLOCKSIZE = 16000
 KEYWORD_PATH = 'models/porcupine_keywords/hey-Vox-mate_en_raspberry-pi_v3_0_0.ppn'
 GENERATING_SOUND = 'audio/generating.mp3'
 GREETING_SOUND = 'audio/greeting.mp3'
-ENV_PATH = '.env'
 
 # ================= INITIALIZATION =================
 # Setup logging with more detailed format
@@ -302,7 +304,6 @@ class AIService:
     """Handles all AI-related operations"""
 
     def __init__(self):
-        load_dotenv(ENV_PATH)
         self.client = OpenAI(
             base_url="https://api.groq.com/openai/v1",
             api_key=os.getenv("GROQ_API_KEY")

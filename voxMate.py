@@ -28,29 +28,40 @@ from typing import Dict, Any
 
 # ================= ENVIRONMENT CHECK =================
 def check_environment():
-    """Check required environment variables and play warning sounds if missing"""
+    """Check required environment variables and play warning sounds if missing."""
     load_dotenv(ENV_PATH)
     
-    # Define warning sounds
-    WARNING_SOUND_MONGODB = 'audio/warning_mongodb.mp3'
-    WARNING_SOUND_API_KEYS = 'audio/warning_api_keys.mp3'
+    ENV_CHECKS = {
+        "warnings": {
+            "MONGODB_URI": {
+                "sound": "audio/warning_mongodb.mp3",
+                "message": "Continuing with default configuration (MongoDB not available)"
+            }
+        },
+        "critical": {
+            "GROQ_API_KEY": {},
+            "PORCUPINE_API_KEY": {},
+            "SECRET_KEY": {},
+            "SPOTIFY_CLIENT_ID": {},
+            "SPOTIFY_CLIENT_SECRET": {},
+            "_sound": "audio/critical_env_var.mp3"
+        }
+    }
     
-    # Check MONGODB_URI
-    if not os.getenv("MONGODB_URI"):
-        logger.error("MONGODB_URI environment variable is not set")
-        AudioProcessor.play_sound(WARNING_SOUND_MONGODB)
-        logger.warning("Continuing with default configuration (MongoDB not available)")
+    # Check warning variables
+    for var, config in ENV_CHECKS["warnings"].items():
+        if not os.getenv(var):
+            logger.error(f"{var} environment variable is not set")
+            AudioProcessor.play_sound(config["sound"])
+            logger.warning(config["message"])
     
-    # Check GROQ_API_KEY and PORCUPINE_API_KEY
-    missing_keys = []
-    if not os.getenv("GROQ_API_KEY"):
-        missing_keys.append("GROQ_API_KEY")
-    if not os.getenv("PORCUPINE_API_KEY"):
-        missing_keys.append("PORCUPINE_API_KEY")
+    # Check critical variables
+    missing_keys = [var for var in ENV_CHECKS["critical"] 
+                   if not var.startswith("_") and not os.getenv(var)]
     
     if missing_keys:
         logger.error(f"Missing required API keys: {', '.join(missing_keys)}")
-        AudioProcessor.play_sound(WARNING_SOUND_API_KEYS)
+        AudioProcessor.play_sound(ENV_CHECKS["critical"]["_sound"])
         logger.critical("Exiting due to missing API keys")
         sys.exit(1)
 
@@ -396,7 +407,7 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
 
 def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream) -> None:
     """Listen for wake word and respond when detected"""
-    logger.info("Listening for wake word... (say 'Hey Bop')")
+    logger.info("Listening for wake word... (say 'Hey voxMate')")
     while True:
         try:
             pcm = stream.read(porcupine.frame_length, exception_on_overflow=False)

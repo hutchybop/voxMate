@@ -110,44 +110,18 @@ def load_config() -> Dict[str, Any]:
         with open(config_path, "r") as f:
             user_config = json.load(f)
 
-#=============================Testing==================================================================================================================
-#+++++++++++++++++++++++++++++Testing++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#=============================Testing==================================================================================================================
-    print("DEBUG: user_config: ", user_config.get("user_id"))
-#+++++++++++++++++++++++++++++Testing++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
     # Try to connect to MongoDB if URI is available
     mongodb_uri = os.getenv("MONGODB_URI")
-#=============================Testing==================================================================================================================
-    print("DEBUG: mongodb_uri: ", mongodb_uri)
-#+++++++++++++++++++++++++++++Testing++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
     if mongodb_uri:
-#=============================Testing==================================================================================================================
-        print("DEBUG: Inside 'if mongodb_uri'")
-#+++++++++++++++++++++++++++++Testing++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         try:
             mongodb = MongoClient(mongodb_uri).get_default_database()
             
             # Try user settings first, then fall back to default settings
             settings = mongodb.appSettings.find_one({"_id": user_config.get("user_id")}) or {}
-#=============================Testing==================================================================================================================
-            print("DEBUG: settings: ", settings)
-#+++++++++++++++++++++++++++++Testing++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
             if not settings:
-#=============================Testing==================================================================================================================
-                print("DEBUG: Inside 'if not settings'")
-#+++++++++++++++++++++++++++++Testing++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 settings = mongodb.appSettings.find_one({"_id": "default"}) or {}
-            
-#=============================Testing==================================================================================================================
-            print("DEBUG User config settings: ", {
-                "SILENCE_THRESHOLD": settings.get('silence_threshold', DEFAULT_CONFIG["SILENCE_THRESHOLD"]),
-                "SILENCE_DURATION": settings.get('silence_duration', DEFAULT_CONFIG["SILENCE_DURATION"]),
-                "NOISE_REDUCTION_ENABLED": settings.get('noise_reduction', DEFAULT_CONFIG["NOISE_REDUCTION_ENABLED"]),
-                "STT_MODEL": settings.get('stt_model', DEFAULT_CONFIG["STT_MODEL"]),
-                "AI_MODEL": settings.get('ai_model', DEFAULT_CONFIG["AI_MODEL"])
-            })
-#+++++++++++++++++++++++++++++Testing++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
             # Build final config with proper fallback order
             return {
@@ -160,10 +134,6 @@ def load_config() -> Dict[str, Any]:
         except Exception as e:
             logger.error(f"Failed to connect to MongoDB: {e}")
             logger.warning("Using default configuration")
-
-#=============================Testing==================================================================================================================
-    print("Default config settings: ", DEFAULT_CONFIG)
-#+++++++++++++++++++++++++++++Testing++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     # Fallback to defaults if MongoDB not available
     return DEFAULT_CONFIG
@@ -186,7 +156,7 @@ BLOCKSIZE = 16000
 
 # Paths
 # Get absolute path to be safe
-KEYWORD_PATH = 'models/porcupine_keywords/hey-Vox-mate_en_raspberry-pi_v3_0_0.ppn'
+KEYWORD_PATH = Path(__file__).resolve().parent / "models" / "porcupine_keywords" / os.getenv("PORCUPINE_KEYWORD_FILE_NAME")
 GENERATING_SOUND = 'audio/generating.mp3'
 GREETING_SOUND = 'audio/greeting.mp3'
 
@@ -435,6 +405,8 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
             pcm = struct.unpack_from("h" * porcupine.frame_length, pcm)
             if porcupine.process(pcm) >= 0:
                 logger.info("Wake word detected!")
+                # Recheck user config for update
+                
                 AudioProcessor.play_sound(GREETING_SOUND)
                 break
         except Exception as e:

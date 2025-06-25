@@ -60,9 +60,9 @@ def check_environment():
                    if not var.startswith("_") and not os.getenv(var)]
     
     if missing_keys:
-        logger.error(f"Missing required API keys: {', '.join(missing_keys)}")
+        logger.error(f"Missing required enviroment variables: {', '.join(missing_keys)}")
         AudioProcessor.play_sound(ENV_CHECKS["critical"]["_sound"])
-        logger.critical("Exiting due to missing API keys")
+        logger.critical("Exiting due to missing critical enviroment variables")
         sys.exit(1)
 
 

@@ -406,7 +406,8 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
             if porcupine.process(pcm) >= 0:
                 logger.info("Wake word detected!")
                 # Recheck user config for update
-                
+                    #
+
                 AudioProcessor.play_sound(GREETING_SOUND)
                 break
         except Exception as e:

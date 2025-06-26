@@ -450,10 +450,21 @@ def main() -> None:
     signal.signal(signal.SIGINT, lambda s, f: sys.exit(0))
     atexit.register(cleanup)
 
+
+
     # Check environment variables before proceeding
     check_environment()
 
     try:
+
+        # Connect to Socket.IO server (non-blocking)
+        try:
+            sio.connect('http://localhost:5000', wait_timeout=10)
+            logger.info("👂 Listening for settings updates...")
+        except Exception as e:
+            logger.warning(f"Could not connect to Socket.IO server: {e}")
+        # Continue running even if Socket.IO fails
+
         ai_service = AIService()
         logger.info(f"Noise reduction: {'ENABLED' if NOISE_REDUCTION_ENABLED else 'DISABLED'}")
         

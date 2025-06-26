@@ -14,7 +14,6 @@ import numpy as np
 import sounddevice as sd
 import pvporcupine
 import pyaudio
-from flask_socketio import SocketIO
 import socketio
 from ctypes import *
 from gtts import gTTS
@@ -26,6 +25,7 @@ from pymongo import MongoClient
 import json
 from pathlib import Path
 from typing import Dict, Any
+from enum import Enum, auto
 
 
 # ================= Load env Variables=================
@@ -52,6 +52,14 @@ try:
     cdll.LoadLibrary('libasound.so').snd_lib_error_set_handler(ERROR_HANDLER_FUNC(py_error_handler))
 except Exception as e:
     logger.debug(f"Couldn't set ALSA error handler: {e}")
+
+# Setup app state tracking
+class AppState(Enum):
+    WAITING_FOR_WAKE_WORD = auto()
+    PROCESSING_QUESTION = auto()
+    PLAYING_RESPONSE = auto()
+
+current_state = AppState.WAITING_FOR_WAKE_WORD
 
 
 # ================= SOCKET IO =================
@@ -162,7 +170,9 @@ CONFIG = load_config()
 def on_settings_updated():
     logger.info(f"Received updated voxMate settings")
     load_config()
-    logger.info("Listening for wake word... (say 'Hey voxMate')")
+    # Only show message if in waiting state
+    if current_state == AppState.WAITING_FOR_WAKE_WORD:
+        logger.info("Listening for wake word... (say 'Hey voxMate')")
 
 # Make settings available as module-level constants
 SILENCE_THRESHOLD = CONFIG["SILENCE_THRESHOLD"]
@@ -461,7 +471,7 @@ def main() -> None:
         # Connect to Socket.IO server (non-blocking)
         try:
             sio.connect('http://localhost:5000', wait_timeout=10)
-            logger.info("👂 Listening for settings updates...")
+            logger.info("Listening for settings updates...")
         except Exception as e:
             logger.warning(f"Could not connect to Socket.IO server: {e}")
         # Continue running even if Socket.IO fails
@@ -472,8 +482,15 @@ def main() -> None:
         with audio_wake_stream(ai_service.access_key) as (porcupine, pa, stream):
             while True:
                 try:
+                    # Update state to waiting for wake word
+                    current_state = AppState.WAITING_FOR_WAKE_WORD
+
                     # Wake word detection phase
                     wake_word_detection(porcupine, stream)
+
+                    # Update state to processing question
+                    current_state = AppState.PROCESSING_QUESTION
+                    logger.info("Wake word detected! Speak your question...")
 
                     # Recording and processing phase
                     start_total = time.time()
@@ -482,6 +499,9 @@ def main() -> None:
                     total_stt = time.time() - start_total
 
                     if transcript:
+                        # Update state to processing response
+                        current_state = AppState.PLAYING_RESPONSE
+                        
                         # AI response generation
                         ai_start = time.time()
                         ai_response = ai_service.generate_response(transcript)

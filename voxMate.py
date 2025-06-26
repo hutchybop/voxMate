@@ -14,6 +14,8 @@ import numpy as np
 import sounddevice as sd
 import pvporcupine
 import pyaudio
+from flask_socketio import SocketIO
+import socketio
 from ctypes import *
 from gtts import gTTS
 from openai import OpenAI
@@ -51,6 +53,18 @@ try:
 except Exception as e:
     logger.debug(f"Couldn't set ALSA error handler: {e}")
 
+
+# ================= SOCKET IO =================
+sio = socketio.Client()
+
+@sio.event
+def connect():
+    logger.info("socket_io connected")
+
+@sio.event
+def disconnect():
+    logger.warning("socket_io disconnected")
+    
 
 # ================= ENVIRONMENT CHECK =================
 def check_environment():
@@ -123,6 +137,8 @@ def load_config() -> Dict[str, Any]:
             if not settings:
                 settings = mongodb.appSettings.find_one({"_id": "default"}) or {}
 
+            logger.info("User config settings loaded")
+
             # Build final config with proper fallback order
             return {
                 "SILENCE_THRESHOLD": settings.get('silence_threshold', DEFAULT_CONFIG["SILENCE_THRESHOLD"]),
@@ -140,6 +156,12 @@ def load_config() -> Dict[str, Any]:
 
 # Load configuration when module is imported
 CONFIG = load_config()
+
+# Update config if socketio recieved
+@sio.on('settings_updated')
+def on_settings_updated():
+    logger.info(f"Received updated voxMate settings")
+    load_config()
 
 # Make settings available as module-level constants
 SILENCE_THRESHOLD = CONFIG["SILENCE_THRESHOLD"]

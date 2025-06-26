@@ -24,10 +24,14 @@ def settings():
                     if k != 'csrf_token'}
         
         # Insert the new user settings into the database
-        current_app.db.appSettings.update_one(
+        settingUpdate = current_app.db.appSettings.update_one(
             {"_id": session["_id"]},
             {"$set": form_data}
         )
+
+        if settingUpdate:
+            appSettings.socketio.emit('settings_updated')
+
 
         flash("Settings updated successfully!", "success")
         return redirect(url_for("appSettings.settings"))

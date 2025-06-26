@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from pymongo import MongoClient
 from datetime import timedelta
 from flask import session, g, request
+from flask_socketio import SocketIO
 
 from controllers.main import main
 from controllers.users import users
@@ -24,6 +25,9 @@ def create_app():
 
     # Setting up the session
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
+
+    # Setting up ioSocket
+    socketio = SocketIO(app)
 
     # Configuring Flask app settings
     app.config["SESSION_COOKIE_NAME"] = "voxMate_session"
@@ -67,5 +71,8 @@ def create_app():
     app.register_blueprint(users)
     app.register_blueprint(appSettings)
     app.register_blueprint(policy)
+
+    # Making socketio avaiable in appSettings
+    appSettings.socketio = socketio
 
     return app

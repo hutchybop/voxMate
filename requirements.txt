@@ -21,3 +21,4 @@ flask_wtf
 email_validator
 passlib
 markdown
+flask_socketio

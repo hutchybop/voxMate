@@ -162,6 +162,7 @@ CONFIG = load_config()
 def on_settings_updated():
     logger.info(f"Received updated voxMate settings")
     load_config()
+    logger.info("Listening for wake word... (say 'Hey voxMate')")
 
 # Make settings available as module-level constants
 SILENCE_THRESHOLD = CONFIG["SILENCE_THRESHOLD"]

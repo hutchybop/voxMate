@@ -205,7 +205,7 @@ def on_settings_updated():
         AI_MODEL = CONFIG["AI_MODEL"]
     finally:
         if app_state.is_waiting():
-            logger.info("Listening for wake word... (say 'Hey voxMate')")
+            logger.info(f"Listening for wake word... (say '{WAKE_WORD}')")
 
 
 # Make settings available as module-level constants
@@ -220,6 +220,7 @@ SAMPLE_RATE = 16000
 CHANNELS = 2
 DTYPE = 'int16'
 BLOCKSIZE = 16000
+WAKE_WORD = 'Hey VoxMate'
 
 # Paths
 # Get absolute path to be safe
@@ -464,7 +465,7 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
 
 def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream) -> None:
     """Listen for wake word and respond when detected"""
-    logger.info("Listening for wake word... (say 'Hey voxMate')")
+    logger.info("Listening for wake word... (say '{WAKE_WORD}')")
     while True:
         try:
             pcm = stream.read(porcupine.frame_length, exception_on_overflow=False)

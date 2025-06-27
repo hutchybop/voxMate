@@ -170,13 +170,12 @@ def load_config() -> Dict[str, Any]:
                 settings = mongodb.appSettings.find_one({"_id": "default"}) or {}
 
             logger.info("User config settings loaded")
-            print("DEBUG: settings: ", settings)
 
             # Build final config with proper fallback order
             return {
                 "SILENCE_THRESHOLD": settings.get('silence_threshold', DEFAULT_CONFIG["SILENCE_THRESHOLD"]),
                 "SILENCE_DURATION": settings.get('silence_duration', DEFAULT_CONFIG["SILENCE_DURATION"]),
-                "VOLUME_DISPLAY": settings.get('volume_duration', DEFAULT_CONFIG["VOLUME_DISPLAY"]),
+                "VOLUME_DISPLAY": settings.get('volume_display', DEFAULT_CONFIG["VOLUME_DISPLAY"]),
                 "NOISE_REDUCTION_ENABLED": settings.get('noise_reduction', DEFAULT_CONFIG["NOISE_REDUCTION_ENABLED"]),
                 "STT_MODEL": settings.get('stt_model', DEFAULT_CONFIG["STT_MODEL"]),
                 "AI_MODEL": settings.get('ai_model', DEFAULT_CONFIG["AI_MODEL"]),

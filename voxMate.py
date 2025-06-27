@@ -465,7 +465,7 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
 
 def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream) -> None:
     """Listen for wake word and respond when detected"""
-    logger.info("Listening for wake word... (say '{WAKE_WORD}')")
+    logger.info(f"Listening for wake word... (say '{WAKE_WORD}')")
     while True:
         try:
             pcm = stream.read(porcupine.frame_length, exception_on_overflow=False)

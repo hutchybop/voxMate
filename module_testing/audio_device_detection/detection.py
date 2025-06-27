@@ -1,23 +1,83 @@
 import subprocess
+from dataclasses import dataclass, field
+from typing import Dict, List
 
-def check_pulseaudio_devices():
-    try:
-        # Check for playback (speaker) devices
-        result = subprocess.run(["pactl", "list", "short", "sinks"], 
-                               capture_output=True, text=True)
-        speakers = bool(result.stdout.strip())
+@dataclass
+class AudioChecker:
+    """Class to check audio devices on Raspberry Pi with PulseAudio"""
+    suggestions: Dict[str, List[str]] = field(default_factory=lambda: {
+        'global': [],
+        'mic': [],
+        'speaker': []
+    })
+    
+    def __post_init__(self):
+        self.devices = {'mic': False, 'speaker': False}
+        self._check_audio()
+
+    def _run_command(self, cmd: List[str]) -> str:
+        """Helper to run shell commands safely"""
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            return result.stdout.strip()
+        except subprocess.CalledProcessError as e:
+            self.suggestions['global'].append(f"Command failed: {' '.join(cmd)} - {e.stderr.strip()}")
+            return ""
+
+    def _check_pulseaudio(self) -> bool:
+        """Check if PulseAudio is available"""
+        if not self._run_command(["which", "pactl"]):
+            self.suggestions['global'].extend([
+                "PulseAudio not found. Install with:",
+                "sudo apt install pulseaudio pavucontrol",
+                "For RPi audio: sudo apt install pulseaudio-module-alsa"
+            ])
+            return False
+        return True
+
+    def _check_audio(self):
+        """Main check logic"""
+        if not self._check_pulseaudio():
+            return
+
+        output = self._run_command(["pactl", "list", "short"])
+        self.devices['mic'] = "Source" in output
+        self.devices['speaker'] = "Sink" in output
+
+        if not self.devices['mic']:
+            self.suggestions['mic'].extend([
+                "No microphone detected. Try:",
+                "1. Check connections: arecord -l",
+                "2. sudo raspi-config > Advanced > Audio",
+                "3. pacmd set-default-source <name>"
+            ])
+
+        if not self.devices['speaker']:
+            self.suggestions['speaker'].extend([
+                "No speakers detected. Try:",
+                "1. Check audio jack/HDMI connection",
+                "2. sudo raspi-config > System Options > Audio",
+                "3. amixer -D pulse sset Master unmute"
+            ])
+
+    def display_results(self):
+        """Display results in user-friendly format"""
+        status = {
+            'mic': "✅" if self.devices['mic'] else "❌",
+            'speaker': "✅" if self.devices['speaker'] else "❌"
+        }
         
-        # Check for input (microphone) devices
-        result = subprocess.run(["pactl", "list", "short", "sources"], 
-                               capture_output=True, text=True)
-        mics = bool(result.stdout.strip())
+        print(f"\nRPi Audio Status:\nMic: {status['mic']}  Speaker: {status['speaker']}\n")
         
-        return mics, speakers
-    except FileNotFoundError:
-        print("pactl not found - PulseAudio may not be installed")
-        return False, False
+        for device in ['mic', 'speaker']:
+            if not self.devices[device] and self.suggestions.get(device):
+                print(f"Troubleshoot {device}:")
+                print('\n'.join(f"• {s}" for s in self.suggestions[device]))
+        
+        if self.suggestions.get('global'):
+            print("\nSystem-wide issues:")
+            print('\n'.join(f"• {s}" for s in self.suggestions['global']))
 
-has_mic, has_speaker = check_pulseaudio_devices()
-
-print(f"has_mic: {has_mic}")
-print(f"has_speaker: {has_speaker}")
+# Usage
+checker = AudioChecker()
+checker.display_results()

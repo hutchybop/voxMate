@@ -170,6 +170,7 @@ def load_config() -> Dict[str, Any]:
                 settings = mongodb.appSettings.find_one({"_id": "default"}) or {}
 
             logger.info("User config settings loaded")
+            print("DEBUG: settings: ", settings)
 
             # Build final config with proper fallback order
             return {
@@ -298,7 +299,7 @@ class AudioProcessor:
             
             chunk = indata.copy()
             volume = np.linalg.norm(chunk)
-            
+
             # Shows volume in terminal while mic is in use if set to true
             if VOLUME_DISPLAY:
                 logger.info(f"\n {volume}")

@@ -298,9 +298,11 @@ class AudioProcessor:
             
             chunk = indata.copy()
             volume = np.linalg.norm(chunk)
-            # Displays the volume while the mic is in use, if set to true
+            
+            # Shows volume in terminal while mic is in use if set to true
             if VOLUME_DISPLAY:
-                print(f'Volume: {volume}')
+                logger.info(f"\n {volume}")
+
             
             if NOISE_REDUCTION_ENABLED:
                 if volume > SILENCE_THRESHOLD:

@@ -18,3 +18,6 @@ def check_pulseaudio_devices():
         return False, False
 
 has_mic, has_speaker = check_pulseaudio_devices()
+
+print(f"has_mic: {has_mic}")
+print(f"has_speaker: {has_speaker}")

@@ -301,7 +301,7 @@ class AudioProcessor:
 
             # Shows volume in terminal while mic is in use if set to true
             if VOLUME_DISPLAY:
-                logger.info(f"\n {volume}")
+                print(f"Mic Volume detected: {volume}")
 
             
             if NOISE_REDUCTION_ENABLED:
@@ -548,11 +548,11 @@ def main() -> None:
 
                         # Performance metrics
                         logger.info("\nPerformance Metrics:")
-                        logger.info(f"- STT Processing: {stt_time:.2f}s")
-                        logger.info(f"- STT & Playback: {total_stt:.2f}s")
-                        logger.info(f"- AI Response: {ai_time:.2f}s")
-                        logger.info(f"- TTS Generation: {tts_time:.2f}s")
-                        logger.info(f"- TTS & Playback: {total_tts:.2f}s")
+                        logger.info(f"STT Processing: {stt_time:.2f}s")
+                        logger.info(f"STT & Playback: {total_stt:.2f}s")
+                        logger.info(f"AI Response: {ai_time:.2f}s")
+                        logger.info(f"TTS Generation: {tts_time:.2f}s")
+                        logger.info(f"TTS & Playback: {total_tts:.2f}s")
 
                 except KeyboardInterrupt:
                     logger.info("Interrupted by user")

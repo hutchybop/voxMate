@@ -173,6 +173,9 @@ def load_config() -> Dict[str, Any]:
             logger.info(f"Noise reduction: {'ENABLED' if NOISE_REDUCTION_ENABLED else 'DISABLED'}")
             logger.info(f"Volume Display: {'ENABLED' if VOLUME_DISPLAY else 'DISABLED'}")
 
+            print("DEBUG: NOISE_REDUCTION_ENABLED: ", NOISE_REDUCTION_ENABLED)
+            print("DEBUG: get NOISE_REDUCTION_ENABLED: ", settings.get('noise_reduction'))
+
             # Build final config with proper fallback order
             return {
                 "SILENCE_THRESHOLD": settings.get('silence_threshold', DEFAULT_CONFIG["SILENCE_THRESHOLD"]),

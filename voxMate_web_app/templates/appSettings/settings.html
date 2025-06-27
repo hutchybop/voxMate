@@ -34,7 +34,9 @@
             {% set silence_threshold_description %}
                 Configure the silence threshold. This sets how quiet the room needs to be before the app knows 
                 you have finished speaking. <span class="text-danger">Lower values make the app more sensitive 
-                to sound.</span> You might need to adjust this depending on your background noise.
+                to sound.</span> You might need to adjust this depending on your background noise. 
+                <br><br>
+                <span class="text-info">Default value: {{ default_settings.silence_threshold }}</span>
             {% endset %}
             {% set silence_threshold_current_setting %}
                 Current Setting: <strong>{{ settings.silence_threshold }}</strong>
@@ -74,6 +76,8 @@
                 This is how long the app waits (in seconds) after things go quiet before it responds. 
                 <span class="text-danger">Increase it if you want more thinking time, or decrease it 
                 if you want faster replies.</span>
+                <br><br>
+                <span class="text-info">Default value: {{ default_settings.silence_duration }} seconds(s)</span>
             {%  endset %}
             {% set silence_duration_current_setting %}
                 Current Setting: <strong>{{ settings.silence_duration }} second(s)</strong>
@@ -103,6 +107,41 @@
                 silence_duration_input_controls
             ) }}
 
+            <!-- Volume Display Card -->
+            {% set volume_display_title %}
+                Volume Display
+            {%  endset %}
+            {% set volume_display_description %}
+                Volume Display: [ON/OFF]<br>  
+                <span class="d-block ms-3">- <span class="text-danger">ON</span>: Displays the microphone volume in the terminal, when speaking to voxMate. Useful for detecting the ideal volume for 'Slience Threshold'</span>
+                <span class="d-block ms-3">- <span class="text-danger">OFF</span>: Default, microphone volume is not shown.</span>
+                <br>
+                <span class="text-info">Default value: {{ "On" if settings.volume_display else "Off" }}</span>
+            {%  endset %}
+            {% set volume_display_current_setting %}
+                Current Setting: <strong>{{ "On" if default_settings.volume_display else "Off" }}</strong>
+            {%  endset %}
+            {% set volume_display_input_controls %}
+                <div class="d-flex align-items-center gap-2">
+                    <label for="volume_display" class="form-check-label mb-0">
+                        Volume Display:
+                    </label>
+                    <div class="form-check form-switch m-0">
+                        {{ settingsForm.volume_display(
+                            id="volume_display",
+                            class="form-check-input" + (" is-invalid" if settingsForm.volume_display.errors else ""),
+                            checked="checked" if settings.volume_display else False
+                        ) }}
+                    </div>
+                </div>
+            {%  endset %}
+            {{ render_settings_card_field(
+                volume_display_title,
+                volume_display_description,
+                volume_display_current_setting,
+                volume_display_input_controls
+            ) }}
+
             <!-- Noise Reduction Card -->
             {% set noise_reduction_title %}
                 Noise Reduction
@@ -111,6 +150,8 @@
                 Noise Reduction: [ON/OFF]<br>  
                 <span class="d-block ms-3">- <span class="text-danger">ON</span>: Ignores background noise for cleaner recordings (recommended).</span>
                 <span class="d-block ms-3">- <span class="text-danger">OFF</span>: Captures all sounds, useful in very quiet environments.</span>
+                <br>
+                <span class="text-info">Default value: {{ "On" if default_settings.noise_reduction else "Off" }}</span>
             {%  endset %}
             {% set noise_reduction_current_setting %}
                 Current Setting: <strong>{{ "On" if settings.noise_reduction else "Off" }}</strong>
@@ -146,6 +187,8 @@
                 You will need to add your groq API key <a class="form__link" href="">here</a>, 
                 if you have not already. <br>
                 More information can be found on the <a class="form__link" href="#">about</a> page.
+                <br><br>
+                <span class="text-info">Default value: {{ default_settings.stt_model }}</span>
             {%  endset %}
             {% set stt_model_current_setting %}
                 Current Setting: <strong>{{ settings.stt_model }}</strong>
@@ -183,6 +226,8 @@
                 You will need to add your groq API key <a class="form__link" href="">here</a>, 
                 if you have not already. <br>
                 More information can be found on the <a class="form__link" href="#">about</a> page.
+                <br><br>
+                <span class="text-info">Default value: {{ default_settings.ai_model }}</span>
             {%  endset %}
             {% set ai_model_current_setting %}
                 Current Setting: <strong>{{ settings.ai_model }}</strong>

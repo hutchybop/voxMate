@@ -14,6 +14,7 @@ class AppSettings:
     email: str
     silence_threshold: int = 14200
     silence_duration: int = 1
+    volume_display: bool = False
     noise_reduction: bool = True
     stt_model: str = 'whisper-large-v3-turbo'
     ai_model: str = 'mistral-saba-24b'

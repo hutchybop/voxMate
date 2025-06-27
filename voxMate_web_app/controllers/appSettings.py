@@ -11,6 +11,7 @@ appSettings = Blueprint(
 def settings():
     settingsForm = SettingsForm()
     settings = current_app.db.appSettings.find_one({"_id": session["_id"]})
+    default_settings = current_app.db.appSettings.find_one({"_id": "default"})
 
     # Checks if the The form validates, and The form data contains the key 'noise_reduction'
     #  — regardless of whether its value is True or False, just that the key exists.
@@ -20,8 +21,10 @@ def settings():
         print(settingsForm.data)
 
         # Collect the form data, excluding the CSRF token
-        form_data = {k: v for k, v in settingsForm.data.items() 
-                    if k != 'csrf_token'}
+        form_data = {
+            k: v for k, v in settingsForm.data.items() 
+            if k not in ['csrf_token', 'submit']
+        }
         
         # Insert the new user settings into the database
         settingUpdate = current_app.db.appSettings.update_one(
@@ -37,6 +40,6 @@ def settings():
         return redirect(url_for("appSettings.settings"))
     
 
-    return render_template("appSettings/settings.html", title="voxMate - Settings", settings=settings, settingsForm=settingsForm)
+    return render_template("appSettings/settings.html", title="voxMate - Settings", settings=settings, settingsForm=settingsForm, default_settings=default_settings)
 
 

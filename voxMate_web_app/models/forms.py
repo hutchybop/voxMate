@@ -19,6 +19,7 @@ class LoginForm(FlaskForm):
 class SettingsForm(FlaskForm):
     silence_threshold = IntegerField("Silence Threshold", validators=[InputRequired()])
     silence_duration = FloatField("Silence Duration (s)", validators=[InputRequired()])
+    volume_display = BooleanField("Volume Display")
     noise_reduction = BooleanField("Noise Reduction")
     stt_model = StringField("STT Model", validators=[InputRequired()])
     ai_model = StringField("AI Model", validators=[InputRequired()])

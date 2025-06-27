@@ -42,6 +42,7 @@ def save_user_config(user_id, email):
             email=email,
             silence_threshold=default_settings["silence_threshold"],
             silence_duration=default_settings["silence_duration"],
+            volume_display=default_settings["volume_display"],
             noise_reduction=default_settings["noise_reduction"],
             stt_model=default_settings["stt_model"],
             ai_model=default_settings["ai_model"]

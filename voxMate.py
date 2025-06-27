@@ -510,6 +510,7 @@ def main() -> None:
     try:    
         ai_service = AIService()
         logger.info(f"Noise reduction: {'ENABLED' if NOISE_REDUCTION_ENABLED else 'DISABLED'}")
+        logger.info(f"Volume Display: {'ENABLED' if VOLUME_DISPLAY else 'DISABLED'}")
         
         with audio_wake_stream(ai_service.access_key) as (porcupine, pa, stream):
             while True:

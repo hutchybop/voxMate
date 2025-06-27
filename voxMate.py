@@ -170,6 +170,8 @@ def load_config() -> Dict[str, Any]:
                 settings = mongodb.appSettings.find_one({"_id": "default"}) or {}
 
             logger.info("User config settings loaded")
+            logger.info(f"Noise reduction: {'ENABLED' if NOISE_REDUCTION_ENABLED else 'DISABLED'}")
+            logger.info(f"Volume Display: {'ENABLED' if VOLUME_DISPLAY else 'DISABLED'}")
 
             # Build final config with proper fallback order
             return {
@@ -197,7 +199,7 @@ def on_settings_updated():
     logger.info("Received updated voxMate settings")
 
     try:
-        global CONFIG, SILENCE_THRESHOLD, SILENCE_DURATION, NOISE_REDUCTION_ENABLED, STT_MODEL, AI_MODEL
+        global CONFIG, SILENCE_THRESHOLD, SILENCE_DURATION, VOLUME_DISPLAY, NOISE_REDUCTION_ENABLED, STT_MODEL, AI_MODEL
         CONFIG = load_config()
         SILENCE_THRESHOLD = CONFIG["SILENCE_THRESHOLD"]
         SILENCE_DURATION = CONFIG["SILENCE_DURATION"]

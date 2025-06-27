@@ -116,10 +116,10 @@
                 <span class="d-block ms-3">- <span class="text-danger">ON</span>: Displays the microphone volume in the terminal, when speaking to voxMate. Useful for detecting the ideal volume for 'Slience Threshold'</span>
                 <span class="d-block ms-3">- <span class="text-danger">OFF</span>: Default, microphone volume is not shown.</span>
                 <br>
-                <span class="text-info">Default value: {{ "On" if settings.volume_display else "Off" }}</span>
+                <span class="text-info">Default value: {{ "On" if default_settings.volume_display else "Off" }}</span>
             {%  endset %}
             {% set volume_display_current_setting %}
-                Current Setting: <strong>{{ "On" if default_settings.volume_display else "Off" }}</strong>
+                Current Setting: <strong>{{ "On" if settings.volume_display else "Off" }}</strong>
             {%  endset %}
             {% set volume_display_input_controls %}
                 <div class="d-flex align-items-center gap-2">

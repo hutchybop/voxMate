@@ -13,14 +13,12 @@ def settings():
     settings = current_app.db.appSettings.find_one({"_id": session["_id"]})
     default_settings = current_app.db.appSettings.find_one({"_id": "default"})
 
-    # Checks if the The form validates, and The form data contains the key 'noise_reduction'
+    # Checks if the The form validates, and The form data contains the key 'noise_reduction' & 'volume_display
     #  — regardless of whether its value is True or False, just that the key exists.
     # Checking noise_reduction here as WTForms does not handle boolean field validation well
-    if settingsForm.validate_on_submit() and 'noise_reduction' in settingsForm.data:
+    if settingsForm.validate_on_submit() and all(key in settingsForm.data for key in ['noise_reduction', 'volume_display']):
 
-        print(settingsForm.data)
-
-        # Collect the form data, excluding the CSRF token
+        # Collect the form data, excluding the CSRF token & submit fields
         form_data = {
             k: v for k, v in settingsForm.data.items() 
             if k not in ['csrf_token', 'submit']

@@ -1,6 +1,7 @@
 import subprocess
 from dataclasses import dataclass, field
 from typing import Dict, List
+print("test")
 
 @dataclass
 class AudioChecker:

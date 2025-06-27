@@ -4,7 +4,7 @@ from typing import Dict, List
 
 @dataclass
 class AudioChecker:
-    """Class to check audio devices on Raspberry Pi with PulseAudio"""
+    """Audio device checker for Ubuntu Server on RPi"""
     suggestions: Dict[str, List[str]] = field(default_factory=lambda: {
         'global': [],
         'mic': [],
@@ -18,46 +18,59 @@ class AudioChecker:
     def _run_command(self, cmd: List[str]) -> str:
         """Helper to run shell commands safely"""
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            result = subprocess.run(cmd, capture_output=True, text=True)
             return result.stdout.strip()
-        except subprocess.CalledProcessError as e:
-            self.suggestions['global'].append(f"Command failed: {' '.join(cmd)} - {e.stderr.strip()}")
+        except FileNotFoundError:
+            self.suggestions['global'].append(f"Command not found: {cmd[0]}")
             return ""
 
     def _check_pulseaudio(self) -> bool:
-        """Check if PulseAudio is available"""
+        """Check if PulseAudio is available and running"""
         if not self._run_command(["which", "pactl"]):
             self.suggestions['global'].extend([
-                "PulseAudio not found. Install with:",
-                "sudo apt install pulseaudio pavucontrol",
-                "For RPi audio: sudo apt install pulseaudio-module-alsa"
+                "PulseAudio not installed. Install with:",
+                "sudo apt update && sudo apt install -y pulseaudio"
             ])
             return False
+        
+        # Check if PulseAudio is running
+        if "Connection refused" in self._run_command(["pactl", "list"]):
+            self.suggestions['global'].extend([
+                "PulseAudio not running. Try:",
+                "pulseaudio --start --log-level=1",
+                "For system-wide: sudo systemctl enable --user pulseaudio"
+            ])
+            return False
+            
         return True
 
     def _check_audio(self):
-        """Main check logic"""
+        """Main check logic for Ubuntu Server"""
         if not self._check_pulseaudio():
             return
 
+        # Check devices
         output = self._run_command(["pactl", "list", "short"])
         self.devices['mic'] = "Source" in output
         self.devices['speaker'] = "Sink" in output
 
+        # Ubuntu Server specific suggestions
         if not self.devices['mic']:
             self.suggestions['mic'].extend([
                 "No microphone detected. Try:",
-                "1. Check connections: arecord -l",
-                "2. sudo raspi-config > Advanced > Audio",
-                "3. pacmd set-default-source <name>"
+                "1. Check physical connections",
+                "2. List ALSA devices: arecord -l",
+                "3. Verify PulseAudio detected it: pactl list sources",
+                "4. For USB mics: lsusb to check detection"
             ])
 
         if not self.devices['speaker']:
             self.suggestions['speaker'].extend([
-                "No speakers detected. Try:",
-                "1. Check audio jack/HDMI connection",
-                "2. sudo raspi-config > System Options > Audio",
-                "3. amixer -D pulse sset Master unmute"
+                "No output devices detected. Try:",
+                "1. Check audio connections (HDMI/3.5mm)",
+                "2. List ALSA devices: aplay -l",
+                "3. Set default sink: pacmd set-default-sink <name>",
+                "4. Check volume: amixer -D pulse sset Master 100% unmute"
             ])
 
     def display_results(self):
@@ -67,7 +80,7 @@ class AudioChecker:
             'speaker': "✅" if self.devices['speaker'] else "❌"
         }
         
-        print(f"\nRPi Audio Status:\nMic: {status['mic']}  Speaker: {status['speaker']}\n")
+        print(f"\nAudio Status (Ubuntu Server):\nMic: {status['mic']}  Speaker: {status['speaker']}\n")
         
         for device in ['mic', 'speaker']:
             if not self.devices[device] and self.suggestions.get(device):

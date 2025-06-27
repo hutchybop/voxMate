@@ -28,11 +28,10 @@ from pathlib import Path
 from typing import Dict, Any
 
 
-# ================= Load env Variables=================
+# ================= INITIALIZATION =================
+#Load env
 load_dotenv()
 
-
-# ================= INITIALIZATION =================
 # Setup logging with more detailed format
 logging.basicConfig(
     level=logging.INFO,
@@ -344,7 +343,6 @@ class AudioProcessor:
 
 class AIService:
     """Handles all AI-related operations"""
-
     def __init__(self):
         self.client = OpenAI(
             base_url="https://api.groq.com/openai/v1",
@@ -472,9 +470,6 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
             pcm = struct.unpack_from("h" * porcupine.frame_length, pcm)
             if porcupine.process(pcm) >= 0:
                 logger.info("Wake word detected!")
-                # Recheck user config for update
-                    #
-
                 AudioProcessor.play_sound(GREETING_SOUND)
                 break
         except Exception as e:

@@ -170,11 +170,6 @@ def load_config() -> Dict[str, Any]:
                 settings = mongodb.appSettings.find_one({"_id": "default"}) or {}
 
             logger.info("User config settings loaded")
-            # logger.info(f"Noise reduction: {'ENABLED' if NOISE_REDUCTION_ENABLED else 'DISABLED'}")
-            logger.info(f"Volume Display: {'ENABLED' if VOLUME_DISPLAY else 'DISABLED'}")
-
-            print("DEBUG: NOISE_REDUCTION_ENABLED: ", NOISE_REDUCTION_ENABLED)
-            print("DEBUG: get NOISE_REDUCTION_ENABLED: ", settings.get('noise_reduction'))
 
             # Build final config with proper fallback order
             return {
@@ -211,6 +206,8 @@ def on_settings_updated():
         STT_MODEL = CONFIG["STT_MODEL"]
         AI_MODEL = CONFIG["AI_MODEL"]
     finally:
+        logger.info(f"Noise reduction: {'ENABLED' if NOISE_REDUCTION_ENABLED else 'DISABLED'}")
+        logger.info(f"Volume Display: {'ENABLED' if VOLUME_DISPLAY else 'DISABLED'}")
         if app_state.is_waiting():
             logger.info(f"Listening for wake word... (say '{WAKE_WORD}')")
 

@@ -141,6 +141,7 @@ def check_environment():
 DEFAULT_CONFIG = {
     "SILENCE_THRESHOLD": 14200,
     "SILENCE_DURATION": 1.0,
+    "VOLUME_DISPLAY": False,
     "NOISE_REDUCTION_ENABLED": True,
     "STT_MODEL": "whisper-large-v3-turbo",
     "AI_MODEL": "mistral-saba-24b"
@@ -174,6 +175,7 @@ def load_config() -> Dict[str, Any]:
             return {
                 "SILENCE_THRESHOLD": settings.get('silence_threshold', DEFAULT_CONFIG["SILENCE_THRESHOLD"]),
                 "SILENCE_DURATION": settings.get('silence_duration', DEFAULT_CONFIG["SILENCE_DURATION"]),
+                "VOLUME_DISPLAY": settings.get('volume_duration', DEFAULT_CONFIG["VOLUME_DISPLAY"]),
                 "NOISE_REDUCTION_ENABLED": settings.get('noise_reduction', DEFAULT_CONFIG["NOISE_REDUCTION_ENABLED"]),
                 "STT_MODEL": settings.get('stt_model', DEFAULT_CONFIG["STT_MODEL"]),
                 "AI_MODEL": settings.get('ai_model', DEFAULT_CONFIG["AI_MODEL"]),
@@ -199,6 +201,7 @@ def on_settings_updated():
         CONFIG = load_config()
         SILENCE_THRESHOLD = CONFIG["SILENCE_THRESHOLD"]
         SILENCE_DURATION = CONFIG["SILENCE_DURATION"]
+        VOLUME_DISPLAY = CONFIG["VOLUME_DISPLAY"]
         NOISE_REDUCTION_ENABLED = CONFIG["NOISE_REDUCTION_ENABLED"]
         STT_MODEL = CONFIG["STT_MODEL"]
         AI_MODEL = CONFIG["AI_MODEL"]
@@ -210,6 +213,7 @@ def on_settings_updated():
 # Make settings available as module-level constants
 SILENCE_THRESHOLD = CONFIG["SILENCE_THRESHOLD"]
 SILENCE_DURATION = CONFIG["SILENCE_DURATION"]
+VOLUME_DISPLAY = CONFIG["VOLUME_DISPLAY"]
 NOISE_REDUCTION_ENABLED = CONFIG["NOISE_REDUCTION_ENABLED"]
 STT_MODEL = CONFIG["STT_MODEL"]
 AI_MODEL = CONFIG["AI_MODEL"]
@@ -292,7 +296,9 @@ class AudioProcessor:
             
             chunk = indata.copy()
             volume = np.linalg.norm(chunk)
-            print(f'Volume: {volume}')
+            # Displays the volume while the mic is in use, if set to true
+            if VOLUME_DISPLAY:
+                print(f'Volume: {volume}')
             
             if NOISE_REDUCTION_ENABLED:
                 if volume > SILENCE_THRESHOLD:

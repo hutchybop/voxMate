@@ -14,13 +14,14 @@ load_dotenv('../../.env')
 SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
 SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
 REDIRECT_URI = 'http://127.0.0.1:5000/callback'
-SCOPES = 'user-read-currently-playing user-modify-playback-state user-read-playback-state'
+SCOPES = 'user-read-currently-playing user-modify-playback-state user-read-playback-state user-library-read playlist-read-private'
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', secrets.token_hex(16))
 
 # Disable spotipy's default file cache
 os.environ['SPOTIPY_CACHE'] = ''
+
 
 def create_spotify_oauth():
     return SpotifyOAuth(
@@ -33,8 +34,10 @@ def create_spotify_oauth():
 
 user_tokens = {}
 
+
 def is_token_expired(token_info):
     return time.time() > token_info['expires_at']
+
 
 def refresh_token_if_needed(user_id):
     token_info = user_tokens.get(user_id)
@@ -54,6 +57,7 @@ def refresh_token_if_needed(user_id):
     
     return token_info
 
+
 @app.route('/')
 def index():
     if 'user_id' not in session:
@@ -68,7 +72,13 @@ def index():
     token_info = refresh_token_if_needed(user_id)
     
     if not token_info:
-        return redirect('/logout')
+        auth_url = create_spotify_oauth().get_authorize_url()
+        return f"""
+            <p>No Token</p> <br> 
+            <a href='/logout'>logout</a> <br> 
+            <a href='/'>Home</a> <br> 
+            <a href='{auth_url}'>Login with Spotify</a>
+        """
     
     try:
         sp = spotipy.Spotify(auth=token_info['access_token'])
@@ -77,9 +87,59 @@ def index():
             <h1>Welcome {current_user['display_name']}!</h1>
             <p>You are logged in with Spotify.</p>
             <a href="/logout">Logout</a>
+            <a href="/play_list">View your playlists</a>
+            <a href='/playback'>start playback</a> <br>
         """
     except Exception as e:
         return redirect(f'/error?message={str(e)}')
+
+
+@app.route('/play_list')
+def play_list():
+    user_id = session['user_id']
+    token_info = refresh_token_if_needed(user_id)
+
+    if not token_info:
+        auth_url = create_spotify_oauth().get_authorize_url()
+        return f"<p>No Token</p> <br> <a href='/logout'>logout</a> <br> <a href='/'>Home</a> <br> <a href='{auth_url}'>Login with Spotify</a>"
+
+    access_token = token_info['access_token']
+    sp = spotipy.Spotify(auth=access_token)
+
+    playlists = sp.current_user_playlists(limit=50)
+    output = ""
+    while playlists:
+        for i, playlist in enumerate(playlists['items']):
+            output += f"{i+1}. {playlist['name']}<br>"
+        if playlists['next']:
+            playlists = sp.next(playlists)
+        else:
+            break
+
+    devices = sp.devices()
+
+    return f"""
+        {output} <br>
+        Devices: {devices}
+        """
+            
+    
+@app.route('/playback')
+def playback():
+    user_id = session['user_id']
+    token_info = refresh_token_if_needed(user_id)
+
+    if not token_info:
+        auth_url = create_spotify_oauth().get_authorize_url()
+        return f"<p>No Token</p> <br> <a href='/logout'>logout</a> <br> <a href='/'>Home</a> <br> <a href='{auth_url}'>Login with Spotify</a>"
+
+    access_token = token_info['access_token']
+    sp = spotipy.Spotify(auth=access_token)
+
+    sp.start_playback(device_id=ddevice)
+
+    return redirect('/')
+
 
 @app.route('/callback')
 def callback():
@@ -106,6 +166,7 @@ def callback():
         return redirect('/')
     except Exception as e:
         return redirect(f'/error?message={str(e)}')
+
 
 @app.route('/logout')
 def logout():
@@ -172,7 +233,7 @@ def error():
     return f"""
         <h1>Error</h1>
         <p>{error_message}</p>
-        <a href="/">Try again</a>
+        <a href="/">Try again</a> or <a href="/logout">Logout</a> and try again
     """
 
 if __name__ == '__main__':

@@ -15,6 +15,7 @@ import sounddevice as sd
 import pvporcupine
 import pyaudio
 import socketio
+import threading
 from ctypes import *
 from gtts import gTTS
 from openai import OpenAI
@@ -25,7 +26,6 @@ from pymongo import MongoClient
 import json
 from pathlib import Path
 from typing import Dict, Any
-from enum import Enum, auto
 
 
 # ================= Load env Variables=================
@@ -53,13 +53,37 @@ try:
 except Exception as e:
     logger.debug(f"Couldn't set ALSA error handler: {e}")
 
-# Setup app state tracking
-class AppState(Enum):
-    WAITING_FOR_WAKE_WORD = auto()
-    PROCESSING_QUESTION = auto()
-    PLAYING_RESPONSE = auto()
+# Improved state tracking with thread safety
+class AppState:
+    """Thread-safe application state management"""
+    _states = {
+        "WAITING": "Waiting for wake word",
+        "PROCESSING": "Processing response"
+    }
 
-current_state = AppState.WAITING_FOR_WAKE_WORD
+    def __init__(self):
+        self._state = "WAITING"
+        self._lock = threading.Lock()
+
+    @property
+    def state(self):
+        with self._lock:
+            return self._state
+
+    def set_state(self, new_state):
+        with self._lock:
+            if new_state in self._states:
+                old_state = self._state
+                self._state = new_state
+                logger.debug(f"State changed: {old_state} → {new_state}")
+            else:
+                raise ValueError(f"Invalid state: {new_state}")
+            
+    def is_waiting(self):
+        return self.state == "WAITING"
+
+# Global state instance
+app_state = AppState()
 
 
 # ================= SOCKET IO =================
@@ -67,11 +91,11 @@ sio = socketio.Client()
 
 @sio.event
 def connect():
-    logger.info("socket_io connected")
+    logger.info("socket.IO connected to server")
 
 @sio.event
 def disconnect():
-    logger.warning("socket_io disconnected")
+    logger.warning("socket.IO disconnected to server")
     
 
 # ================= ENVIRONMENT CHECK =================
@@ -168,11 +192,21 @@ CONFIG = load_config()
 # Update config if socketio recieved
 @sio.on('settings_updated')
 def on_settings_updated():
-    logger.info(f"Received updated voxMate settings")
-    load_config()
-    # Only show message if in waiting state
-    if current_state == AppState.WAITING_FOR_WAKE_WORD:
-        logger.info("Listening for wake word... (say 'Hey voxMate')")
+    """Handle settings updates with state awareness"""
+    logger.info("Received updated voxMate settings")
+
+    try:
+        global CONFIG, SILENCE_THRESHOLD, SILENCE_DURATION, NOISE_REDUCTION_ENABLED, STT_MODEL, AI_MODEL
+        CONFIG = load_config()
+        SILENCE_THRESHOLD = CONFIG["SILENCE_THRESHOLD"]
+        SILENCE_DURATION = CONFIG["SILENCE_DURATION"]
+        NOISE_REDUCTION_ENABLED = CONFIG["NOISE_REDUCTION_ENABLED"]
+        STT_MODEL = CONFIG["STT_MODEL"]
+        AI_MODEL = CONFIG["AI_MODEL"]
+    finally:
+        if app_state.is_waiting():
+            logger.info("Listening for wake word... (say 'Hey voxMate')")
+
 
 # Make settings available as module-level constants
 SILENCE_THRESHOLD = CONFIG["SILENCE_THRESHOLD"]
@@ -196,7 +230,6 @@ GREETING_SOUND = 'audio/greeting.mp3'
 
 class AudioProcessor:
     """Handles all audio operations with configurable noise reduction"""
-    
     @staticmethod
     def start_looping_sound() -> subprocess.Popen:
         try:
@@ -461,21 +494,18 @@ def main() -> None:
     signal.signal(signal.SIGINT, lambda s, f: sys.exit(0))
     atexit.register(cleanup)
 
-
-
     # Check environment variables before proceeding
     check_environment()
 
+    # Connect to Socket.IO server (non-blocking)
     try:
-
-        # Connect to Socket.IO server (non-blocking)
-        try:
-            sio.connect('http://localhost:5000', wait_timeout=10)
-            logger.info("Listening for settings updates...")
-        except Exception as e:
-            logger.warning(f"Could not connect to Socket.IO server: {e}")
+        sio.connect('http://localhost:5000', wait_timeout=10)
+        logger.info("Listening for settings updates...")
+    except Exception as e:
         # Continue running even if Socket.IO fails
-
+        logger.warning(f"Could not connect to Socket.IO server: {e}")
+        
+    try:    
         ai_service = AIService()
         logger.info(f"Noise reduction: {'ENABLED' if NOISE_REDUCTION_ENABLED else 'DISABLED'}")
         
@@ -483,14 +513,14 @@ def main() -> None:
             while True:
                 try:
                     # Update state to waiting for wake word
-                    current_state = AppState.WAITING_FOR_WAKE_WORD
+                    app_state.set_state("WAITING")
 
                     # Wake word detection phase
                     wake_word_detection(porcupine, stream)
 
                     # Update state to processing question
-                    current_state = AppState.PROCESSING_QUESTION
-                    logger.info("Wake word detected! Speak your question...")
+                    app_state.set_state("PROCESSING")
+                    logger.info("Wake word detected! Ask your question...")
 
                     # Recording and processing phase
                     start_total = time.time()
@@ -499,9 +529,6 @@ def main() -> None:
                     total_stt = time.time() - start_total
 
                     if transcript:
-                        # Update state to processing response
-                        current_state = AppState.PLAYING_RESPONSE
-                        
                         # AI response generation
                         ai_start = time.time()
                         ai_response = ai_service.generate_response(transcript)

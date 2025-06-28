@@ -136,7 +136,7 @@ def playback():
     access_token = token_info['access_token']
     sp = spotipy.Spotify(auth=access_token)
 
-    sp.start_playback(device_id=ddevice)
+    sp.start_playback(device_id="b16c033229c6e42b50fcc84989e90f4fc0be26c0")
 
     return redirect('/')
 

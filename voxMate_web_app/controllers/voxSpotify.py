@@ -1,6 +1,7 @@
 import os
 import time
 import spotipy
+import uuid
 from spotipy.oauth2 import SpotifyOAuth
 from flask import Blueprint, render_template, current_app, session, redirect, url_for, flash, request
 from dotenv import load_dotenv
@@ -15,7 +16,7 @@ load_dotenv("../../.env")
 # Configuration
 SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
 SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
-REDIRECT_URI = 'http://127.0.0.1:5000/voxSpotify/callback'
+REDIRECT_URI = os.getenv('SPOTIFY_CALLBACK_URL')
 SCOPES = " ".join([
     "user-read-currently-playing",
     "user-modify-playback-state",
@@ -28,13 +29,14 @@ SCOPES = " ".join([
 os.environ['SPOTIPY_CACHE'] = ''
 
 # Setup spotipy's auth
-def create_spotify_oauth():
+def create_spotify_oauth(state=None):
     return SpotifyOAuth(
         client_id=SPOTIFY_CLIENT_ID,
         client_secret=SPOTIFY_CLIENT_SECRET,
         redirect_uri=REDIRECT_URI,
         scope=SCOPES,
-        cache_handler=None
+        cache_handler=None,
+        state=state
     )
 
 def get_token_and_refresh():
@@ -65,23 +67,21 @@ def voxSpotify_index():
 
     # Show spotify login page if no toke_info
     if not token_info:
-        auth_url = create_spotify_oauth().get_authorize_url()
+        state = str(uuid.uuid4())
+        session['spotify_auth_state'] = state
+        auth_url = create_spotify_oauth(state=state).get_authorize_url()
         return render_template('voxSpotify/voxSpotify_index.html', title="voxMate - Spotify Login", auth_url=auth_url)
     
-    sp = spotipy.Spotify(auth=token_info['access_token'])
-    current_user = sp.current_user()
-    return render_template('voxSpotify/voxSpotify_profile.html', title="voxMate - Spotify Profile", current_user=current_user)
+    try:
+        sp = spotipy.Spotify(auth=token_info['access_token'])
+        current_user = sp.current_user()
+        return render_template('voxSpotify/voxSpotify_profile.html', title="voxMate - Spotify Profile", current_user=current_user)
     
-    # try:
-    #     sp = spotipy.Spotify(auth=token_info['access_token'])
-    #     current_user = sp.current_user()
-    #     return render_template('voxSpotify/voxSpotify_profile.html', title="voxMate - Spotify Profile", current_user=current_user)
-    
-    # except Exception as e:
-    #     # Delete token from DB to force re-auth on next load
-    #     current_app.db.voxSpotify.delete_one({"_id": session['_id']})
-    #     flash(f"There has been an error: {str(e)} \n Please log in again.", "danger")
-    #     return redirect(url_for('voxSpotify.voxSpotify_index'))
+    except Exception as e:
+        # Delete token from DB to force re-auth on next load
+        current_app.db.voxSpotify.delete_one({"_id": session['_id']})
+        flash(f"There has been an error: {str(e)} \n Please log in again.", "danger")
+        return redirect(url_for('voxSpotify.voxSpotify_index'))
 
 
 
@@ -96,6 +96,13 @@ def callback():
     code = request.args.get('code')
     if not code:
         flash(f"Login error, no authorisation code received. \n Please try again.", "danger")
+        return redirect(url_for('voxSpotify.voxSpotify_index'))
+    
+    # Checks for CSRF attack
+    returned_state = request.args.get('state')
+    expected_state = session.pop('spotify_auth_state', None)
+    if not returned_state or returned_state != expected_state:
+        flash("Invalid state parameter. Please try logging in again.", "danger")
         return redirect(url_for('voxSpotify.voxSpotify_index'))
 
     try:
@@ -115,6 +122,7 @@ def callback():
             '_id': session["_id"],
             'token_info': token_info
         })
+
 
         return redirect(url_for('voxSpotify.voxSpotify_index'))
     

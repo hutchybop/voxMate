@@ -9,6 +9,7 @@ from flask_socketio import SocketIO
 from controllers.main import main
 from controllers.users import users
 from controllers.appSettings import appSettings
+from controllers.voxSpotify import voxSpotify
 from controllers.policy import policy
 
 
@@ -70,6 +71,7 @@ def create_app():
     app.register_blueprint(main)
     app.register_blueprint(users)
     app.register_blueprint(appSettings)
+    app.register_blueprint(voxSpotify)
     app.register_blueprint(policy)
 
     # Making socketio avaiable in appSettings

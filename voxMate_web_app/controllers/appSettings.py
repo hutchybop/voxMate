@@ -6,6 +6,7 @@ appSettings = Blueprint(
     "appSettings", __name__, template_folder="templates", static_folder="static"
 )
 
+
 @appSettings.route("/settings", methods=["GET", "POST"])
 @isLoggedIn
 def settings():

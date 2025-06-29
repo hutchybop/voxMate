@@ -84,6 +84,7 @@ def register():
         # Store the user ID and email in the session
         session["_id"] = user._id
         session["email"] = user.email
+        session.permanent = True
 
         # Flash a success message and redirect to the index page
         flash("Registration successful!", "success")
@@ -121,6 +122,7 @@ def login():
         save_user_config(user._id, user.email)
         session["_id"] = user._id
         session["email"] = user.email
+        session.permanent = True
         flash("Login successful!", "success")
         return redirect(url_for("main.index"))  # Use redirect instead of render_template
 

@@ -4,7 +4,7 @@
     <div class="container-fluid">
         <!-- Logo -->
         <a class="navbar-brand p-0" href="{{ url_for('main.index') }}">
-            <img class="d-inline-block align-text-top" src="static/images/voxMate.png" alt="voxMate" height="30">
+            <img class="d-inline-block align-text-top" src="{{ url_for('static', filename='images/voxMate.png') }}" alt="voxMate" height="30">
         </a>
         
         <!-- Mobile toggle - simplified -->
@@ -18,7 +18,7 @@
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item"><a class="nav-link text-white" href="{{ url_for('main.index') }}">Home</a></li>
                 <li class="nav-item"><a class="nav-link text-white" href="{{ url_for('appSettings.settings') }}">Settings</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="#">Spotify Setup</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="{{ url_for('voxSpotify.voxSpotify_index') }}">Spotify</a></li>
             </ul>
 
             <!-- Divider -->

@@ -1,0 +1,14 @@
+.spotify-title-logo {
+  height: 2.5rem;
+  object-fit: contain;
+  margin-left: 0.25rem;
+  margin-bottom: 0.2rem;
+}
+
+.spotify-button-logo {
+  height: 2rem;
+}
+
+.spotify-text {
+  color: #1DB954;
+}

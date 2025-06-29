@@ -3,7 +3,6 @@
 # Update git to latest version
 git pull
 
-
 # Start the voxMate_web_app
 tmux kill-session -t voxMate 2>/dev/null
 tmux new-session -d -s voxMate "bash --login"
@@ -13,5 +12,6 @@ tmux send-keys -t voxMate "flask run --host=0.0.0.0 --port=5000 --debug" C-m
 echo "voxMate Webapp deployed, 192.168.1.30:5000"
 
 # Run voxMate app
-cd ~/voxMate
-~/voxMate/.voxenv/bin/python3 -m voxMate_app.main
+cd ~/voxMate/voxMate_app
+source ~/voxMate/.voxenv/bin/activate
+python3 -m voxMate_app.main

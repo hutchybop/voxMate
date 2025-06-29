@@ -3,8 +3,6 @@
 # Update git to latest version
 git pull
 
-# Setup .voxenv
-source ~/voxMate/.voxenv/bin/activate
 
 # Start the voxMate_web_app
 tmux kill-session -t voxMate 2>/dev/null
@@ -16,4 +14,4 @@ echo "voxMate Webapp deployed, 192.168.1.30:5000"
 
 # Run voxMate app
 cd ~/voxMate
-python3 -m voxMate_app.main
+~/voxMate/.voxenv/bin/python3 -m voxMate_app.main

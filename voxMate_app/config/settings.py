@@ -9,6 +9,7 @@ from pymongo import MongoClient
 # Required local imports
 from services.audio import AudioProcessor
 from utils.logging import logger
+import config.constrants as constrants
 
 
 # ================= CONFIGURATION =================
@@ -26,7 +27,7 @@ DEFAULT_CONFIG = {
 def load_config() -> Dict[str, Any]:
     """Load configuration from user file and MongoDB with fallbacks."""
     # Load user config if exists
-    config_path = Path(__file__).resolve().parent / "config" / "user_config.json"
+    config_path = Path(__file__).resolve().parent.parent.parent / "userConfig" / "user_config.json"
     user_config = {}
     if config_path.exists():
         with open(config_path, "r") as f:
@@ -84,7 +85,7 @@ def check_environment():
     ENV_CHECKS = {
         "warnings": {
             "MONGODB_URI": {
-                "sound": "audio/warning_mongodb.mp3",
+                "sound": constrants.MONGODB_WARNING_SOUND,
                 "message": "Continuing with default configuration (MongoDB not available)"
             }
         },
@@ -94,7 +95,7 @@ def check_environment():
             "SECRET_KEY": {},
             "SPOTIFY_CLIENT_ID": {},
             "SPOTIFY_CLIENT_SECRET": {},
-            "_sound": "audio/critical_env_var.mp3"
+            "_sound": constrants.CRITICAL_ENV_VAR_SOUND
         }
     }
     

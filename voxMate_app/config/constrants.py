@@ -12,6 +12,6 @@ WAKE_WORD = 'Hey VoxMate'
 
 # Paths
 # Get absolute path to be safe
-KEYWORD_PATH = Path(__file__).resolve().parent.parent / "models" / "porcupine_keywords" / os.getenv("PORCUPINE_KEYWORD_FILE_NAME")
+KEYWORD_PATH = Path(__file__).resolve().parent.parent.parent / "models" / "porcupine_keywords" / os.getenv("PORCUPINE_KEYWORD_FILE_NAME")
 GENERATING_SOUND = 'audio/generating.mp3'
 GREETING_SOUND = 'audio/greeting.mp3'

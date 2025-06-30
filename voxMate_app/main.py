@@ -2,10 +2,15 @@
 
 print("🟢 Starting main.py")
 
+print("📦 Importing Path")
+from pathlib import Path
+
 # Loading env
 print("📦 Loading env variables")
 from dotenv import load_dotenv
-load_dotenv('../../.env')
+# Automatically load the .env from the project root
+env_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 # Required python imports
 print("📦 Importing signal")

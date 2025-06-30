@@ -12,6 +12,9 @@ from typing import Optional
 from utils.logging import logger
 import config.constrants as contrants
 import config.settings as settings
+from utils.alsa_suppress import suppress_alsa_errors
+
+suppress_alsa_errors()
 
 class AudioProcessor:
     """Handles all audio operations with configurable noise reduction"""

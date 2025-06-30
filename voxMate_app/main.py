@@ -2,6 +2,11 @@
 
 print("🟢 Starting main.py")
 
+# Loading env
+print("📦 Loading env variables")
+from dotenv import load_dotenv
+load_dotenv('../../.env')
+
 # Required python imports
 print("📦 Importing signal")
 import signal

@@ -10,8 +10,3 @@ tmux send-keys -t voxMate "source ~/voxMate/.voxenv/bin/activate" C-m
 tmux send-keys -t voxMate "cd ~/voxMate/voxMate_web_app" C-m
 tmux send-keys -t voxMate "flask run --host=0.0.0.0 --port=5000 --debug" C-m
 echo "voxMate Webapp deployed, 192.168.1.30:5000"
-
-# Run voxMate app
-cd ~/voxMate/voxMate_app
-source ~/voxMate/.voxenv/bin/activate
-python3 -m voxMate_app.main

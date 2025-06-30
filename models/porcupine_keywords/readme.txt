@@ -1,1 +1,0 @@
-Add .ppn and LICENSE.txt files here from Porcupine Wake Word creation

@@ -17,7 +17,7 @@ users = Blueprint(
 
 # Define the base directory and the path to the user configuration file
 BASE_DIR = Path(__file__).resolve().parent.parent.parent  # goes up to voxMate/
-CONFIG_PATH = BASE_DIR / "config" / "user_config.json"
+CONFIG_PATH = BASE_DIR / "userConfig" / "user_config.json"
 
 
 def save_user_config(user_id, email):

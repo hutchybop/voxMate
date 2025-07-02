@@ -4,6 +4,7 @@ import os
 import time
 import re
 import tempfile
+import json
 from gtts import gTTS
 import subprocess
 from typing import Optional, Tuple
@@ -13,6 +14,8 @@ from typing import Optional, Tuple
 from utils.logging import logger
 from services.audio import AudioProcessor
 import config.settings as settings
+from config.ai_prompt import ai_prompt
+from services.spotify_app import handle_spotify_play
 
 
 class AIService:
@@ -60,24 +63,24 @@ class AIService:
         try:
             response = self.client.chat.completions.create(
                 model=settings.AI_MODEL,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a helpful smart speaker assistant. "
-                                  "Avoid lists and give answers in concise brief sentences."
-                    },
-                    {
-                        "role": "user",
-                        "content": f"Answer very briefly: {prompt}"
-                    }
-                ],
+                messages=ai_prompt(prompt),
                 max_tokens=100,
                 temperature=0.7
             )
             message = response.choices[0].message.content
             logger.info(f"AI Response: {message}")
             # Remove any special formatting tags
-            return re.sub(r"<think>.*?</think>", "", message, flags=re.DOTALL).strip()
+            cleaned = re.sub(r"<think>.*?</think>", "", message, flags=re.DOTALL)
+            cleaned = re.sub(r"^```(?:json)?\s*|```$", "", cleaned, flags=re.MULTILINE).strip()
+            try:
+                parsed = json.loads(cleaned)
+                response_text = parsed.get("response")
+                if parsed.get("action") == "spotify_play":
+                    handle_spotify_play(parsed.get("params", ""))
+                return response_text
+            except json.JSONDecodeError:
+                pass  # Fall through to return plain text
+            return cleaned
         except Exception as e:
             logger.error(f"AI API Error: {e}")
             return "Sorry, I encountered an error processing your request."

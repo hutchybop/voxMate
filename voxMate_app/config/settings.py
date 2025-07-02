@@ -2,9 +2,12 @@
 import os
 import json
 import sys
+import time
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from pymongo import MongoClient
+from pymongo.database import Database
+from spotipy.oauth2 import SpotifyOAuth
 
 # Required local imports
 from services.audio import AudioProcessor
@@ -23,23 +26,38 @@ DEFAULT_CONFIG = {
     "AI_MODEL": "mistral-saba-24b"
 }
 
-
-def load_config() -> Dict[str, Any]:
-    """Load configuration from user file and MongoDB with fallbacks."""
+def load_user() -> Optional[Dict[str, Any]]:
     # Load user config if exists
     config_path = Path(__file__).resolve().parent.parent.parent / "userConfig" / "user_config.json"
     user_config = {}
     if config_path.exists():
         with open(config_path, "r") as f:
             user_config = json.load(f)
+            return user_config
+    else:
+        logger.error("Please login to play spotify and customise settings")
+        return None
 
+def load_mongodb() -> Optional[Database]:
     # Try to connect to MongoDB if URI is available
     mongodb_uri = os.getenv("MONGODB_URI")
-
     if mongodb_uri:
         try:
             mongodb = MongoClient(mongodb_uri).get_default_database()
-            
+            return mongodb
+        except Exception as e:
+            logger.error(f"Failed to connect to MongoDB: {e}")
+            return None
+        
+
+def load_config() -> Dict[str, Any]:
+    """Load configuration from user file and MongoDB with fallbacks."""
+    # Finds the user if they have logged in
+    user_config = load_user()
+
+    mongodb = load_mongodb()
+    if mongodb is not None:
+        try:            
             # Try user settings first, then fall back to default settings
             settings = mongodb.appSettings.find_one({"_id": user_config.get("user_id")}) or {}
 
@@ -59,10 +77,52 @@ def load_config() -> Dict[str, Any]:
             }
         except Exception as e:
             logger.error(f"Failed to connect to MongoDB: {e}")
-            logger.warning("Using default configuration")
+            
 
     # Fallback to defaults if MongoDB not available
+    logger.warning("Using default configuration")
     return DEFAULT_CONFIG
+
+
+# Setup spotipy's auth
+def create_spotify_oauth(state=None):
+    return SpotifyOAuth(
+        client_id=constrants.SPOTIFY_CLIENT_ID,
+        client_secret=constrants.SPOTIFY_CLIENT_SECRET,
+        redirect_uri=constrants.REDIRECT_URI,
+        scope=constrants.SCOPES,
+        cache_handler=None,
+        state=state
+    )
+
+
+def load_spotify_token():
+    user_config = load_user()
+    mongodb = load_mongodb()
+
+    if user_config is None:
+        return None
+    
+    if mongodb is not None:
+        try:
+            _id = user_config["user_id"]
+            token_info = None
+            user_token = mongodb.db.voxSpotify.find_one({'_id': _id})
+
+            if user_token:
+                token_info = user_token.get("token_info")
+                if time.time() > token_info['expires_at']:
+                    oauth = create_spotify_oauth()
+                    new_token_info = oauth.refresh_access_token(token_info['refresh_token'])
+                    if not new_token_info:
+                        return None
+                    else:
+                        mongodb.db.voxSpotify.update_one({'_id': _id}, {'$set': {'token_info': new_token_info}})
+                        return new_token_info
+                        
+            return token_info
+        except:
+            return None
 
 
 # Load configuration when module is imported

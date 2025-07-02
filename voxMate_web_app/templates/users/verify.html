@@ -1,0 +1,45 @@
+{% from "macros/fields.html" import render_text_field %}
+
+{% extends "layouts/boilerplate.html" %}
+
+{% block main_content %}
+
+<div class="container d-flex justify-content-center align-items-center">
+    <div class="row">
+        <div class="col">
+            <div class="card card-shadow-left-bottom">
+                <div class="d-flex justify-content-center">
+                    <h4 class="card-title text-center text-wrap w-75 mt-3">
+                        Verify Your Email Address
+                    </h4>
+                </div>
+
+                <hr>
+
+                <div class="card-shadow">
+                    <div class="card-body">
+                        <p>Enter the code sent to the email address you registered with</p>
+                        <hr>
+                        <form name="verify" method="POST" novalidate>
+
+                            {{ form.hidden_tag() }}
+                            {{ render_text_field(form.code) }}
+
+                            <div class="d-flex flex-column">
+                                <div class="mb-2">
+                                    {{ form.submit(class="btn btn-success") }}
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <a href="{{ url_for('users.get_code') }}" class="btn btn-primary">Get a new code</a>
+                                </div>
+                            </div>
+                            
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>   
+    </div>
+</div>
+
+{% endblock %}

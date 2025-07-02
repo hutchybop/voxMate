@@ -59,10 +59,10 @@ def load_config() -> Dict[str, Any]:
     if mongodb is not None:
         try:            
             # Try user settings first, then fall back to default settings
-            settings = mongodb.appSettings.find_one({"_id": user_config.get("user_id")}) or {}
+            settings = mongodb.appSettings.find_one({"user_id": user_config.get("user_id")}) or {}
 
             if not settings:
-                settings = mongodb.appSettings.find_one({"_id": "default"}) or {}
+                settings = mongodb.appSettings.find_one({"user_id": "default"}) or {}
 
             logger.info("User config settings loaded")
 
@@ -105,9 +105,9 @@ def load_spotify_token():
     
     if mongodb is not None:
         try:
-            _id = user_config["user_id"]
+            user_id = user_config["user_id"]
             token_info = None
-            user_token = mongodb.db.voxSpotify.find_one({'_id': _id})
+            user_token = mongodb.db.voxSpotify.find_one({'user_id': user_id})
 
             if user_token:
                 token_info = user_token.get("token_info")
@@ -117,7 +117,7 @@ def load_spotify_token():
                     if not new_token_info:
                         return None
                     else:
-                        mongodb.db.voxSpotify.update_one({'_id': _id}, {'$set': {'token_info': new_token_info}})
+                        mongodb.db.voxSpotify.update_one({'user_id': user_id}, {'$set': {'token_info': new_token_info}})
                         return new_token_info
                         
             return token_info

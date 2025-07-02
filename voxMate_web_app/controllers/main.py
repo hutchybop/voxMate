@@ -8,6 +8,7 @@ main = Blueprint(
 
 @main.route("/")
 def index():
+
     readme_path = os.path.join(current_app.root_path, "..", "readme.md")
     with open(readme_path, "r", encoding="utf-8") as f:
         md_content = f.read()

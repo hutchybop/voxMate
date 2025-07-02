@@ -16,7 +16,7 @@ load_dotenv("../../.env")
 # Configuration
 SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
 SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
-REDIRECT_URI = os.getenv('SPOTIFY_CALLBACK_URL')
+REDIRECT_URI = os.getenv('SPOTIFY_CALLBACK_URI')
 SCOPES = " ".join([
     "user-read-currently-playing",
     "user-modify-playback-state",
@@ -40,9 +40,9 @@ def create_spotify_oauth(state=None):
     )
 
 def get_token_and_refresh():
-    _id = session["_id"]
+    user_id = session["user_id"]
     token_info = None
-    user_token = current_app.db.voxSpotify.find_one({'_id': _id})
+    user_token = current_app.db.voxSpotify.find_one({'user_id': user_id})
 
     if user_token:
         token_info = user_token.get("token_info")
@@ -52,7 +52,7 @@ def get_token_and_refresh():
             if not new_token_info:
                 return None
             else:
-                current_app.db.voxSpotify.update_one({'_id': _id}, {'$set': {'token_info': new_token_info}})
+                current_app.db.voxSpotify.update_one({'user_id': user_id}, {'$set': {'token_info': new_token_info}})
                 return new_token_info
                 
     return token_info
@@ -61,6 +61,8 @@ def get_token_and_refresh():
 @voxSpotify.route("/voxSpotify")
 @isLoggedIn
 def voxSpotify_index():
+
+    print(f"DEBUG: URI: ", REDIRECT_URI)
 
     # Get the user token from the db and refresh if required
     token_info = get_token_and_refresh()
@@ -79,7 +81,7 @@ def voxSpotify_index():
     
     except Exception as e:
         # Delete token from DB to force re-auth on next load
-        current_app.db.voxSpotify.delete_one({"_id": session['_id']})
+        current_app.db.voxSpotify.delete_one({"user_id": session['user_id']})
         flash(f"There has been an error: {str(e)} \n Please log in again.", "danger")
         return redirect(url_for('voxSpotify.voxSpotify_index'))
 
@@ -119,7 +121,7 @@ def callback():
         
         # Store token_info in MongoDB
         current_app.db.voxSpotify.insert_one({
-            '_id': session["_id"],
+            'user_id': session["user_id"],
             'token_info': token_info
         })
 
@@ -135,6 +137,6 @@ def callback():
 def voxSpotify_logout():
     token_info = get_token_and_refresh()
     if token_info:
-        current_app.db.voxSpotify.delete_one({"_id": session['_id']})
+        current_app.db.voxSpotify.delete_one({"user_id": session['user_id']})
     
     return render_template('voxSpotify/voxSpotify_logout.html', title="voxMate - Spotify Logout")

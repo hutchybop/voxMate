@@ -24,3 +24,7 @@ class SettingsForm(FlaskForm):
     stt_model = StringField("STT Model", validators=[InputRequired()])
     ai_model = StringField("AI Model", validators=[InputRequired()])
     submit = SubmitField("Save Settings")
+
+class VerifyForm(FlaskForm):
+    code = IntegerField("code", validators=[InputRequired()])
+    submit = SubmitField("Submit Code")

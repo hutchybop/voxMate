@@ -10,9 +10,10 @@ appSettings = Blueprint(
 @appSettings.route("/settings", methods=["GET", "POST"])
 @isLoggedIn
 def settings():
+
     settingsForm = SettingsForm()
-    settings = current_app.db.appSettings.find_one({"_id": session["_id"]})
-    default_settings = current_app.db.appSettings.find_one({"_id": "default"})
+    settings = current_app.db.appSettings.find_one({"user_id": session["user_id"]})
+    default_settings = current_app.db.appSettings.find_one({"user_id": "default"})
 
     # Checks if the The form validates, and The form data contains the key 'noise_reduction' & 'volume_display
     #  — regardless of whether its value is True or False, just that the key exists.
@@ -27,7 +28,7 @@ def settings():
         
         # Insert the new user settings into the database
         settingUpdate = current_app.db.appSettings.update_one(
-            {"_id": session["_id"]},
+            {"user_id": session["user_id"]},
             {"$set": form_data}
         )
 

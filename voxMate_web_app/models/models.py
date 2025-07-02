@@ -1,16 +1,20 @@
 from dataclasses import dataclass, field
+from typing import Optional
 
 
 @dataclass
 class User:
-    _id: str
     email: str
     password: str
-    appSettings_id: str = field(default_factory=lambda: "default")
+    verify: bool
+    device_id: str
+    user_id: Optional[str] = None
+    unverified_user_id: Optional[str] = None
+    api_token: Optional[str] = None
 
 @dataclass
 class AppSettings:
-    _id: str
+    user_id: str
     email: str
     silence_threshold: int = 14200
     silence_duration: int = 1

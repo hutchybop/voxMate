@@ -23,3 +23,9 @@ class AppSettings:
     stt_model: str = 'whisper-large-v3-turbo'
     ai_model: str = 'mistral-saba-24b'
 
+@dataclass
+class VoxMate:
+    user_id: str
+    user_code: Optional[str] = None
+    token_info: Optional[str] = None
+

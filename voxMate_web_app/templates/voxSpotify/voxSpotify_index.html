@@ -31,7 +31,7 @@
 
                     <hr>
 
-                    <a href="{{ auth_url }}" class="btn btn-dark d-inline-flex align-items-center gap-2">
+                    <button onclick="loginToSpotify()" class="btn btn-dark d-inline-flex align-items-center gap-2">
                         <img src="{{ url_for('static', filename='images/spotify_logo.png') }}" 
                             alt="Spotify" 
                             class="spotify-button-logo">
@@ -45,3 +45,14 @@
 
 
 {% endblock %}
+
+{% block script_content %}
+<script>
+
+    const authUrl = "{{ auth_url | safe }}";
+
+</script>
+<script src="{{ url_for('static', filename='java/voxSpotify.js') }}"></script>
+{% endblock %}
+
+

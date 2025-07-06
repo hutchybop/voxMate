@@ -4,7 +4,6 @@ import uuid
 from dataclasses import asdict
 from pathlib import Path
 import json
-import requests
 
 from models.forms import RegisterForm
 from models.forms import LoginForm
@@ -12,8 +11,8 @@ from models.forms import VerifyForm
 from models.models import User
 from models.models import AppSettings
 from models.decorators import isLoggedIn
-from models.decorators import retry_api_request
 from models.decorators import check_user_status
+from utils.api import contact_api_server
 
 users = Blueprint(
     "users", __name__, template_folder="templates", static_folder="static"
@@ -44,12 +43,12 @@ def save_user_config(user_id, email):
         new_user_settings = AppSettings(
             user_id=user_id,
             email=email,
-            silence_threshold=default_settings["silence_threshold"],
-            silence_duration=default_settings["silence_duration"],
-            volume_display=default_settings["volume_display"],
-            noise_reduction=default_settings["noise_reduction"],
-            stt_model=default_settings["stt_model"],
-            ai_model=default_settings["ai_model"]
+            silence_threshold=default_settings.get("silence_threshold"),
+            silence_duration=default_settings.get("silence_duration"),
+            volume_display=default_settings.get("volume_display"),
+            noise_reduction=default_settings.get("noise_reduction"),
+            stt_model=default_settings.get("stt_model"),
+            ai_model=default_settings.get("ai_model")
         )
         # Insert the new user settings into the database
         current_app.db.appSettings.insert_one(asdict(new_user_settings))
@@ -65,15 +64,6 @@ def get_device_id():
         return None, "Serial not found"
     except Exception as e:
         return None, str(e)
-
-
-@retry_api_request(max_retries=3, delay_seconds=2)
-def contact_api_server(payload, url_page):
-    """Encapsulates the API request logic with retries."""
-    url = f"https://voxmate.longrunner.co.uk/{url_page}"
-    response = requests.post(url, json=payload, timeout=10)
-    response.raise_for_status()  # Triggers HTTPError for bad status
-    return response.json()
  
 
 @users.route("/register", methods=["GET", "POST"])
@@ -226,9 +216,19 @@ def login():
         
         # If the user's verify is false add unverified_user_id to the session and redirect to verify
         if user_data.get("verify") == False:
-            session["unverified_user_id"] = user_data.get("unverified_user_id")
-            return redirect(url_for('users.verify'))
-        
+            if user_data.get("unverified_user_id"):
+                session.pop("user_id", None)
+                session["unverified_user_id"] = user_data.get("unverified_user_id")
+                current_app.db.users.update_one({"email": form.email.data}, {"$set": {"user_id": None}})
+                flash("Please verify your email address")
+                return redirect(url_for('users.verify'))
+            elif user_data.get("user_id"):
+                session.pop("user_id", None)
+                session["unverified_user_id"] = user_data.get("user_id")
+                current_app.db.users.update_one({"email": form.email.data}, {"$set": {"user_id": None}, "unverified_user_id": user_data.get("user_id")})
+                flash("Please verify your email address")
+                return redirect(url_for('users.verify'))
+
         # Create User object and verify password
         # user = User(**user_data)
         if not pbkdf2_sha256.verify(form.password.data, user_data.get("password")):
@@ -241,7 +241,7 @@ def login():
         session["email"] = user_data.get("email")
         session.permanent = True
         flash("Login successful!", "success")
-        return redirect(url_for("main.index"))  # Use redirect instead of render_template
+        return redirect(url_for("main.index"))
 
     return render_template("users/login.html", title="voxMate - Login", form=form)
 

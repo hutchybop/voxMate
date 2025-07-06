@@ -8,10 +8,8 @@ function checkStatus() {
     })
     .then(data => {
 
-        console.log(data)
-
         if (data.status === "user_code") {
-            status_text.textContent = "Success"
+            status_text.textContent = "Success, you have been logged in by Spotify!"
             setTimeout(() => {
                 window.location.href = "/voxSpotify/callback";
             }, 1000);

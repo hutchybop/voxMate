@@ -1,9 +1,10 @@
-from flask import Blueprint, render_template, flash, current_app, session, redirect, url_for
+from flask import Blueprint, render_template, flash, current_app, session, redirect, url_for, request
 from passlib.hash import pbkdf2_sha256
 import uuid
 from dataclasses import asdict
 from pathlib import Path
 import json
+import os
 
 from models.forms import RegisterForm
 from models.forms import LoginForm
@@ -75,13 +76,16 @@ def register():
 
     # If the form is submitted and valid, create a new user with unverified_user_id and send them to register/verify
     if form.validate_on_submit():
-        
-        # Get the device id
-        # device_id, error = get_device_id()
-        # if not device_id:
-        #     flash(f"Error retrieving Raspberry device ID: {error}. Please try again.", "danger")
-        #     return redirect(url_for('users.register'))
-        device_id = 'in_dev_on_mac'
+
+        if os.getenv("FLASK_ENV_PI") == 'true':
+            # Get the device id if on Rpi
+            device_id, error = get_device_id()
+            if not device_id:
+                flash(f"Error retrieving Raspberry device ID: {error}. Please try again.", "danger")
+                return redirect(url_for('users.register'))
+        else:
+            # Device_id if testing locally
+            device_id = 'in_dev_locally'
         
         # Check if the email already exists in the database for the device_id
         existing_user = current_app.db.users.find_one({"email": form.email.data, "device_id": device_id})

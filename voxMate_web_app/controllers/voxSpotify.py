@@ -79,7 +79,6 @@ def voxSpotify_index():
         sp = spotipy.Spotify(auth=token_info['access_token'])
         current_user = sp.current_user()
         return render_template('voxSpotify/voxSpotify_profile.html', title="voxMate - Spotify Profile", current_user=current_user)
-    
     except Exception as e:
         # Delete token from DB to force re-auth on next load
         current_app.db.voxSpotify.delete_one({"user_id": session['user_id']})
@@ -112,10 +111,10 @@ def check_status():
         if response.get("user_code"):
             user_code = response.get("user_code")
             # Add it to the voxspotify collection
-            user = current_app.db.voxSpotify.find_one({session.get("user_id")})
+            user = current_app.db.voxSpotify.find_one({"user_id": session.get("user_id")})
             # If the user is already in the db update, if not add new user
             if user:
-                current_app.db.voxSpotify.update_one({session.get("user_id")}, {"$Set": {"user_code": user_code}})
+                current_app.db.voxSpotify.update_one({"user_id": session.get("user_id")}, {"$Set": {"user_code": user_code}})
             else:
                 user_spotify = VoxMate(
                     user_id=session.get("user_id"),

@@ -105,9 +105,9 @@ def load_spotify_token():
     
     if mongodb is not None:
         try:
-            user_id = user_config["user_id"]
+            user_id = user_config.get("user_id")
             token_info = None
-            user_token = mongodb.db.voxSpotify.find_one({'user_id': user_id})
+            user_token = mongodb.voxSpotify.find_one({'user_id': user_id})
 
             if user_token:
                 token_info = user_token.get("token_info")
@@ -117,7 +117,7 @@ def load_spotify_token():
                     if not new_token_info:
                         return None
                     else:
-                        mongodb.db.voxSpotify.update_one({'user_id': user_id}, {'$set': {'token_info': new_token_info}})
+                        mongodb.voxSpotify.update_one({'user_id': user_id}, {'$set': {'token_info': new_token_info}})
                         return new_token_info
                         
             return token_info

@@ -29,4 +29,5 @@ SCOPES = " ".join([
     "user-library-read",
     "playlist-read-private"
 ])
-SPOTIFY_DEVICE_ID = "b16c033229c6e42b50fcc84989e90f4fc0be26c0"
+SPOTIFY_DEVICE_ID = "b16c033229c6e42b50fcc84989e90f4fc0be26c0"      # Pi
+# SPOTIFY_DEVICE_ID = "775086b5c0c806bad6dbb0652ba4d7003b7e0b32"      # mac

@@ -41,6 +41,7 @@ def create_app():
     app.config["SESSION_PERMANENT"] = True
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=48)
     app.config["WTF_CSRF_ENABLED"] = True
+    app.config['TEMPLATES_AUTO_RELOAD'] = True
 
     REQUIRED_ENV_VARS = ['GROQ_API_KEY', 'PORCUPINE_API_KEY', 'MONGODB_URI', 'SECRET_KEY']
 

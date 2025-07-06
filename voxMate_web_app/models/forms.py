@@ -26,5 +26,5 @@ class SettingsForm(FlaskForm):
     submit = SubmitField("Save Settings")
 
 class VerifyForm(FlaskForm):
-    code = IntegerField("code", validators=[InputRequired()])
+    code = StringField("code", validators=[InputRequired()])
     submit = SubmitField("Submit Code")

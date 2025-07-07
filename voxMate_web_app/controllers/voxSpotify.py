@@ -43,9 +43,16 @@ def create_spotify_oauth(state=None):
         state=state
     )
 
-def get_token_and_refresh():
+def get_token_and_refresh(user_id=None):
+
+
+
+    if user_id:
+        user_token = current_app.db.voxSpotify.find_one({'user_id': user_id})
+    else:
+        user_token = current_app.db.voxSpotify.find_one({'user_id': session.get("user_id")})
+
     token_info = None
-    user_token = current_app.db.voxSpotify.find_one({'user_id': session.get("user_id")})
 
     if user_token:
         token_info = user_token.get("token_info")
@@ -84,6 +91,47 @@ def voxSpotify_index():
         current_app.db.voxSpotify.delete_one({"user_id": session['user_id']})
         flash(f"There has been an error: {str(e)} \n Please log in again.", "danger")
         return redirect(url_for('voxSpotify.voxSpotify_index'))
+    
+
+@voxSpotify.route('/voxSpotify/playback')
+def playback():
+
+    token_info = None
+
+    if request.method == 'POST':
+        data = request.get_json(silent=True) or {}
+        user_id = data.get("user_id")
+        if not user_id:
+            return jsonify(success=False, message="no user_id")
+        else:
+            token_info = get_token_and_refresh(user_id)
+    
+    token_info = get_token_and_refresh()
+
+    print("WEB.controllers.voxSpotify.playback: token_info: ", token_info)
+
+    time.sleep(5)
+
+    if not token_info:
+        # flash("Please login to spotify", "warning")
+        # return redirect(url_for('voxSpotify.voxSpotify_index'))
+        return jsonify(success=False, message="no token")
+
+
+    access_token = token_info['access_token']
+    try:
+        sp = spotipy.Spotify(auth=access_token)
+        sp.transfer_playback(device_id="b16c033229c6e42b50fcc84989e90f4fc0be26c0", force_play=True)
+        response = sp.start_playback(device_id="b16c033229c6e42b50fcc84989e90f4fc0be26c0")
+        print("Playback response:", response)
+    except Exception as e:
+        print("Playback error: ", e)
+        import traceback
+        traceback.print_exc()
+
+    # flash('Playback started!', "success")
+    # return redirect(url_for('voxSpotify.voxSpotify_index'))
+    return jsonify(success=True)
 
 
 

@@ -112,7 +112,7 @@ class AudioProcessor:
                 callback=callback,
                 blocksize=contrants.BLOCKSIZE
             ) as stream:
-                logger.info("\nRecording... (speak now)")
+                logger.info("Recording... (speak now)")
                 while stream.active:
                     time.sleep(0.1)
 

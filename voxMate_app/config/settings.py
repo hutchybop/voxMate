@@ -33,6 +33,7 @@ def load_user() -> Optional[Dict[str, Any]]:
     if config_path.exists():
         with open(config_path, "r") as f:
             user_config = json.load(f)
+            # print("APP.config.settings.load_user: user_config: ", user_config)
             return user_config
     else:
         logger.error("Please login to play spotify and customise settings")
@@ -54,8 +55,8 @@ def load_config() -> Dict[str, Any]:
     """Load configuration from user file and MongoDB with fallbacks."""
     # Finds the user if they have logged in
     user_config = load_user()
-
     mongodb = load_mongodb()
+
     if mongodb is not None:
         try:            
             # Try user settings first, then fall back to default settings
@@ -100,20 +101,28 @@ def load_spotify_token():
     user_config = load_user()
     mongodb = load_mongodb()
 
+    # print("APP.config.settings.load_spotify_token: user_config: ", user_config)
+    # print("APP.config.settings.load_spotify_token: mongodb: ", mongodb)
+
     if user_config is None:
         return None
     
     if mongodb is not None:
         try:
+            # print("APP.config.settings.load_spotify_token: 'mongodb is not None'")
             user_id = user_config.get("user_id")
+            # print("APP.config.settings.load_spotify_token: user_id: ", user_id)
             token_info = None
             user_token = mongodb.voxSpotify.find_one({'user_id': user_id})
+            # print("APP.config.settings.load_spotify_token: user_token (db_call): ", user_token)
 
             if user_token:
                 token_info = user_token.get("token_info")
+                # print("APP.config.settings.load_spotify_token: token_info: ", token_info)
                 if time.time() > token_info['expires_at']:
                     oauth = create_spotify_oauth()
                     new_token_info = oauth.refresh_access_token(token_info['refresh_token'])
+                    # print("APP.config.settings.load_spotify_token: new_token_info: ", new_token_info)
                     if not new_token_info:
                         return None
                     else:

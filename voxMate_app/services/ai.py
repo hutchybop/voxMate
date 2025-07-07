@@ -68,16 +68,19 @@ class AIService:
                 temperature=0.7
             )
             message = response.choices[0].message.content
-            logger.info(f"AI Response: {message}")
             # Remove any special formatting tags
             cleaned = re.sub(r"<think>.*?</think>", "", message, flags=re.DOTALL)
             cleaned = re.sub(r"^```(?:json)?\s*|```$", "", cleaned, flags=re.MULTILINE).strip()
+            logger.info(f"AI Response: {cleaned}")
             try:
                 parsed = json.loads(cleaned)
                 response_text = parsed.get("response")
                 if parsed.get("action") == "spotify_play":
-                    handle_spotify_play(parsed.get("params", ""))
-                return response_text
+                    # play_spotify = handle_spotify_play(parsed.get("params", ""))
+                    play_spotify = {"params": parsed.get("params", "")}
+                else:
+                    play_spotify = None
+                return response_text, play_spotify
             except json.JSONDecodeError:
                 pass  # Fall through to return plain text
             return cleaned

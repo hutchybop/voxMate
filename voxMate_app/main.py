@@ -21,6 +21,7 @@ from services.ai import AIService
 import config.settings as settings
 import services.wakeword as wakeword
 from utils.state import app_state
+from services.spotify_app import handle_spotify_play
 
 def main() -> None:
     """Main execution loop"""
@@ -55,7 +56,6 @@ def main() -> None:
 
                     # Update state to processing question
                     app_state.set_state("PROCESSING")
-                    logger.info("Wake word detected! Ask your question...")
 
                     # Recording and processing phase
                     start_total = time.time()
@@ -66,13 +66,17 @@ def main() -> None:
                     if transcript:
                         # AI response generation
                         ai_start = time.time()
-                        ai_response = ai_service.generate_response(transcript)
+                        ai_response, play_spotify = ai_service.generate_response(transcript)
                         ai_time = time.time() - ai_start
 
                         # Text-to-speech conversion
                         tts_start = time.time()
                         tts_time = ai_service.text_to_speech(ai_response, sound_process)
                         total_tts = time.time() - tts_start
+
+                        # Play Spotify if requested
+                        if play_spotify is not None:
+                            handle_spotify_play(play_spotify.get("params"))
 
                         # Performance metrics
                         logger.info("\nPerformance Metrics:")

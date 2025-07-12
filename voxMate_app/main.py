@@ -45,54 +45,50 @@ def main() -> None:
         logger.info(f"Noise reduction: {'ENABLED' if settings.NOISE_REDUCTION_ENABLED else 'DISABLED'}")
         logger.info(f"Volume Display: {'ENABLED' if settings.VOLUME_DISPLAY else 'DISABLED'}")
         
-        with wakeword.audio_wake_stream(ai_service.access_key) as (porcupine, pa, stream):
-            while True:
-                try:
-                    # Update state to waiting for wake word
-                    app_state.set_state("WAITING")
+        while True:
+            try:
+                app_state.set_state("WAITING")
 
-                    # Wake word detection phase
+                # Wake word phase (PyAudio holds mic)
+                with wakeword.audio_wake_stream(ai_service.access_key) as (porcupine, pa, stream):
                     wakeword.wake_word_detection(porcupine, stream)
 
-                    # Update state to processing question
-                    app_state.set_state("PROCESSING")
+                # Mic now released — record using sounddevice
+                app_state.set_state("PROCESSING")
 
-                    # Recording and processing phase
-                    start_total = time.time()
-                    audio_file = AudioProcessor.record_audio_to_file()
-                    transcript, stt_time, sound_process = ai_service.transcribe_audio(audio_file)
-                    total_stt = time.time() - start_total
+                start_total = time.time()
+                audio_file = AudioProcessor.record_audio_to_file()
+                transcript, stt_time, sound_process = ai_service.transcribe_audio(audio_file)
+                total_stt = time.time() - start_total
 
-                    if transcript:
-                        # AI response generation
-                        ai_start = time.time()
-                        ai_response, play_spotify = ai_service.generate_response(transcript)
-                        ai_time = time.time() - ai_start
+                if transcript:
+                    # AI response generation
+                    ai_start = time.time()
+                    ai_response, play_spotify = ai_service.generate_response(transcript)
+                    ai_time = time.time() - ai_start
 
-                        # Text-to-speech conversion
-                        tts_start = time.time()
-                        tts_time = ai_service.text_to_speech(ai_response, sound_process)
-                        total_tts = time.time() - tts_start
+                    # Text-to-speech
+                    tts_start = time.time()
+                    tts_time = ai_service.text_to_speech(ai_response, sound_process)
+                    total_tts = time.time() - tts_start
 
-                        # Play Spotify if requested
-                        if play_spotify is not None:
-                            handle_spotify_play(play_spotify.get("params"))
+                    if play_spotify is not None:
+                        handle_spotify_play(play_spotify.get("params"))
 
-                        # Performance metrics
-                        logger.info("\nPerformance Metrics:")
-                        logger.info(f"STT Processing: {stt_time:.2f}s")
-                        logger.info(f"STT & Playback: {total_stt:.2f}s")
-                        logger.info(f"AI Response: {ai_time:.2f}s")
-                        logger.info(f"TTS Generation: {tts_time:.2f}s")
-                        logger.info(f"TTS & Playback: {total_tts:.2f}s")
+                    logger.info("\nPerformance Metrics:")
+                    logger.info(f"STT Processing: {stt_time:.2f}s")
+                    logger.info(f"STT & Playback: {total_stt:.2f}s")
+                    logger.info(f"AI Response: {ai_time:.2f}s")
+                    logger.info(f"TTS Generation: {tts_time:.2f}s")
+                    logger.info(f"TTS & Playback: {total_tts:.2f}s")
 
-                except KeyboardInterrupt:
-                    logger.info("Interrupted by user")
-                    break
-                except Exception as e:
-                    logger.error(f"Error in main loop: {e}")
-                    time.sleep(2)
-                    continue
+            except KeyboardInterrupt:
+                logger.info("Interrupted by user")
+                break
+            except Exception as e:
+                logger.error(f"Error in main loop: {e}")
+                time.sleep(2)
+                continue
 
     except Exception as e:
         logger.critical(f"Fatal error: {e}", exc_info=True)

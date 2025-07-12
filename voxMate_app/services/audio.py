@@ -22,7 +22,7 @@ class AudioProcessor:
     def start_looping_sound() -> subprocess.Popen:
         try:
             return subprocess.Popen(
-                ["mpg321", "-o", "pulse", "--stereo", "-q", "--loop", "-1", contrants.GENERATING_SOUND],
+                ["mpg321", "--stereo", "-q", "--loop", "-1", contrants.GENERATING_SOUND],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 stdin=subprocess.PIPE   # Prevents hanging on terminate
@@ -48,7 +48,7 @@ class AudioProcessor:
         """Play sound with explicit stereo output"""
         try:
             result = subprocess.run(
-                ["mpg321", "-o", "pulse", "--stereo", "-q", file_path],
+                ["mpg321", "--stereo", "-q", file_path],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,  # Capture stderr for debugging
                 check=True
@@ -58,7 +58,7 @@ class AudioProcessor:
             # Fallback to non-stereo mode if needed
             try:
                 subprocess.run(
-                    ["mpg321", "-o", "pulse", "-q", file_path],
+                    ["mpg321", "-q", file_path],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                     check=True
@@ -110,7 +110,7 @@ class AudioProcessor:
                 dtype=contrants.DTYPE,
                 channels=contrants.CHANNELS,
                 callback=callback,
-                blocksize=contrants.BLOCKSIZE
+                blocksize=contrants.BLOCKSIZE,
             ) as stream:
                 logger.info("Recording... (speak now)")
                 while stream.active:

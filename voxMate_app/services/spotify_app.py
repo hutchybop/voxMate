@@ -3,7 +3,7 @@ import time
 import requests
 
 import config.constrants as constrants
-from config.settings import load_spotify_token
+from config.settings import load_spotify_token_now
 from config.settings import load_user
 from utils.logging import logger
 
@@ -11,55 +11,14 @@ SPOTIFY_CLIENT_ID = constrants.SPOTIFY_CLIENT_ID
 SPOTIFY_CLIENT_SECRET = constrants.SPOTIFY_CLIENT_SECRET
 
 def handle_spotify_play(params):
+    print("DEBUG: handle_spotify_play calling load_spotify_token =", load_spotify_token_now)
 
-        # token_info = load_spotify_token()
-        # # print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: token_info = ", token_info)
-
-        # if not token_info:
-        #     logger.error("Please login to Spotify via the web app to play Spotify.")
-        #     return
-
-        # sp = spotipy.Spotify(auth=token_info['access_token'])
-
-        # # Find raspotify device
-        # devices = sp.devices().get('devices', [])
-        # print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: devices-1: ", devices)
-        # raspotify = next((d for d in devices if 'voxMate' in d['name']), None)
-        # print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: raspotify-1: ", raspotify)
-        # if not raspotify:
-        #     print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: No active raspotify device found. Trying to wake it up...")
-
-        #     # Dummy playback to activate device
-        #     try:
-        #         sp.start_playback(uris=["spotify:track:7GhIk7Il098yCjg4BQjzvb"])  # Rickroll
-        #         time.sleep(1)
-        #         sp.pause_playback()
-        #         time.sleep(1)
-        #     except Exception as e:
-        #         print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: Wake-up playback failed:", e)
-
-        #     # Refresh devices
-        #     devices = sp.devices().get('devices', [])
-        #     print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: devices-2: ", devices)
-        #     raspotify = next((d for d in devices if 'voxMate' in d['name']), None)
-        #     print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: raspotify-2: ", raspotify)
-
-        # if not raspotify:
-        #     print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: Still no device found.")
-        #     return
-
-        # device_id = raspotify['id']
-        # print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: device_id: ", device_id)
-
-        # sp.transfer_playback(device_id=device_id, force_play=True)
-        # time.sleep(1)
-        # sp.start_playback(device_id=device_id)
-
-
-
-
-    token_info = load_spotify_token()
-    # print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: token_info = ", token_info)
+    token_info = load_spotify_token_now()
+    import inspect
+    print("CALLING load_spotify_token defined at:", inspect.getfile(load_spotify_token_now))
+    print("RAW token_info:", token_info)
+    print("RAW token_info id:", id(token_info))
+    print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: token_info = ", token_info)
 
     if token_info is not None:
 
@@ -92,6 +51,52 @@ def handle_spotify_play(params):
 
 
 
+
+def testFunc():
+
+    # token_info = load_spotify_token()
+        # # print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: token_info = ", token_info)
+
+    # if not token_info:
+    #     logger.error("Please login to Spotify via the web app to play Spotify.")
+    #     return
+
+    # sp = spotipy.Spotify(auth=token_info['access_token'])
+
+    # # Find raspotify device
+    # devices = sp.devices().get('devices', [])
+    # print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: devices-1: ", devices)
+    # raspotify = next((d for d in devices if 'voxMate' in d['name']), None)
+    # print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: raspotify-1: ", raspotify)
+    # if not raspotify:
+    #     print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: No active raspotify device found. Trying to wake it up...")
+
+    #     # Dummy playback to activate device
+    #     try:
+    #         sp.start_playback(uris=["spotify:track:7GhIk7Il098yCjg4BQjzvb"])  # Rickroll
+    #         time.sleep(1)
+    #         sp.pause_playback()
+    #         time.sleep(1)
+    #     except Exception as e:
+    #         print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: Wake-up playback failed:", e)
+
+    #     # Refresh devices
+    #     devices = sp.devices().get('devices', [])
+    #     print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: devices-2: ", devices)
+    #     raspotify = next((d for d in devices if 'voxMate' in d['name']), None)
+    #     print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: raspotify-2: ", raspotify)
+
+    # if not raspotify:
+    #     print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: Still no device found.")
+    #     return
+
+    # device_id = raspotify['id']
+    # print("APP.services.spotify_app.py.handle_spotifyvoxMate_app: device_id: ", device_id)
+
+    # sp.transfer_playback(device_id=device_id, force_play=True)
+    # time.sleep(1)
+    # sp.start_playback(device_id=device_id)
+
     # try:
     #     user = load_user()
     #     user_id = user.get("user_id")
@@ -111,3 +116,4 @@ def handle_spotify_play(params):
     #         print("Error:", response.status_code, response.text)
     # except Exception as e:
     #     logger.error(f"Error trying to play Spotify: {e}")
+    pass

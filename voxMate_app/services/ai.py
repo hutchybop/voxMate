@@ -15,7 +15,6 @@ from utils.logging import logger
 from services.audio import AudioProcessor
 import config.settings as settings
 from config.ai_prompt import ai_prompt
-from services.spotify_app import handle_spotify_play
 
 
 class AIService:

@@ -2,12 +2,10 @@
 import os
 import json
 import sys
-import time
 from pathlib import Path
 from typing import Dict, Any, Optional
 from pymongo import MongoClient
 from pymongo.database import Database
-from spotipy.oauth2 import SpotifyOAuth
 
 # Required local imports
 from services.audio import AudioProcessor
@@ -78,69 +76,14 @@ def load_config() -> Dict[str, Any]:
             }
         except Exception as e:
             logger.error(f"Failed to connect to MongoDB: {e}")
-            
-
+    
     # Fallback to defaults if MongoDB not available
     logger.warning("Using default configuration")
     return DEFAULT_CONFIG
 
 
-# Setup spotipy's auth
-def create_spotify_oauth(state=None):
-    return SpotifyOAuth(
-        client_id=constrants.SPOTIFY_CLIENT_ID,
-        client_secret=constrants.SPOTIFY_CLIENT_SECRET,
-        # redirect_uri=constrants.REDIRECT_URI,
-        redirect_uri='https://voxmate.longrunner.co.uk/voxSpotify/callback',
-        scope=constrants.SCOPES,
-        cache_handler=None,
-        state=state
-    )
-
-
-def load_spotify_token():
-    print("APP: load_spotify_token: start") 
-    user_config = load_user()
-    mongodb = load_mongodb()
-
-    print("APP.config.settings.load_spotify_token: user_config: ", user_config)
-    print("APP.config.settings.load_spotify_token: mongodb: ", mongodb)
-
-    if user_config is None:
-        return None
-    
-    if mongodb is not None:
-        try:
-            print("Checking token expiry...")
-            user_id = user_config.get("user_id")
-            user_token = mongodb.voxSpotify.find_one({'user_id': user_id})
-            token_info = user_token.get("token_info") if user_token else None
-
-            if token_info:
-                print("token_info loaded:", token_info)
-                if time.time() > token_info['expires_at']:
-                    print("Token expired. Attempting refresh...")
-                    oauth = create_spotify_oauth()
-                    new_token_info = oauth.refresh_access_token(token_info['refresh_token'])
-                    print("Refreshed token:", new_token_info)
-                    if not new_token_info:
-                        print("Refresh returned None")
-                        return None
-                    mongodb.voxSpotify.update_one({'user_id': user_id}, {'$set': {'token_info': new_token_info}})
-                    return new_token_info
-                return token_info
-        except Exception as e:
-            print("⚠️ Exception during token fetch/refresh:", e)
-            import traceback
-            traceback.print_exc()
-            return None
-        except:
-            return None
-
-
 # Load configuration when module is imported
 CONFIG = load_config()
-
 
 # Make settings available as module-level constants
 SILENCE_THRESHOLD = CONFIG["SILENCE_THRESHOLD"]

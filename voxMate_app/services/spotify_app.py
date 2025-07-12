@@ -1,19 +1,19 @@
+# Required python imports
 import spotipy
 import time
 import traceback
 import requests
-import os
 import traceback
 from typing import Optional, Tuple, Dict, Any
 from datetime import datetime, timezone
-from pymongo.database import Database
-from pymongo import MongoClient
 from spotipy.oauth2 import SpotifyOAuth
 
+# Required local imports
 import config.constrants as constrants
 from utils.logging import logger
 from config.settings import load_user
 from models.models import VoxSpotify
+from config.settings import load_mongodb
 
 
 class SpotifyPlayer:
@@ -69,22 +69,10 @@ class SpotifyPlayer:
             
         self.sp = None  # Ensure clean state on failure
         return False
-    
-    def load_mongodb(self) -> Optional[Database]:
-        """Load the pymongo db"""
-        # Try to connect to MongoDB if URI is available
-        mongodb_uri = os.getenv("MONGODB_URI")
-        if mongodb_uri:
-            try:
-                mongodb = MongoClient(mongodb_uri).get_default_database()
-                return mongodb
-            except Exception as e:
-                logger.error(f"Failed to connect to MongoDB: {e}")
-                return None
 
     def create_spotify_oauth(self) -> SpotifyOAuth:
         """Create the SpotifyOAuth to authorise the user Spotify account"""
-        mongodb = self.load_mongodb()
+        mongodb = load_mongodb()
         state = mongodb.users.find_one({"user_id": self.user_id}).get("api_token" "")
 
         return SpotifyOAuth(
@@ -291,7 +279,7 @@ class SpotifyPlayer:
     def load_spotify_doc(self) -> Optional[VoxSpotify]:
         """Load the full VoxSpotify document as a dataclass"""
         try:
-            mongodb = self.load_mongodb()
+            mongodb = load_mongodb()
             if not mongodb:
                 return None
                 
@@ -304,7 +292,7 @@ class SpotifyPlayer:
     def save_spotify_doc(self, doc: VoxSpotify) -> bool:
         """Save the VoxSpotify dataclass to MongoDB"""
         try:
-            mongodb = self.load_mongodb()
+            mongodb = load_mongodb()
             if not mongodb:
                 return False
                 

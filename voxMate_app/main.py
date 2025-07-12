@@ -21,7 +21,7 @@ from services.ai import AIService
 import config.settings as settings
 import services.wakeword as wakeword
 from utils.state import app_state
-from services.spotify_app import handle_spotify_play
+from services.spotify_app import SpotifyPlayer
 
 def main() -> None:
     """Main execution loop"""
@@ -73,7 +73,9 @@ def main() -> None:
                     total_tts = time.time() - tts_start
 
                     if play_spotify is not None:
-                        handle_spotify_play(play_spotify.get("params"))
+                        spotify_player = SpotifyPlayer()
+                        if not spotify_player.handle_spotify_play(play_spotify.get("params")):
+                            logger.error("Failed to play Spotify content")
 
                     logger.info("\nPerformance Metrics:")
                     logger.info(f"STT Processing: {stt_time:.2f}s")

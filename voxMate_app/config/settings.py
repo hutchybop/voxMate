@@ -98,7 +98,7 @@ def create_spotify_oauth(state=None):
     )
 
 
-def load_spotify_token_now():
+def load_spotify_token():
     print("APP: load_spotify_token: start") 
     user_config = load_user()
     mongodb = load_mongodb()
@@ -110,26 +110,6 @@ def load_spotify_token_now():
         return None
     
     if mongodb is not None:
-        # try:
-        #     print("APP.config.settings.load_spotify_token: 'mongodb is not None'")
-        #     user_id = user_config.get("user_id")
-        #     print("APP.config.settings.load_spotify_token: user_id: ", user_id)
-        #     token_info = None
-        #     user_token = mongodb.voxSpotify.find_one({'user_id': user_id})
-        #     print("APP.config.settings.load_spotify_token: user_token (db_call): ", user_token)
-
-        #     if user_token:
-        #         token_info = user_token.get("token_info")
-        #         print("APP.config.settings.load_spotify_token: token_info: ", token_info)
-        #         if time.time() > token_info['expires_at']:
-        #             oauth = create_spotify_oauth()
-        #             new_token_info = oauth.refresh_access_token(token_info['refresh_token'])
-        #             print("APP.config.settings.load_spotify_token: new_token_info: ", new_token_info)
-        #             if not new_token_info:
-        #                 return None
-        #             else:
-        #                 mongodb.voxSpotify.update_one({'user_id': user_id}, {'$set': {'token_info': new_token_info}})
-        #                 return new_token_info
         try:
             print("Checking token expiry...")
             user_id = user_config.get("user_id")
@@ -154,13 +134,6 @@ def load_spotify_token_now():
             import traceback
             traceback.print_exc()
             return None
-                    
-            print("APP.config.settings.load_spotify_token: token_info (before return): ", token_info)   
-            print("RETURNING token_info with id:", id(token_info))
-            test_token = token_info
-            print("APP.config.settings.load_spotify_token: test_token (before return): ", test_token) 
-            # return token_info
-            return test_token
         except:
             return None
 

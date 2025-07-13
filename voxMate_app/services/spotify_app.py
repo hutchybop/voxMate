@@ -377,11 +377,14 @@ class SpotifyPlayer:
         """Load the full VoxSpotify document as a dataclass"""
         try:
             if (mongodb := load_mongodb()) is None:
-                return False  # Connection error already logged 
+                return None  # Connection error already logged 
             if (doc := mongodb.voxSpotify.find_one({'user_id': self.user_id})) is None:
                 logger.info(f"Failed to load VoxSpotify document, no Spotify document for user {self.user_id}")
                 return None
             return VoxSpotify.from_dict(doc) if doc else None
+        except KeyError as e:
+            logger.error(f"Failed to load VoxSpotify document, missing required field in document: {e}")
+            return None
         except Exception as e:
             logger.error(f"Failed to load VoxSpotify document: {e}")
             return None
@@ -391,7 +394,7 @@ class SpotifyPlayer:
         """Save the VoxSpotify dataclass to MongoDB"""
         try:
             if (mongodb := load_mongodb()) is None:
-                return False  # Connection error already logged
+                return None  # Connection error already logged
             mongodb.voxSpotify.update_one(
                 {'user_id': self.user_id},
                 {'$set': doc.to_dict()},

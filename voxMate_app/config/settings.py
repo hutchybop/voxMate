@@ -54,7 +54,7 @@ def load_config() -> Dict[str, Any]:
     # Finds the user if they have logged in
     user_config = load_user()
     if (mongodb := load_mongodb()) is None:
-        return False  # Connection error already logged
+        return None  # Connection error already logged
 
     try:            
         # Try user settings first, then fall back to default settings

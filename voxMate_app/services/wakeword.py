@@ -9,6 +9,7 @@ import struct
 import config.constrants as constrants
 from utils.logging import logger
 from services.audio import AudioProcessor
+from services.spotify_app import SpotifyPlayer
 
 
 @contextmanager
@@ -52,6 +53,9 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
     logger.info(f"Listening for wake word... (say '{constrants.WAKE_WORD}')")
     while True:
         try:
+            # Stops Spotify if playing to use the speaker
+            spotify_player = SpotifyPlayer()
+            spotify_player.stop_playback()
             pcm = stream.read(porcupine.frame_length, exception_on_overflow=False)
             pcm = struct.unpack_from("h" * porcupine.frame_length, pcm)
 

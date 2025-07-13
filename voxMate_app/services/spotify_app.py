@@ -311,9 +311,9 @@ class SpotifyPlayer:
             return False
         device_id = self.get_valid_device_id()
         if not device_id:
-            logger.error("No valid playback device available")
+            logger.error("Failed to handle Spotify play, no valid playback device available")
             return False
-        logger.info(f"Attempting playback on device ID: {device_id}")
+        logger.info(f"Handeling Spotify play, attempting playback on device ID: {device_id}")
         # Transfer playback (with retry logic)
         if not self.transfer_playback(device_id):
             logger.error("Failed to handle Spotify play, failed to transfer playback")

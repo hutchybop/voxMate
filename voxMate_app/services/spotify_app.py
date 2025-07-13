@@ -294,8 +294,14 @@ class SpotifyPlayer:
         try:
             self.sp.pause_playback()
             return True
-        except Exception as e:
+        except spotipy.SpotifyException as e:
+            if e.http_status == 404:  # Nothing is playing
+                logger.warning("Stopping playback, no active playback to stop")
+                return True
             logger.error(f"Failed to stop playback: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Failed to stop playback, unexpected error stopping playback: {e}")
             return False
  
  

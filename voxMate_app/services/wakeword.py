@@ -4,6 +4,7 @@ from typing import Tuple, Generator
 import pyaudio
 import pvporcupine
 import struct
+import time
 
 # Required local imports
 import config.constrants as constrants
@@ -51,17 +52,28 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
 def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream) -> None:
     """Listen for wake word and respond when detected"""
     logger.info(f"Listening for wake word... (say '{constrants.WAKE_WORD}')")
+    # Initialize SpotifyPlayer once outside the loop
+    spotify_player = SpotifyPlayer()
+    max_pause_attempts = 3
+    spotify_stopped = False  # Track if we've already stopped playback
     while True:
         try:
-            # Stops Spotify if playing to use the speaker
-            spotify_player = SpotifyPlayer()
-            spotify_player.stop_playback()
             pcm = stream.read(porcupine.frame_length, exception_on_overflow=False)
             pcm = struct.unpack_from("h" * porcupine.frame_length, pcm)
-
             if porcupine.process(pcm) >= 0:
                 logger.info("Wake word detected! Ask your question...")
-                # wake word stream must be closed BEFORE recording speech
+                # Stop Spotify only if we haven't already done so
+                if not spotify_stopped:
+                    for attempt in range(max_pause_attempts):
+                        if spotify_player.stop_playback():
+                            spotify_stopped = True
+                            logger.debug("Wake word detected, Spotify paused successfully")
+                            break
+                        elif attempt == max_pause_attempts - 1:
+                            logger.error("Critical: Failed to detect wake word, failed to pause Spotify after retries")
+                            return  # Exit wake word detection entirely
+                        time.sleep(0.1)
+                # Wake word stream must be closed BEFORE recording speech
                 AudioProcessor.play_sound(constrants.GREETING_SOUND)
                 break
         except Exception as e:

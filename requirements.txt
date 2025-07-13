@@ -4,22 +4,19 @@
 
 setuptools
 wheel
-numpy
-sounddevice
-pyaudio # Requires portaudio, on mac: brew install portaudio
+numpy                  # sudo apt install libatlas-base-dev
+sounddevice            # sudo apt install libportaudio2
+pyaudio                # sudo apt install portaudio19-dev
 gTTS
 openai
 python-dotenv
-huggingface_hub
-wavio
-vosk
-pyttsx3
-pvporcupine
-flask
-pymongo
-flask_wtf
-email_validator
+pvporcupine            # sudo apt install libc6 libstdc++6 (usually already present)
+Flask
+Flask-WTF
+email-validator
 passlib
 markdown
-flask_socketio
-spotypi
+Flask-SocketIO
+spotipy
+wtforms
+requests

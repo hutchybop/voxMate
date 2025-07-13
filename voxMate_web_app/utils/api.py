@@ -1,5 +1,8 @@
-from models.decorators import retry_api_request
+# Required python imports
 import requests
+
+# Required local imports
+from models.decorators import retry_api_request
 
 @retry_api_request(max_retries=3, delay_seconds=2)
 def contact_api_server(payload, url_page):

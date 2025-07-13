@@ -1,3 +1,4 @@
+# Required python imports
 import functools
 from flask import session, redirect, url_for, flash, request, current_app
 import requests

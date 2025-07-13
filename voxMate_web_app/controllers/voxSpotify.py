@@ -1,14 +1,16 @@
+# Required python imports
 import os
 import time
-import spotipy
-import time
-from spotipy.oauth2 import SpotifyOAuth
+from dataclasses import asdict
 from flask import Blueprint, render_template, current_app, session, redirect, url_for, flash, request, jsonify
 from dotenv import load_dotenv
+from spotipy.oauth2 import SpotifyOAuth
+import spotipy
+
+# Required local imports
 from models.decorators import isLoggedIn
 from utils.api import contact_api_server
 from models.models import VoxMate
-from dataclasses import asdict
 
 
 voxSpotify = Blueprint(

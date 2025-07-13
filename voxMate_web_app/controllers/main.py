@@ -1,3 +1,4 @@
+# Required python imports
 from flask import Blueprint, render_template, url_for, current_app
 import markdown
 import os

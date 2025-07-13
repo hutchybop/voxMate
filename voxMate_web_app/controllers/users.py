@@ -1,3 +1,4 @@
+# Required python imports
 from flask import Blueprint, render_template, flash, current_app, session, redirect, url_for, request
 from passlib.hash import pbkdf2_sha256
 import uuid
@@ -6,6 +7,7 @@ from pathlib import Path
 import json
 import os
 
+#  Required local imports
 from models.forms import RegisterForm
 from models.forms import LoginForm
 from models.forms import VerifyForm

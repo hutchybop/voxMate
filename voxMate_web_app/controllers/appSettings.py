@@ -1,4 +1,7 @@
+# Required python imports
 from flask import Blueprint, render_template, current_app, session, redirect, url_for, flash
+
+# Required local imports
 from models.decorators import isLoggedIn
 from models.forms import SettingsForm
 

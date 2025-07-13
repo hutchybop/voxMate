@@ -1,7 +1,8 @@
+# Required python imports
 from flask_wtf import FlaskForm
 from flask import request
 from wtforms import StringField, SubmitField, PasswordField, IntegerField, BooleanField, FloatField
-from wtforms.validators import InputRequired, Email, Length, EqualTo, ValidationError
+from wtforms.validators import InputRequired, Email, Length, EqualTo
 
 class RegisterForm(FlaskForm):
     email = StringField("Email", validators=[InputRequired(), Email()])

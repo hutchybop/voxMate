@@ -10,7 +10,7 @@ import spotipy
 # Required local imports
 from models.decorators import isLoggedIn
 from utils.api import contact_api_server
-from models.models import VoxMate
+from models.models import VoxSpotify
 
 
 voxSpotify = Blueprint(
@@ -164,7 +164,7 @@ def check_status():
             if user:
                 current_app.db.voxSpotify.update_one({"user_id": session.get("user_id")}, {"$Set": {"user_code": user_code}})
             else:
-                user_spotify = VoxMate(
+                user_spotify = VoxSpotify(
                     user_id=session.get("user_id"),
                     user_code=user_code
                 )

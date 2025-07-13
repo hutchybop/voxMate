@@ -1,6 +1,7 @@
 # Required python imports
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Dict, Any
+from datetime import datetime
 
 
 @dataclass
@@ -13,6 +14,7 @@ class User:
     unverified_user_id: Optional[str] = None
     api_token: Optional[str] = None
 
+
 @dataclass
 class AppSettings:
     user_id: str
@@ -24,9 +26,12 @@ class AppSettings:
     stt_model: str = 'whisper-large-v3-turbo'
     ai_model: str = 'mistral-saba-24b'
 
+
 @dataclass
-class VoxMate:
+class VoxSpotify:
     user_id: str
+    token_info: Optional[Dict[str, Any]] = None
+    device_id: Optional[str] = None
+    last_updated: Optional[datetime] = None
     user_code: Optional[str] = None
-    token_info: Optional[str] = None
 

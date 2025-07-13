@@ -1,3 +1,4 @@
+# Required python imports
 import os
 from flask import Flask
 from dotenv import load_dotenv
@@ -6,6 +7,7 @@ from datetime import timedelta
 from flask import session, g, request
 from flask_socketio import SocketIO
 
+# Reuired local imports
 from controllers.main import main
 from controllers.users import users
 from controllers.appSettings import appSettings

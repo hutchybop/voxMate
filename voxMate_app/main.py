@@ -72,10 +72,15 @@ def main() -> None:
                     tts_time = ai_service.text_to_speech(ai_response, sound_process)
                     total_tts = time.time() - tts_start
 
-                    if play_spotify is not None:
-                        spotify_player = SpotifyPlayer()
-                        if not spotify_player.handle_spotify_play(play_spotify.get("params")):
-                            logger.error("Failed to play Spotify content")
+                    try:
+                        if play_spotify is not None:
+                            spotify_player = SpotifyPlayer()
+                            if play_spotify.get("params") == "spotify_stop":
+                                spotify_player.stop_playback()
+                            else:
+                                spotify_player.handle_spotify_play(play_spotify.get("params"))
+                    except Exception as e:
+                            logger.error(f"Failed to play Spotify content: {e}")
 
                     logger.info("\nPerformance Metrics:")
                     logger.info(f"STT Processing: {stt_time:.2f}s")

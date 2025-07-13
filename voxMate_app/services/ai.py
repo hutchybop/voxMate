@@ -75,13 +75,15 @@ class AIService:
                 parsed = json.loads(cleaned)
                 response_text = parsed.get("response")
                 if parsed.get("action") == "spotify_play":
-                    # play_spotify = handle_spotify_play(parsed.get("params", ""))
-                    play_spotify = {"params": parsed.get("params", "")}
+                    play_spotify = {"action": "play", "params": parsed.get("params", "")}
+                elif parsed.get("action") == "spotify_stop":
+                    play_spotify = {"action": "stop"}  # No params needed
                 else:
                     play_spotify = None
                 return response_text, play_spotify
             except json.JSONDecodeError:
                 pass  # Fall through to return plain text
+            logger.warning("Incorrect Ai response format")
             return cleaned
         except Exception as e:
             logger.error(f"AI API Error: {e}")

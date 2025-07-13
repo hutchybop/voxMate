@@ -20,3 +20,4 @@ Flask-SocketIO
 spotipy
 wtforms
 requests
+websocket-client

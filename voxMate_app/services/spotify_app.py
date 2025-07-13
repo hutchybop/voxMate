@@ -7,6 +7,7 @@ import traceback
 from typing import Optional, Tuple, Dict, Any
 from datetime import datetime, timezone
 from spotipy.oauth2 import SpotifyOAuth
+from threading import Lock
 
 # Required local imports
 import config.constrants as constrants
@@ -26,7 +27,18 @@ class SpotifyPlayer:
     - Retry logic
     - Graceful degradation
     """
+
+    # Control class state creatation with thread locking protection
+    _instance = None  # Class-level instance reference
+    _lock = Lock()
     
+    def __new__(cls, *args, **kwargs):
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = super().__new__(cls)
+        return cls._instance
+    
+
     def __init__(self, max_retries: int = 2):
         """
         Initialize the Spotify player.
@@ -41,6 +53,7 @@ class SpotifyPlayer:
         self.max_retries = max_retries
         self.memory_cache = {'device_id': None, 'last_updated': None}
         self.sp = None  # Will be initialized when needed
+        self._initialized = True  # Mark as initialized
         
     def initialize_spotify(self) -> bool:
         """Initialize Spotify client with comprehensive error handling"""
@@ -203,6 +216,31 @@ class SpotifyPlayer:
         logger.error("No usable device found")
         return None
     
+    def detect_spotify_type(self, query: str) -> Tuple[str, str]:
+        """Try to determine if the query is a song, album, artist, playlist, or podcast."""
+        if not self.sp and not self.initialize_spotify():
+            logger.error("Spotify initialization failed")
+            return False
+        
+        try:
+            result = self.sp.search(q=query, type="track,album,artist,playlist,show", limit=1)
+
+            if result['tracks']['items']:
+                return "track", result['tracks']['items'][0]['uri']
+            if result['albums']['items']:
+                return "album", result['albums']['items'][0]['uri']
+            if result['artists']['items']:
+                return "artist", result['artists']['items'][0]['uri']
+            if result['playlists']['items']:
+                return "playlist", result['playlists']['items'][0]['uri']
+            if result['shows']['items']:  # Podcasts
+                return "show", result['shows']['items'][0]['uri']
+
+        except Exception as e:
+            logger.error(f"Failed to detect Spotify type: {e}")
+        
+        return None, None
+    
     def transfer_playback(self, device_id: str) -> bool:
         """Safely transfer playback to a device with retry logic"""
         for attempt in range(self.max_retries + 1):
@@ -239,6 +277,18 @@ class SpotifyPlayer:
                 return False
         return False
     
+    def stop_playback(self) -> bool:
+        """Stop playback while maintaining playback context"""
+        if not self.sp and not self.initialize_spotify():
+            return False
+            
+        try:
+            self.sp.pause_playback()
+            return True
+        except Exception as e:
+            logger.error(f"Failed to stop playback: {e}")
+            return False
+    
     def handle_spotify_play(self, params: Dict[str, Any]) -> bool:
         """
         Main method to handle Spotify playback with full error handling.
@@ -259,22 +309,68 @@ class SpotifyPlayer:
             return False
             
         logger.info(f"Attempting playback on device ID: {device_id}")
-        
+
         # Transfer playback (with retry logic)
         if not self.transfer_playback(device_id):
             logger.error("Failed to transfer playback")
             return False
-            
-        # Small delay to ensure transfer completes
-        time.sleep(2)
         
-        # Start playback (with retry logic)
-        if not self.start_playback(device_id):
-            logger.error("Failed to start playback")
-            return False
+        # Wait for transfer to complete with verification
+        timeout = time.time() + 5  # 5 second timeout
+        while time.time() < timeout:
+            try:
+                current_playback = self.sp.current_playback()
+                if current_playback and current_playback.get('device', {}).get('id') == device_id:
+                    break
+                time.sleep(1)
+            except Exception as e:
+                logger.warning(f"Error checking playback state: {e}")
             
-        logger.info("Playback started successfully")
-        return True
+        query = ""
+        if isinstance(params, str):
+            query = params.strip()
+        elif isinstance(params, dict):
+            query = params.get("query", "").strip()
+        
+        # Handle empty query (resume playback)
+        if not query:
+            try:
+                # First try to resume existing playback
+                self.sp.start_playback(device_id=device_id)
+                logger.info("Resumed playback successfully")
+                return True
+            except spotipy.SpotifyException as e:
+                if e.http_status == 404:
+                    # If nothing is playing, start a default playlist
+                    self.sp.start_playback(
+                        device_id=device_id,
+                        context_uri="spotify:playlist:37i9dQZF1DXcBWIGoYBM5M"  # Today's Top Hits
+                    )
+                    logger.info("Started default playlist")
+                    return True
+                logger.error(f"Playback resume error: {e}")
+                return False
+
+        # Handle search query
+        try:
+            content_type, uri = self.detect_spotify_type(query)
+            if not uri:
+                return False
+
+            # Always use context_uri for continuous playback
+            if content_type in ["track", "album", "playlist", "show", "artist"]:
+                self.sp.start_playback(
+                    device_id=device_id,
+                    context_uri=uri,
+                    offset={"position": 0} if content_type == "track" else None
+                )
+                logger.info(f"Started playing {content_type} context: {query}")
+                return True
+
+        except Exception as e:
+            logger.error(f"Playback error: {e}")
+            return False
+
     
     def load_spotify_doc(self) -> Optional[VoxSpotify]:
         """Load the full VoxSpotify document as a dataclass"""

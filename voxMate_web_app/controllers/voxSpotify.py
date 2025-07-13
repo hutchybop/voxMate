@@ -46,9 +46,7 @@ def create_spotify_oauth(state=None):
     )
 
 def get_token_and_refresh(user_id=None):
-
-
-
+    
     if user_id:
         user_token = current_app.db.voxSpotify.find_one({'user_id': user_id})
     else:

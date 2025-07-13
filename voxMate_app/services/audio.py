@@ -4,6 +4,7 @@ import time
 import tempfile
 import os
 import wave
+import signal
 import numpy as np
 import sounddevice as sd
 from typing import Optional
@@ -33,15 +34,26 @@ class AudioProcessor:
 
     @staticmethod
     def stop_looping_sound(process: Optional[subprocess.Popen]) -> None:
-        """Stop the background looping sound"""
+        """Stop the background looping sound with mpg321-specific enhancements"""
         if process and process.poll() is None:
             try:
+                # 1. Try normal termination
                 process.terminate()
-                process.wait(timeout=2)
+                process.wait(timeout=1)
+                # 2. Check if mpg321 is still running
+                if process.poll() is None:  # Still running
+                    # Get the entire process group
+                    pgid = os.getpgid(process.pid)
+                    # Kill the whole group
+                    os.killpg(pgid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass  # Process already dead
             except subprocess.TimeoutExpired:
-                process.kill()
+                process.kill()  # Fallback
             except Exception as e:
-                logger.error(f"Error stopping sound process: {e}")
+                logger.error(f"Error stopping sound: {e}")
+                # Last resort - system level kill
+                os.system(f"pkill -9 -f 'mpg321.*{process.args[-1]}'")
 
     @staticmethod
     def play_sound(file_path: str) -> None:

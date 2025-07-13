@@ -27,10 +27,16 @@ def main() -> None:
     """Main execution loop"""
     signal.signal(signal.SIGTERM, lambda s, f: sys.exit(0))
     signal.signal(signal.SIGINT, lambda s, f: sys.exit(0))
-    atexit.register(cleanup)
 
-    # Check environment variables before proceeding
-    settings.check_environment()
+    spotify_play = False
+
+    # Initialize services
+    audio = AudioProcessor()
+    atexit.register(cleanup, audio_processor=audio)  # Pass audio to cleanup
+    spotify_player = SpotifyPlayer()
+
+    # Check environment variables before proceeding  
+    settings.check_environment(audio_player=audio)
 
     # Connect to Socket.IO server (non-blocking)
     try:
@@ -47,7 +53,11 @@ def main() -> None:
         
         while True:
             try:
-                app_state.set_state("WAITING")
+                
+                if not spotify_play:
+                    app_state.set_state("WAITING")
+                else:
+                    app_state.set_state("WAITING_SPOTIFY")
 
                 # Wake word phase (PyAudio holds mic)
                 with wakeword.audio_wake_stream(ai_service.access_key) as (porcupine, pa, stream):
@@ -58,30 +68,55 @@ def main() -> None:
 
                 start_total = time.time()
                 audio_file = AudioProcessor.record_audio_to_file()
-                transcript, stt_time, sound_process = ai_service.transcribe_audio(audio_file)
+                try:
+                    transcript, stt_time, sound_process = ai_service.transcribe_audio(audio_file)
+                except Exception as e:
+                    logger.error(f"STT failed: {e}")
+                    continue
+
+
                 total_stt = time.time() - start_total
 
                 if transcript:
                     # AI response generation
                     ai_start = time.time()
-                    ai_response, play_spotify = ai_service.generate_response(transcript)
+                    try:
+                        ai_response, spotify_cmd = ai_service.generate_response(transcript)
+                        if not isinstance(ai_response, str):
+                            ai_response = str(ai_response)
+                    except Exception as e:
+                        logger.error(f"AI processing failed: {e}")
+                        ai_response = "Sorry, I encountered an error processing your request"
+                        spotify_cmd = None
                     ai_time = time.time() - ai_start
 
                     # Text-to-speech
                     tts_start = time.time()
-                    tts_time = ai_service.text_to_speech(ai_response, sound_process)
+                    try:
+                        tts_time = ai_service.text_to_speech(ai_response, sound_process)
+                    except Exception as e:
+                        logger.error(f"TTS failed: {e}")
                     total_tts = time.time() - tts_start
 
-                    try:
-                        if play_spotify is not None:
-                            spotify_player = SpotifyPlayer()
-                            if play_spotify.get("params") == "spotify_stop":
-                                spotify_player.stop_playback()
-                            else:
-                                spotify_player.handle_spotify_play(play_spotify.get("params"))
-                    except Exception as e:
-                            logger.error(f"Failed to play Spotify content: {e}")
+                    # Spotify Control
+                    if spotify_cmd:
+                        try:
+                            if spotify_cmd.get("action") == "spotify_stop":
+                                success_stop = spotify_player.stop_playback()
+                                if success_stop:
+                                    spotify_play = False
+                            elif spotify_cmd.get("action") == "spotify_play":
+                                success_start = spotify_player.handle_spotify_play(spotify_cmd.get("params", ""))
+                                if success_start:
+                                    spotify_play = True
+                        except Exception as e:
+                                logger.error(f"Failed to play Spotify content: {e}")
+                    
+                    # Resume Spotify play if paused for Wake word
+                    if not spotify_cmd and spotify_play:
+                        spotify_player.handle_spotify_play()
 
+                    # Performance metrics
                     logger.info("\nPerformance Metrics:")
                     logger.info(f"STT Processing: {stt_time:.2f}s")
                     logger.info(f"STT & Playback: {total_stt:.2f}s")
@@ -96,7 +131,6 @@ def main() -> None:
                 logger.error(f"Error in main loop: {e}")
                 time.sleep(2)
                 continue
-
     except Exception as e:
         logger.critical(f"Fatal error: {e}", exc_info=True)
         sys.exit(1)

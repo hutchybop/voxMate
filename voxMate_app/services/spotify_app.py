@@ -228,22 +228,31 @@ class SpotifyPlayer:
         return None
     
 
-    def detect_spotify_type(self, query: str) -> Tuple[str, str]:
-        """Try to determine if the query is a song, album, artist, playlist, or podcast."""
+    def detect_spotify_type(self, query: str, user_content_type: Optional[str] = None) -> Tuple[str, str]:
+        """
+        Try to determine if the query is a song, album, artist, playlist, or podcast.
+        Returns:
+            A tuple of (content_type, uri) or (None, None) if not found.
+        """
         if not self.sp and not self.initialize_spotify():
-            return False
+            return None, None
         try:
-            result = self.sp.search(q=query, type="track,album,artist,playlist,show", limit=1)
-            if result['tracks']['items']:
-                return "track", result['tracks']['items'][0]['uri']
-            if result['albums']['items']:
-                return "album", result['albums']['items'][0]['uri']
-            if result['artists']['items']:
-                return "artist", result['artists']['items'][0]['uri']
-            if result['playlists']['items']:
-                return "playlist", result['playlists']['items'][0]['uri']
-            if result['shows']['items']:  # Podcasts
-                return "show", result['shows']['items'][0]['uri']
+            if user_content_type:
+                if user_content_type in ["track", "playlist", "album", "artist", "show", "episode", "audiobook"]:
+                    result = self.sp.search(q=query, type=user_content_type, limit=1)
+                    if result:
+                        items = result.get(f"{user_content_type}s", {}).get("items", [])
+                        if items:
+                            return content_type, items[0]["uri"]
+            
+            result = self.sp.search(q=query, type="track,album,artist,playlist,show,episode,audiobook", limit=1)
+            type_priority = ["track", "playlist", "album", "artist", "show", "episode", "audiobook"]  # You can adjust this order
+
+            for content_type in type_priority:
+                items = result.get(f"{content_type}s", {}).get("items", [])
+                if items:
+                    return content_type, items[0]["uri"]
+
         except Exception as e:
             logger.error(f"Failed to detect Spotify type: {e}")
         return None, None
@@ -292,8 +301,11 @@ class SpotifyPlayer:
         if not self.sp and not self.initialize_spotify():
             return False    
         try:
-            self.sp.pause_playback()
-            return True
+            playback = self.sp.current_playback()
+            if playback and playback['is_playing']:
+                self.sp.pause_playback()
+                return True
+            return True  # No active playback is fine
         except spotipy.SpotifyException as e:
             if e.http_status == 404:  # Nothing is playing
                 logger.warning("Stopping playback, no active playback to stop")
@@ -335,13 +347,15 @@ class SpotifyPlayer:
             except Exception as e:
                 logger.warning(f"Failed to handle Spotify play, error checking playback state: {e}")
         else:  # This goes here - executes if while loop completes without breaking
-            logger.error("Failed to handle Spotify play,, playback transfer verification timed out")
+            logger.error("Failed to handle Spotify play, playback transfer verification timed out")
             return False
         query = ""
+        user_content_type = ""
         if isinstance(params, str):
             query = params.strip()
         elif isinstance(params, dict):
             query = params.get("query", "").strip()
+            user_content_type = params.get("type", "").strip()
         # Handle empty query (resume playback)
         if not query:
             try:
@@ -362,18 +376,31 @@ class SpotifyPlayer:
                 return False
         # Handle search query
         try:
-            content_type, uri = self.detect_spotify_type(query)
+            if user_content_type:
+                content_type, uri = self.detect_spotify_type(query, user_content_type)
+            else:
+                content_type, uri = self.detect_spotify_type(query)
             if not uri:
                 return False
-            # Always use context_uri for continuous playback
-            if content_type in ["track", "album", "playlist", "show", "artist"]:
+            # context_uri
+            if content_type in ["album", "playlist", "show", "artist", "audiobook"]:
                 self.sp.start_playback(
                     device_id=device_id,
                     context_uri=uri,
-                    offset={"position": 0} if content_type == "track" else None
                 )
                 logger.info(f"Handling Spotify Play, started playing {content_type} context: {query}")
                 return True
+            elif content_type in ["track", "episode"]:
+                self.sp.start_playback(
+                    device_id=device_id,
+                    uri=uri,
+                    offset={"position": 0}
+                )
+                logger.info(f"Handling Spotify Play, started playing {content_type} context: {query}")
+                return True
+            else:
+                logger.warning(f"Unsupported content_type returned from detect_spotify_type: {content_type}")
+                return False
         except Exception as e:
             logger.error(f"Failed to handle spotify play, playback error: {e}")
             return False

@@ -9,6 +9,7 @@ class AppState:
     """Thread-safe application state management"""
     _states = {
         "WAITING": "Waiting for wake word",
+        "WAITING_SPOTIFY": "Waiting for wake word, while playing Spotify",
         "PROCESSING": "Processing response"
     }
 
@@ -31,7 +32,8 @@ class AppState:
                 raise ValueError(f"Invalid state: {new_state}")
             
     def is_waiting(self):
-        return self.state == "WAITING"
+        if self.state in ["WAITING", "WAITING_SPOTIFY"]:
+            return True
 
 # Global state instance
 app_state = AppState()

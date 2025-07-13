@@ -73,21 +73,23 @@ class AIService:
             logger.info(f"AI Response: {cleaned}")
             try:
                 parsed = json.loads(cleaned)
-                response_text = parsed.get("response")
+                if not isinstance(parsed, dict):
+                    return cleaned, None
+                response_text = parsed.get("response", cleaned) # Fallback to raw text
                 if parsed.get("action") == "spotify_play":
-                    play_spotify = {"action": "play", "params": parsed.get("params", "")}
+                    spotify_cmd = {"action": "spotify_play", "params": parsed.get("params", "")}
                 elif parsed.get("action") == "spotify_stop":
-                    play_spotify = {"action": "stop"}  # No params needed
+                    spotify_cmd = {"action": "spotify_stop"}  # No params needed
                 else:
-                    play_spotify = None
-                return response_text, play_spotify
+                    spotify_cmd = None
+                return response_text, spotify_cmd
             except json.JSONDecodeError:
                 pass  # Fall through to return plain text
-            logger.warning("Incorrect Ai response format")
-            return cleaned
+            logger.warning("Generate response, incorrect Ai response format")
+            return cleaned, None
         except Exception as e:
-            logger.error(f"AI API Error: {e}")
-            return "Sorry, I encountered an error processing your request."
+            logger.error(f"Failed to generate response: {e}")
+            return "Sorry, I encountered an error processing your request.", None
 
     def text_to_speech(self, message: str, sound_process: Optional[subprocess.Popen]) -> float:
         """Convert text to speech and play it"""

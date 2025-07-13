@@ -3,7 +3,7 @@ from utils.logging import logger
 from services.audio import AudioProcessor
 from services.spotify_app import SpotifyPlayer
 
-def cleanup() -> None:
+def cleanup(audio_processor=None) -> None:
     """Cleanup resources before exit"""
     if hasattr(cleanup, '_called'):
         return
@@ -11,11 +11,10 @@ def cleanup() -> None:
     logger.info("Performing cleanup...")
     try:
         # Stop Spotify if playing
-        spotify = SpotifyPlayer()
-        spotify.stop_playback()
+        SpotifyPlayer().stop_playback()
         # Stop looping sound if playing
-        audio = AudioProcessor()
-        audio.stop_looping_sound()
+        if audio_processor:
+            audio_processor.stop_looping_sound(process=getattr(audio_processor, '_current_process', None))
     except Exception as e:
         logger.error(f"Cleanup error: {e}")
     finally:

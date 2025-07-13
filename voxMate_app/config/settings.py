@@ -8,7 +8,6 @@ from pymongo import MongoClient
 from pymongo.database import Database
 
 # Required local imports
-from services.audio import AudioProcessor
 from utils.logging import logger
 import config.constrants as constrants
 
@@ -95,9 +94,8 @@ AI_MODEL = CONFIG["AI_MODEL"]
 
 
 # ================= ENVIRONMENT CHECK =================
-def check_environment():
-    """Check required environment variables and play warning sounds if missing."""
-    
+def check_environment(audio_player=None):
+    """Check environment variables with optional audio feedback"""
     ENV_CHECKS = {
         "warnings": {
             "MONGODB_URI": {
@@ -115,19 +113,21 @@ def check_environment():
         }
     }
     
-    # Check warning variables
+    # Check warnings
     for var, config in ENV_CHECKS["warnings"].items():
         if not os.getenv(var):
             logger.error(f"{var} environment variable is not set")
-            AudioProcessor.play_sound(config["sound"])
+            if audio_player:  # Only play sound if player is provided
+                audio_player.play_sound(config["sound"])
             logger.warning(config["message"])
     
-    # Check critical variables
+    # Check critical
     missing_keys = [var for var in ENV_CHECKS["critical"] 
                    if not var.startswith("_") and not os.getenv(var)]
     
     if missing_keys:
-        logger.error(f"Missing required enviroment variables: {', '.join(missing_keys)}")
-        AudioProcessor.play_sound(ENV_CHECKS["critical"]["_sound"])
-        logger.critical("Exiting due to missing critical enviroment variables")
+        logger.error(f"Missing required environment variables: {', '.join(missing_keys)}")
+        if audio_player:
+            audio_player.play_sound(ENV_CHECKS["critical"]["_sound"])
+        logger.critical("Exiting due to missing critical environment variables")
         sys.exit(1)

@@ -53,29 +53,29 @@ def load_config() -> Dict[str, Any]:
     """Load configuration from user file and MongoDB with fallbacks."""
     # Finds the user if they have logged in
     user_config = load_user()
-    mongodb = load_mongodb()
+    if (mongodb := load_mongodb()) is None:
+        return False  # Connection error already logged
 
-    if mongodb is not None:
-        try:            
-            # Try user settings first, then fall back to default settings
-            settings = mongodb.appSettings.find_one({"user_id": user_config.get("user_id")}) or {}
+    try:            
+        # Try user settings first, then fall back to default settings
+        settings = mongodb.appSettings.find_one({"user_id": user_config.get("user_id")}) or {}
 
-            if not settings:
-                settings = mongodb.appSettings.find_one({"user_id": "default"}) or {}
+        if not settings:
+            settings = mongodb.appSettings.find_one({"user_id": "default"}) or {}
 
-            logger.info("User config settings loaded")
+        logger.info("User config settings loaded")
 
-            # Build final config with proper fallback order
-            return {
-                "SILENCE_THRESHOLD": settings.get('silence_threshold', DEFAULT_CONFIG["SILENCE_THRESHOLD"]),
-                "SILENCE_DURATION": settings.get('silence_duration', DEFAULT_CONFIG["SILENCE_DURATION"]),
-                "VOLUME_DISPLAY": settings.get('volume_display', DEFAULT_CONFIG["VOLUME_DISPLAY"]),
-                "NOISE_REDUCTION_ENABLED": settings.get('noise_reduction', DEFAULT_CONFIG["NOISE_REDUCTION_ENABLED"]),
-                "STT_MODEL": settings.get('stt_model', DEFAULT_CONFIG["STT_MODEL"]),
-                "AI_MODEL": settings.get('ai_model', DEFAULT_CONFIG["AI_MODEL"]),
-            }
-        except Exception as e:
-            logger.error(f"Failed to connect to MongoDB: {e}")
+        # Build final config with proper fallback order
+        return {
+            "SILENCE_THRESHOLD": settings.get('silence_threshold', DEFAULT_CONFIG["SILENCE_THRESHOLD"]),
+            "SILENCE_DURATION": settings.get('silence_duration', DEFAULT_CONFIG["SILENCE_DURATION"]),
+            "VOLUME_DISPLAY": settings.get('volume_display', DEFAULT_CONFIG["VOLUME_DISPLAY"]),
+            "NOISE_REDUCTION_ENABLED": settings.get('noise_reduction', DEFAULT_CONFIG["NOISE_REDUCTION_ENABLED"]),
+            "STT_MODEL": settings.get('stt_model', DEFAULT_CONFIG["STT_MODEL"]),
+            "AI_MODEL": settings.get('ai_model', DEFAULT_CONFIG["AI_MODEL"]),
+        }
+    except Exception as e:
+        logger.error(f"Failed to connect to MongoDB: {e}")
     
     # Fallback to defaults if MongoDB not available
     logger.warning("Using default configuration")

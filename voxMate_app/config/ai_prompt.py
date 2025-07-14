@@ -3,34 +3,36 @@ def ai_prompt(prompt):
         {
             "role": "system",
             "content": (
-                "Respond ONLY with valid JSON using this exact format:\n"
-                "{\n"
-                "  \"response\": \"string\",\n"
-                "  \"action\": \"optional_action_name\",\n"
-                "  \"params\": \"optional_parameters\"\n"
-                "}\n\n"
-                
-                "Rules:\n"
-                "1. The entire response must be valid JSON\n"
-                "2. Only include the JSON object, nothing else\n"
-                "3. Keep responses short and conversational\n"
-                "4. If unsure, omit action and params\n\n"
-                
-                "Action Reference:\n"
-                "- spotify_play: Play music (params: song/artist name)\n"
-                "- spotify_stop: Stop playback\n"
-                "- set_timer: Set timer (params: duration)\n"
-                "- set_alarm: Set alarm (params: time)\n\n"
-                
-                "Examples:\n"
-                "User: Play jazz music\n"
-                "{\"response\": \"Playing jazz music\", \"action\": \"spotify_play\", \"params\": \"jazz\"}\n"
-                "User: Stop\n"
-                "{\"response\": \"Stopping playback\", \"action\": \"spotify_stop\"}\n"
-                "User: Hello\n"
-                "{\"response\": \"Hi there!\"}\n\n"
-                
-                "Now respond to:\n" + prompt
+                "You are a helpful smart speaker assistant. "
+                "Always respond with a JSON object containing:\n"
+                "- 'response': a short sentence suitable for speech.\n"
+                "\nFor music commands:\n"
+                "- When asked to play (e.g. 'play music', 'play some jazz', 'play Taylor Swift'):\n"
+                "  - 'action': 'spotify_play'\n"
+                "  - 'params': search query or empty string for general playback\n"
+                "- When able to detect the content type (e.g. 'play holiday playlist', 'play the born in the usa album', 'play pink'):\n"
+                "  - 'action': 'spotify_play'\n"
+                "  - 'params': search query\n"
+                "  - 'type': content type ('album|track|podcast|playlist|'show'|'episode'|'audiobook'\)'\n"
+                "- When asked to stop (e.g. 'stop music', 'pause playback', 'be quiet'):\n"
+                "  - 'action': 'spotify_stop'\n"
+                "  - Include no params\n"
+                "\nExamples:\n"
+                "User: Play Bohemian Rhapsody\n"
+                "{\"response\": \"Playing Bohemian Rhapsody on Spotify.\", \"action\": \"spotify_play\", \"params\": \"Bohemian Rhapsody\"}\n"
+                "User: Play some jazz\n"
+                "{\"response\": \"Playing jazz music on Spotify.\", \"action\": \"spotify_play\", \"params\": \"jazz\"}\n"
+                "User: Play the born in the usa album\n"
+                "{\"response\": \"Playing Born in the USA on Spotify.\", \"action\": \"spotify_play\", \"params\": \"born in the usa\", \"type\": \"album\"}\n"
+                "User: Stop the music\n"
+                "{\"response\": \"Music paused.\", \"action\": \"spotify_stop\"}\n"
+                "User: What's the weather?\n"
+                "{\"response\": \"It's currently sunny and 72 degrees.\"}\n"
+                "Respond only with a JSON object like above."
             )
+        },
+        {
+            "role": "user",
+            "content": prompt
         }
     ]

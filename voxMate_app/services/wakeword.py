@@ -67,13 +67,14 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
                     for attempt in range(max_pause_attempts):
                         if spotify_player.stop_playback():
                             spotify_stopped = True
-                            logger.debug("Wake word detected, Spotify paused successfully")
+                            logger.info("Wake word detected, Spotify paused successfully")
                             break
                         elif attempt == max_pause_attempts - 1:
                             logger.error("Critical: Failed to detect wake word, failed to pause Spotify after retries")
                             return  # Exit wake word detection entirely
                         time.sleep(0.1)
                 # Wake word stream must be closed BEFORE recording speech
+                time.sleep(0.1)
                 AudioProcessor.play_sound(constrants.GREETING_SOUND)
                 break
         except Exception as e:

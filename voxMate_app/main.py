@@ -114,7 +114,7 @@ def main() -> None:
                     
                     # Resume Spotify play if paused for Wake word
                     if not spotify_cmd and spotify_play:
-                        spotify_player.handle_spotify_play()
+                        spotify_player.handle_spotify_play("")
 
                     # Performance metrics
                     logger.info("\nPerformance Metrics:")

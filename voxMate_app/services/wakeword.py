@@ -11,6 +11,7 @@ import config.constrants as constrants
 from utils.logging import logger
 from services.audio import AudioProcessor
 from services.spotify_app import SpotifyPlayer
+from utils.state import app_state
 
 
 @contextmanager
@@ -55,7 +56,9 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
     # Initialize SpotifyPlayer once outside the loop
     spotify_player = SpotifyPlayer()
     max_pause_attempts = 3
-    spotify_stopped = False  # Track if we've already stopped playback
+    spotify_stopped = True
+    if app_state.state == 'WAITING_SPOTIFY':
+        spotify_stopped = False
     while True:
         try:
             pcm = stream.read(porcupine.frame_length, exception_on_overflow=False)
@@ -74,7 +77,7 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
                             return  # Exit wake word detection entirely
                         time.sleep(0.1)
                 # Wake word stream must be closed BEFORE recording speech
-                time.sleep(0.1)
+                time.sleep(0.5)
                 AudioProcessor.play_sound(constrants.GREETING_SOUND)
                 break
         except Exception as e:

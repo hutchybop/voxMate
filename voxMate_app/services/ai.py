@@ -63,8 +63,9 @@ class AIService:
             response = self.client.chat.completions.create(
                 model=settings.AI_MODEL,
                 messages=ai_prompt(prompt),
-                max_tokens=100,
-                temperature=0.7
+                max_tokens=200,
+                temperature=0.3,
+                # response_format={"type": "json_object"}
             )
             message = response.choices[0].message.content
             # Remove any special formatting tags

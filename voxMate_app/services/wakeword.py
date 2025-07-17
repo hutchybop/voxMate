@@ -10,7 +10,7 @@ import time
 import config.constrants as constrants
 from utils.logging import logger
 from services.audio import AudioProcessor
-from services.spotify_app import SpotifyPlayer
+from actions.handlers.spotify_app import SpotifyPlayer
 from utils.state import app_state
 
 

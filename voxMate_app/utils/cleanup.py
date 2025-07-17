@@ -1,7 +1,7 @@
 # Required local import
 from utils.logging import logger
 from services.audio import AudioProcessor
-from services.spotify_app import SpotifyPlayer
+from actions.handlers.spotify_app import SpotifyPlayer
 
 def cleanup(audio_processor=None) -> None:
     """Cleanup resources before exit"""

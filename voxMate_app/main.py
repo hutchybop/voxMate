@@ -21,7 +21,7 @@ from services.ai import AIService
 import config.settings as settings
 import services.wakeword as wakeword
 from utils.state import app_state
-from services.spotify_app import SpotifyPlayer
+from actions.handlers.spotify_app import SpotifyPlayer
 
 def main() -> None:
     """Main execution loop"""

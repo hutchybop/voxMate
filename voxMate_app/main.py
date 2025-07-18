@@ -108,6 +108,8 @@ def main() -> None:
                     ai_service.text_to_speech(no_recoding_response)
 
                 try:
+                    print(app_state.get_state("spotify"))
+                    print(app_state.is_spotify_paused)
                     # Resume Spotify play if paused
                     if app_state.is_spotify_paused:
                         cmd_response, message = handle_cmd({"cmd": "spotify_play"})

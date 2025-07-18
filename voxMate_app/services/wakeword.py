@@ -62,9 +62,8 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
     while True:
         try:
             pcm = stream.read(porcupine.frame_length, exception_on_overflow=False)
-            samples = struct.unpack_from("h" * porcupine.frame_length * 2, pcm)  # 2 channels
-            mono_samples = [(samples[i] + samples[i+1]) // 2 for i in range(0, len(samples), 2)]
-            if porcupine.process(mono_samples) >= 0:
+            pcm = struct.unpack_from("h" * porcupine.frame_length, pcm)
+            if porcupine.process(pcm) >= 0:
                 logger.info("Wake word detected! Ask your question...")
                 # Stop Spotify only if we haven't already done so
                 if not spotify_stopped:

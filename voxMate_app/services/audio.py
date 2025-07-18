@@ -23,24 +23,24 @@ class AudioProcessor:
     def start_looping_sound() -> subprocess.Popen:
         try:
             return subprocess.Popen(
-                ["mpg321", "--stereo", "-q", "--loop", "-1", contrants.GENERATING_SOUND],
+                ["mpg123", "--stereo", "-q", "--loop", "-1", "-o", "pulse", contrants.GENERATING_SOUND],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 stdin=subprocess.PIPE   # Prevents hanging on terminate
             )
         except FileNotFoundError:
-            logger.error("mpg321 not found. Please install mpg321 for audio playback.")
+            logger.error("mpg123 not found. Please install mpg123 for audio playback.")
             raise
 
     @staticmethod
     def stop_looping_sound(process: Optional[subprocess.Popen]) -> None:
-        """Stop the background looping sound with mpg321-specific enhancements"""
+        """Stop the background looping sound with mpg123-specific enhancements"""
         if process and process.poll() is None:
             try:
                 # 1. Try normal termination
                 process.terminate()
                 process.wait(timeout=1)
-                # 2. Check if mpg321 is still running
+                # 2. Check if mpg123 is still running
                 if process.poll() is None:  # Still running
                     # Get the entire process group
                     pgid = os.getpgid(process.pid)
@@ -53,14 +53,14 @@ class AudioProcessor:
             except Exception as e:
                 logger.error(f"Error stopping sound: {e}")
                 # Last resort - system level kill
-                os.system(f"pkill -9 -f 'mpg321.*{process.args[-1]}'")
+                os.system(f"pkill -9 -f 'mpg123.*{process.args[-1]}'")
 
     @staticmethod
     def play_sound(file_path: str) -> None:
         """Play sound with explicit stereo output"""
         try:
             result = subprocess.run(
-                ["mpg321", "--stereo", "-q", file_path],
+                ["mpg123", "--stereo", "-q", "-o", "pulse", file_path],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,  # Capture stderr for debugging
                 check=True
@@ -70,7 +70,7 @@ class AudioProcessor:
             # Fallback to non-stereo mode if needed
             try:
                 subprocess.run(
-                    ["mpg321", "-q", file_path],
+                    ["mpg123", "-q", "-o", "pulse", file_path],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                     check=True

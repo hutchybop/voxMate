@@ -64,7 +64,7 @@ sudo apt install -y \
   libffi-dev libssl-dev libasound2-dev \
   portaudio19-dev libportaudio2 libsndfile1 \
   ffmpeg libespeak1 curl unzip sox \
-  libsox-fmt-mp3 mpg321 cmake libopenblas-dev alsa-utils
+  libsox-fmt-mp3 mpg123 cmake libopenblas-dev alsa-utils
 ```
 
 > ✅ Raspberry Pi OS users may also need: `libatlas-base-dev` and `libespeak-ng-dev`

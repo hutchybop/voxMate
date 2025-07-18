@@ -11,14 +11,17 @@ from utils.logging import logger
 # Initisalse SportifyPlayer
 spotify_player = SpotifyPlayer()
 
-def wait_for_device_release(retries=5, delay=0.2):
-    for _ in range(retries):
+def wait_for_device_release(retries=10, delay=0.1):
+    for i in range(retries):
         try:
-            sd.query_devices(kind='output')
+            # Try to initialize a dummy stream to force device release
+            with sd.OutputStream(samplerate=44100, channels=1, dtype='float32'):
+                pass
             return True
         except Exception as e:
-            logger.warning(f"Audio device not ready yet: {e}")
+            logger.warning(f"Audio device not ready (attempt {i+1}/{retries}): {e}")
             time.sleep(delay)
+    logger.error("Failed to release audio device after multiple attempts")
     return False
 
 def handle_cmd(cmd):

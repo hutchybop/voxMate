@@ -80,10 +80,14 @@ class AIService:
                 if not isinstance(parsed, dict):
                     logger.warning("Parsed response is not a JSON object.")
                     return cleaned, None
-
                 response_text = parsed.get("response", cleaned)
-                cmd = parsed.get("action")  # May be None, which is fine
-                return response_text, cmd
+                cmd = parsed.get("action")
+                
+                # Only return cmd if it's a dict and has a 'cmd' key
+                if isinstance(cmd, dict) and "cmd" in cmd:
+                    return response_text, cmd
+                else:
+                    return response_text, None
 
             except json.JSONDecodeError as e:
                 logger.warning(f"JSON parsing failed: {e}")

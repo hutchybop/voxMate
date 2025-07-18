@@ -82,7 +82,10 @@ def main() -> None:
 
                     # Text-to-speech
                     tts_start = time.time()
-                    tts_time = ai_service.text_to_speech(ai_response, sound_process)
+                    try:
+                        tts_time = ai_service.text_to_speech(ai_response, sound_process)
+                    except Exception as e:
+                        logger.error(f"TTS playback failed: {e}")
                     total_tts = time.time() - tts_start
 
                     # Handle the user command and play response

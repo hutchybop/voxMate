@@ -12,9 +12,10 @@ class AppState:
         }
         self._lock = threading.Lock()
 
-    def get_state(self):
-        with self._lock:
-            return self._state.copy()
+    def get_state(self, key=None):
+        if key:
+            return self._state.get(key)
+        return self._state
 
     def set_state(self, key, value):
         with self._lock:

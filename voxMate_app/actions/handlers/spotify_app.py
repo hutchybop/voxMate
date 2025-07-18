@@ -243,7 +243,7 @@ class SpotifyPlayer:
                     if result:
                         items = result.get(f"{user_content_type}s", {}).get("items", [])
                         if items:
-                            return content_type, items[0]["uri"]
+                            return user_content_type, items[0]["uri"]
             
             result = self.sp.search(q=query, type="track,album,artist,playlist,show,episode,audiobook", limit=1)
             type_priority = ["track", "playlist", "album", "artist", "show", "episode", "audiobook"]  # You can adjust this order
@@ -317,11 +317,16 @@ class SpotifyPlayer:
             return False
  
  
-    def handle_spotify_play(self, params: Dict[str, Any]) -> bool:
+    def handle_spotify_play(self, cmd: Dict) -> bool:
         """
         Main method to handle Spotify playback with full error handling.
         Args:
-            params: Dictionary of playback parameters
+            cmd (Dict): Dictionary in format:
+                {
+                    "cmd": "spotify_play",
+                    "params": query (optional),
+                    "type": media_type (optional)
+                }
         Returns:
             bool: True if playback was successfully started, False otherwise
         """
@@ -349,62 +354,54 @@ class SpotifyPlayer:
         else:  # This goes here - executes if while loop completes without breaking
             logger.error("Failed to handle Spotify play, playback transfer verification timed out")
             return False
-        query = ""
-        user_content_type = ""
-        if isinstance(params, str):
-            query = params.strip()
-        elif isinstance(params, dict):
-            query = params.get("query", "").strip()
-            user_content_type = params.get("type", "").strip()
-        # Handle empty query (resume playback)
-        if not query:
-            try:
-                # First try to resume existing playback
-                self.sp.start_playback(device_id=device_id)
-                logger.info("Handling Spotify play, resumed playback successfully")
-                return True
-            except spotipy.SpotifyException as e:
-                if e.http_status == 404:
-                    # If nothing is playing, start a default playlist
-                    self.sp.start_playback(
-                        device_id=device_id,
-                        context_uri="spotify:playlist:37i9dQZF1DXcBWIGoYBM5M"  # Today's Top Hits
-                    )
-                    logger.info("Handling Spotify play, started default playlist")
-                    return True
-                logger.error(f"Failed to handle spotify play, playback resume error: {e}")
-                return False
-        # Handle search query
+        query = cmd.get("params", None)
+        user_content_type = cmd.get("type", None)
+
+        # Handle search query and type if provided
         try:
-            if user_content_type:
-                content_type, uri = self.detect_spotify_type(query, user_content_type)
-            else:
-                content_type, uri = self.detect_spotify_type(query)
-            if not uri:
-                return False
-            # context_uri
-            if content_type in ["album", "playlist", "show", "artist", "audiobook"]:
-                self.sp.start_playback(
-                    device_id=device_id,
-                    context_uri=uri,
-                )
-                logger.info(f"Handling Spotify Play, started playing {content_type} context: {query}")
-                return True
-            elif content_type in ["track", "episode"]:
-                self.sp.start_playback(
-                    device_id=device_id,
-                    uri=uri,
-                    offset={"position": 0}
-                )
-                logger.info(f"Handling Spotify Play, started playing {content_type} context: {query}")
-                return True
-            else:
-                logger.warning(f"Unsupported content_type returned from detect_spotify_type: {content_type}")
-                return False
+            if query is not None:
+                if user_content_type:
+                    content_type, uri = self.detect_spotify_type(query, user_content_type)
+                else:
+                    content_type, uri = self.detect_spotify_type(query)
+                if uri:
+                    # context_uri
+                    if content_type in ["album", "playlist", "show", "artist", "audiobook"]:
+                        self.sp.start_playback(
+                            device_id=device_id,
+                            context_uri=uri,
+                        )
+                        logger.info(f"Handling Spotify Play, started playing {content_type} context: {query}")
+                        return True
+                    elif content_type in ["track", "episode"]:
+                        self.sp.start_playback(
+                            device_id=device_id,
+                            uri=uri,
+                            offset={"position": 0}
+                        )
+                        logger.info(f"Handling Spotify Play, started playing {content_type} context: {query}")
+                        return True
         except Exception as e:
             logger.error(f"Failed to handle spotify play, playback error: {e}")
             return False
-
+        
+        #  If no query given just resume playback
+        try:
+            self.sp.start_playback(device_id=device_id)
+            logger.info("Handling Spotify play, resumed playback successfully")
+            return True
+        except spotipy.SpotifyException as e:
+            if e.http_status in [403, 404]:
+                # If nothing is playing, start a default playlist
+                self.sp.start_playback(
+                    device_id=device_id,
+                    context_uri="spotify:playlist:37i9dQZF1DXcBWIGoYBM5M"  # Today's Top Hits
+                )
+                logger.info("Handling Spotify play, started default playlist")
+                return True
+            logger.error(f"Failed to handle spotify play, playback resume error: {e}")
+            return False
+            
     
     def load_spotify_doc(self) -> Optional[VoxSpotify]:
         """Load the full VoxSpotify document as a dataclass"""

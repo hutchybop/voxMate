@@ -65,29 +65,29 @@ class AIService:
                 messages=ai_prompt(prompt),
                 max_tokens=200,
                 temperature=0.3,
-                # response_format={"type": "json_object"}
+                # response_format={"type": "json_object"}  # Uncomment if model supports it
             )
             message = response.choices[0].message.content
+
             # Remove any special formatting tags
             cleaned = re.sub(r"<think>.*?</think>", "", message, flags=re.DOTALL)
             cleaned = re.sub(r"^```(?:json)?\s*|```$", "", cleaned, flags=re.MULTILINE).strip()
-            logger.info(f"AI Response: {cleaned}")
+            logger.info(f"AI Response (cleaned): {cleaned}")
+
             try:
                 parsed = json.loads(cleaned)
                 if not isinstance(parsed, dict):
+                    logger.warning("Parsed response is not a JSON object.")
                     return cleaned, None
-                response_text = parsed.get("response", cleaned) # Fallback to raw text
-                if parsed.get("action") == "spotify_play":
-                    spotify_cmd = {"action": "spotify_play", "params": parsed.get("params", "")}
-                elif parsed.get("action") == "spotify_stop":
-                    spotify_cmd = {"action": "spotify_stop"}  # No params needed
-                else:
-                    spotify_cmd = None
-                return response_text, spotify_cmd
-            except json.JSONDecodeError:
-                pass  # Fall through to return plain text
-            logger.warning("Generate response, incorrect Ai response format")
-            return cleaned, None
+
+                response_text = parsed.get("response", cleaned)
+                cmd = parsed.get("action")  # May be None, which is fine
+                return response_text, cmd
+
+            except json.JSONDecodeError as e:
+                logger.warning(f"JSON parsing failed: {e}")
+                return cleaned, None
+
         except Exception as e:
             logger.error(f"Failed to generate response: {e}")
             return "Sorry, I encountered an error processing your request.", None

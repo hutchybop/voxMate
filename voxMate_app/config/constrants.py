@@ -5,7 +5,7 @@ from pathlib import Path
 
 # Other default variables
 SAMPLE_RATE = 16000
-CHANNELS = 2
+CHANNELS = 1
 DTYPE = 'int16'
 BLOCKSIZE = 16000
 WAKE_WORD = 'Hey VoxMate'

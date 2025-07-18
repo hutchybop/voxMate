@@ -141,6 +141,6 @@ class AudioProcessor:
             return temp_audio.name
             
         except Exception as e:
-            logger.error(f"Error saving audio file: {e}")
+            logger.error(f"Error: {e}")
             os.unlink(temp_audio.name)
             raise

@@ -48,7 +48,7 @@ class AIService:
                 logger.info(f"Transcription: {transcript.strip()}")
             return transcript.strip(), time.time() - start_time, sound_process
         except Exception as e:
-            logger.error(f"Transcription error: {e}")
+            logger.error(f"Error: {e}")
             AudioProcessor.stop_looping_sound(sound_process)
             raise
         finally:
@@ -56,6 +56,7 @@ class AIService:
                 os.unlink(audio_path)
             except Exception as e:
                 logger.error(f"Error deleting temp audio file: {e}")
+
 
     def generate_response(self, prompt: str) -> str:
         """Generate AI response using chat completion"""
@@ -104,7 +105,8 @@ class AIService:
                 # Clean special characters that might cause TTS issues
                 clean_text = re.sub(r"[_*~]", "", message)
                 gTTS(text=clean_text, lang='en').save(f.name)
-                AudioProcessor.stop_looping_sound(sound_process)
+                if sound_process:
+                    AudioProcessor.stop_looping_sound(sound_process)
                 stop_time = time.time()
                 AudioProcessor.play_sound(f.name)
                 return stop_time - start_time

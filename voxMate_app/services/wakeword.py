@@ -39,7 +39,7 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
         )
         yield porcupine, pa, stream
     except Exception as e:
-        logger.error(f"Error initializing audio wake stream: {e}")
+        logger.error(f"Error initializing: {e}")
         raise
     finally:
         if stream:
@@ -70,7 +70,7 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
                     for attempt in range(max_pause_attempts):
                         if spotify_player.stop_playback():
                             spotify_stopped = True
-                            logger.info("Wake word detected, Spotify paused successfully")
+                            logger.info("Spotify paused successfully")
                             break
                         elif attempt == max_pause_attempts - 1:
                             logger.error("Critical: Failed to detect wake word, failed to pause Spotify after retries")
@@ -81,5 +81,5 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
                 AudioProcessor.play_sound(constrants.GREETING_SOUND)
                 break
         except Exception as e:
-            logger.error(f"Error in wake word detection: {e}")
+            logger.error(f"Error: {e}")
             raise

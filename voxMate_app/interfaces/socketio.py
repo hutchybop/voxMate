@@ -13,11 +13,11 @@ sio = socketio.Client()
 
 @sio.event
 def connect():
-    logger.info("socket.IO connected to server")
+    logger.info("Connected to server")
 
 @sio.event
 def disconnect():
-    logger.warning("socket.IO disconnected to server")
+    logger.warning("Disconnected to server")
 
 
 # Update config if socketio recieved

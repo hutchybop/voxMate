@@ -62,10 +62,10 @@ class SpotifyPlayer:
         try:
             token_info = self.load_spotify_token()
             if token_info is None:
-                logger.error("Failed to initialize Spotify, no valid token available")
+                logger.error("No valid token available")
                 return False
             if 'access_token' not in token_info:
-                    logger.error("Failed to initialize Spotify, Token missing access_token")
+                    logger.error("Token missing access_token")
                     return False
             # Initialize client with retry configuration
             self.sp = spotipy.Spotify(
@@ -79,15 +79,15 @@ class SpotifyPlayer:
                 self.sp.me()  # Gets current user profile
                 return True
             except Exception as api_error:
-                logger.error(f"Failed to initialize Spotify, Spotify API test failed: {str(api_error)}")
+                logger.error(f"Spotify API test failed: {str(api_error)}")
                 self.sp = None
                 return False
         except spotipy.SpotifyException as e:
-            logger.error(f"Failed to initialize Spotify, Spotify API error: {e}")
+            logger.error(f"Spotify API error: {e}")
         except requests.exceptions.RequestException as e:
-            logger.error(f"Failed to initialize Spotify, Network error: {e}")
+            logger.error(f"Network error: {e}")
         except Exception as e:
-            logger.error(f"Failed to initialize Spotify, Unexpected initialization error: {e}")
+            logger.error(f"Unexpected initialization error: {e}")
             traceback.print_exc()
         self.sp = None  # Ensure clean state on failure
         return False
@@ -111,29 +111,29 @@ class SpotifyPlayer:
     def load_spotify_token(self) -> Optional[dict]:
         """Updated version using dataclass"""
         if not self.user_id:
-            logger.error("Failed to load Spotify Token, please login using the Web App and try again.")
+            logger.error("Please login using the Web App and try again.")
             return None     
         try:
             doc = self.load_spotify_doc()
             if not doc or not doc.token_info:
-                logger.warning("Failed to load Spotify Token, no token avaiable, please login to Spotify using the web app.")
+                logger.warning("No token avaiable, please login to Spotify using the web app.")
                 return None
             # Check if token needs refresh
             if time.time() > doc.token_info['expires_at']:
-                logger.info("Loading Spotify Token, refreshing expired token")
+                logger.info("Refreshing expired token")
                 oauth = self.create_spotify_oauth()
                 if oauth is None:
-                    logger.error("Failed to load Spotify Token, Spotify OAuth error")
+                    logger.error("Spotify OAuth error")
                     return None
                 new_token_info = oauth.refresh_access_token(doc.token_info['refresh_token'])
                 if new_token_info is None:
-                    logger.error("Failed to load Spotify Token, Token refresh failed")
+                    logger.error("Token refresh failed")
                     return None
                 
                 # Update and save the document
                 doc.token_info = new_token_info
                 if not self.save_spotify_doc(doc):
-                    logger.error("Failed to load Spotify Token, failed to save refreshed token")
+                    logger.error("Failed to save refreshed token")
                 return new_token_info
             return doc.token_info
         except Exception as e:
@@ -184,7 +184,7 @@ class SpotifyPlayer:
         try:
             current_devices = self.sp.devices().get('devices', [])
         except Exception as e:
-            logger.error(f"Refreshing device cache failed, failed to get current devices: {e}")
+            logger.error(f"Failed to get current devices: {e}")
             return None
         # Check if memory cache device is still active
         mem_id = self.memory_cache.get('device_id')
@@ -215,16 +215,16 @@ class SpotifyPlayer:
             self.memory_cache['device_id'] = new_id
             self.memory_cache['last_updated'] = time.time()
             self.update_cached_device_id_in_db(new_id)
-            logger.info(f"Getting valid device id, found active device: {new_name}")
+            logger.info(f"Found active device: {new_name}")
             return new_id
         # Fall back to database cache if available
         db_id = self.load_cached_device_id_from_db()
         if db_id:
             self.memory_cache['device_id'] = db_id
             self.memory_cache['last_updated'] = time.time()
-            logger.warning("Failed to get valid device id, using database-cached device ID - device may not be active")
+            logger.warning("Using database-cached device ID - device may not be active")
             return db_id
-        logger.error("Failed to get valid device id, no usable device found")
+        logger.error("No usable device found")
         return None
     
 
@@ -268,7 +268,7 @@ class SpotifyPlayer:
                 )
                 return True
             except Exception as e:
-                logger.error(f"Failed to transfer playback, transfer attempt {attempt + 1} failed: {e}")
+                logger.error(f"Transfer attempt {attempt + 1} failed: {e}")
                 if attempt == self.max_retries:
                     traceback.print_exc()
                 time.sleep(1 * (attempt + 1))
@@ -283,14 +283,14 @@ class SpotifyPlayer:
                 return True
             except spotipy.SpotifyException as e:
                 if e.http_status == 404:
-                    logger.error("Failed to start playback, device not found - may be offline")
+                    logger.error("Device not found - may be offline")
                     return False
-                logger.error(f"Failed to start playback, dlayback attempt {attempt + 1} failed: {e}")
+                logger.error(f"Playback attempt {attempt + 1} failed: {e}")
                 if attempt == self.max_retries:
                     traceback.print_exc()
                 time.sleep(1 * (attempt + 1))
             except Exception as e:
-                logger.error(f"Failed to start playback, unexpected playback error: {e}")
+                logger.error(f"Unexpected playback error: {e}")
                 traceback.print_exc()
                 return False
         return False
@@ -308,12 +308,12 @@ class SpotifyPlayer:
             return True  # No active playback is fine
         except spotipy.SpotifyException as e:
             if e.http_status == 404:  # Nothing is playing
-                logger.warning("Stopping playback, no active playback to stop")
+                logger.warning("No active playback to stop")
                 return True
             logger.error(f"Failed to stop playback: {e}")
             return False
         except Exception as e:
-            logger.error(f"Failed to stop playback, unexpected error stopping playback: {e}")
+            logger.error(f"Unexpected error stopping playback: {e}")
             return False
  
  
@@ -334,12 +334,12 @@ class SpotifyPlayer:
             return False
         device_id = self.get_valid_device_id()
         if not device_id:
-            logger.error("Failed to handle Spotify play, no valid playback device available")
+            logger.error("No valid playback device available")
             return False
-        logger.info(f"Handeling Spotify play, attempting playback on device ID: {device_id}")
+        logger.info(f"Attempting playback on device ID: {device_id}")
         # Transfer playback (with retry logic)
         if not self.transfer_playback(device_id):
-            logger.error("Failed to handle Spotify play, failed to transfer playback")
+            logger.error("Failed to transfer playback")
             return False
         # Wait for transfer to complete with verification
         timeout = time.time() + 5  # 5 second timeout
@@ -350,9 +350,9 @@ class SpotifyPlayer:
                     break
                 time.sleep(1)
             except Exception as e:
-                logger.warning(f"Failed to handle Spotify play, error checking playback state: {e}")
+                logger.warning(f"Error checking playback state: {e}")
         else:  # This goes here - executes if while loop completes without breaking
-            logger.error("Failed to handle Spotify play, playback transfer verification timed out")
+            logger.error("Playback transfer verification timed out")
             return False
         query = cmd.get("params", None)
         user_content_type = cmd.get("type", None)
@@ -371,7 +371,7 @@ class SpotifyPlayer:
                             device_id=device_id,
                             context_uri=uri,
                         )
-                        logger.info(f"Handling Spotify Play, started playing {content_type} context: {query}")
+                        logger.info(f"Started playing {content_type} context: {query}")
                         return True
                     elif content_type in ["track", "episode"]:
                         self.sp.start_playback(
@@ -379,16 +379,16 @@ class SpotifyPlayer:
                             uri=uri,
                             offset={"position": 0}
                         )
-                        logger.info(f"Handling Spotify Play, started playing {content_type} context: {query}")
+                        logger.info(f"Started playing {content_type} context: {query}")
                         return True
         except Exception as e:
-            logger.error(f"Failed to handle spotify play, playback error: {e}")
+            logger.error(f"Playback error: {e}")
             return False
         
         #  If no query given just resume playback
         try:
             self.sp.start_playback(device_id=device_id)
-            logger.info("Handling Spotify play, resumed playback successfully")
+            logger.info("Resumed playback successfully")
             return True
         except spotipy.SpotifyException as e:
             if e.http_status in [403, 404]:
@@ -397,9 +397,9 @@ class SpotifyPlayer:
                     device_id=device_id,
                     context_uri="spotify:playlist:37i9dQZF1DXcBWIGoYBM5M"  # Today's Top Hits
                 )
-                logger.info("Handling Spotify play, started default playlist")
+                logger.info("Started default playlist")
                 return True
-            logger.error(f"Failed to handle spotify play, playback resume error: {e}")
+            logger.error(f"Playback resume error: {e}")
             return False
             
     
@@ -409,11 +409,11 @@ class SpotifyPlayer:
             if (mongodb := load_mongodb()) is None:
                 return None  # Connection error already logged 
             if (doc := mongodb.voxSpotify.find_one({'user_id': self.user_id})) is None:
-                logger.info(f"Failed to load VoxSpotify document, no Spotify document for user {self.user_id}")
+                logger.info(f"No Spotify document for user {self.user_id}")
                 return None
             return VoxSpotify.from_dict(doc) if doc else None
         except KeyError as e:
-            logger.error(f"Failed to load VoxSpotify document, missing required field in document: {e}")
+            logger.error(f"Missing required field in document: {e}")
             return None
         except Exception as e:
             logger.error(f"Failed to load VoxSpotify document: {e}")

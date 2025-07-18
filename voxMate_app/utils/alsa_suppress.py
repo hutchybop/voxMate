@@ -13,5 +13,4 @@ def suppress_alsa_errors():
     try:
         cdll.LoadLibrary('libasound.so').snd_lib_error_set_handler(ERROR_HANDLER_FUNC(py_error_handler))
     except Exception as e:
-        if logger:
-            logger.debug(f"Couldn't set ALSA error handler: {e}")
+        logger.debug(f"Couldn't set ALSA error handler: {e}")

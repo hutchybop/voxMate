@@ -22,7 +22,7 @@ class AppState:
                 raise ValueError(f"Unknown state key: {key}")
             old_value = self._state[key]
             self._state[key] = value
-            logger.debug(f"State updated: {key} = {old_value} → {value}")
+            logger.info(f"State updated: {key} = {old_value} → {value}")
 
     def is_waiting(self):
         with self._lock:

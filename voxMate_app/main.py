@@ -42,7 +42,7 @@ def main() -> None:
         logger.info("Listening for settings updates...")
     except Exception as e:
         # Continue running even if Socket.IO fails
-        logger.warning(f"Could not connect to Socket.IO server: {e}")
+        logger.warning(f"[main] Could not connect to Socket.IO server: {e}")
         
     try:    
         ai_service = AIService()
@@ -61,11 +61,8 @@ def main() -> None:
 
                 start_total = time.time()
                 audio_file = AudioProcessor.record_audio_to_file()
-                try:
-                    transcript, stt_time, sound_process = ai_service.transcribe_audio(audio_file)
-                except Exception as e:
-                    logger.error(f"Main loop error, STT failed: {e}")
-                    continue
+
+                transcript, stt_time, sound_process = ai_service.transcribe_audio(audio_file)
                 total_stt = time.time() - start_total
 
                 if transcript:
@@ -76,17 +73,14 @@ def main() -> None:
                         if not isinstance(ai_response, str):
                             ai_response = str(ai_response)
                     except Exception as e:
-                        logger.error(f"Main loop error, AI processing failed: {e}")
+                        logger.error(f"AI processing failed: {e}")
                         ai_response = "Sorry, I encountered an error processing your request"
                         cmd = None
                     ai_time = time.time() - ai_start
 
                     # Text-to-speech
                     tts_start = time.time()
-                    try:
-                        tts_time = ai_service.text_to_speech(ai_response, sound_process)
-                    except Exception as e:
-                        logger.error(f"TTS failed: {e}")
+                    tts_time = ai_service.text_to_speech(ai_response, sound_process)
                     total_tts = time.time() - tts_start
 
                     # Handle the user command and play response
@@ -105,6 +99,11 @@ def main() -> None:
                     logger.info(f"AI Response: {ai_time:.2f}s")
                     logger.info(f"TTS Generation: {tts_time:.2f}s")
                     logger.info(f"TTS & Playback: {total_tts:.2f}s")
+                else:
+                    logger.warning("No sound recorded")
+                    no_recoding_response = "Nothing heard, sleeping"
+                    ai_service.text_to_speech(cmd_response)
+
 
             except KeyboardInterrupt:
                 logger.info("Interrupted by user")

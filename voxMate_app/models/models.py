@@ -49,5 +49,5 @@ class VoxSpotify:
                 user_code=str(data.get('user_code')) if data.get('user_code') is not None else None
             )
         except KeyError as e:
-            logger.error(f"Missing required field: {e}")
-            raise ValueError(f"Missing required field: {e}") from None
+            logger.error(f"VoxSpotify dataclass, Missing required field: {e}")
+            raise ValueError(f"VoxSpotify dataclass, Missing required field: {e}") from None

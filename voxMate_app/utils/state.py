@@ -1,39 +1,36 @@
-# Required python imports
 import threading
-
-# Required local imports
 from utils.logging import logger
 
-# Improved state tracking with thread safety
 class AppState:
-    """Thread-safe application state management"""
-    _states = {
-        "WAITING": "Waiting for wake word",
-        "WAITING_SPOTIFY": "Waiting for wake word, while playing Spotify",
-        "PROCESSING": "Processing response"
-    }
-
+    """Thread-safe, flexible application state management"""
+    
     def __init__(self):
-        self._state = "WAITING"
+        self._state = {
+            "status": "WAITING",      # General app status
+            "spotify": "stopped",     # Could be 'playing', 'paused', etc.
+            "alarm": "off"            # Future: 'ringing', 'off', etc.
+        }
         self._lock = threading.Lock()
 
-    @property
-    def state(self):
+    def get_state(self):
         with self._lock:
-            return self._state
+            return self._state.copy()
 
-    def set_state(self, new_state):
+    def set_state(self, key, value):
         with self._lock:
-            if new_state in self._states:
-                old_state = self._state
-                self._state = new_state
-                logger.debug(f"State changed: {old_state} → {new_state}")
-            else:
-                raise ValueError(f"Invalid state: {new_state}")
-            
+            if key not in self._state:
+                raise ValueError(f"Unknown state key: {key}")
+            old_value = self._state[key]
+            self._state[key] = value
+            logger.debug(f"State updated: {key} = {old_value} → {value}")
+
     def is_waiting(self):
-        if self.state in ["WAITING", "WAITING_SPOTIFY"]:
-            return True
+        with self._lock:
+            return self._state["status"] == "WAITING"
+
+    def is_spotify_playing(self):
+        with self._lock:
+            return self._state["spotify"] == "playing"
 
 # Global state instance
 app_state = AppState()

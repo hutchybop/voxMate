@@ -67,7 +67,7 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
             if porcupine.process(mono_samples) >= 0:
                 logger.info("Wake word detected! Ask your question...")
                 # Stop Spotify only if we haven't already done so
-                if app_state.is_spotify_playing:
+                if app_state.is_spotify_playing():
                     for attempt in range(max_pause_attempts):
                         cmd_response = handle_cmd({"cmd": "spotify_stop"})
                         if cmd_response:

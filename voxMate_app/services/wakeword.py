@@ -60,9 +60,6 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
     max_pause_attempts = 3
     while True:
         try:
-            # pcm = stream.read(porcupine.frame_length, exception_on_overflow=False)
-            # pcm = struct.unpack_from("h" * porcupine.frame_length, pcm)
-            # if porcupine.process(pcm) >= 0:
             pcm = stream.read(porcupine.frame_length, exception_on_overflow=False)
             # Convert to mono by averaging stereo channels
             samples = struct.unpack_from("h" * porcupine.frame_length * 2, pcm)  # 2 channels

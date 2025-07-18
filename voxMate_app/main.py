@@ -100,9 +100,11 @@ def main() -> None:
                     logger.info(f"TTS Generation: {tts_time:.2f}s")
                     logger.info(f"TTS & Playback: {total_tts:.2f}s")
                 else:
+                    # Fall back if no recording
                     logger.warning("No sound recorded")
                     no_recoding_response = "Nothing heard, sleeping"
                     ai_service.text_to_speech(no_recoding_response)
+
                 try:
                     # Resume Spotify play if paused
                     if app_state.is_spotify_paused:

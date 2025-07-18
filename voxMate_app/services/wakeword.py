@@ -12,6 +12,7 @@ from utils.logging import logger
 from services.audio import AudioProcessor
 from actions.handlers.spotify_app import SpotifyPlayer
 from utils.state import app_state
+from actions.dispatcher import handle_cmd
 
 
 @contextmanager
@@ -50,15 +51,13 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
         if porcupine:
             porcupine.delete()
 
+
 def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream) -> None:
     """Listen for wake word and respond when detected"""
     logger.info(f"Listening for wake word... (say '{constrants.WAKE_WORD}')")
     # Initialize SpotifyPlayer once outside the loop
     spotify_player = SpotifyPlayer()
     max_pause_attempts = 3
-    spotify_stopped = True
-    if app_state.state == 'WAITING_SPOTIFY':
-        spotify_stopped = False
     while True:
         try:
             pcm = stream.read(porcupine.frame_length, exception_on_overflow=False)
@@ -66,18 +65,17 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
             if porcupine.process(pcm) >= 0:
                 logger.info("Wake word detected! Ask your question...")
                 # Stop Spotify only if we haven't already done so
-                if not spotify_stopped:
+                if app_state.is_spotify_playing:
                     for attempt in range(max_pause_attempts):
-                        if spotify_player.stop_playback():
-                            spotify_stopped = True
+                        cmd_response = handle_cmd({"cmd": "spotify_stop"})
+                        if cmd_response:
+                            app_state.set_state("spotify", "paused")
                             logger.info("Spotify paused successfully")
                             break
                         elif attempt == max_pause_attempts - 1:
                             logger.error("Critical: Failed to detect wake word, failed to pause Spotify after retries")
                             return  # Exit wake word detection entirely
                         time.sleep(0.1)
-                # Wake word stream must be closed BEFORE recording speech
-                time.sleep(0.5)
                 AudioProcessor.play_sound(constrants.GREETING_SOUND)
                 break
         except Exception as e:

@@ -31,6 +31,10 @@ class AppState:
     def is_spotify_playing(self):
         with self._lock:
             return self._state["spotify"] == "playing"
+        
+    def is_spotify_paused(self):
+        with self._lock:
+            return self._state["spotify"] == "paused"
 
 # Global state instance
 app_state = AppState()

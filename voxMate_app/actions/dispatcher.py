@@ -5,7 +5,10 @@ spotify_player = SpotifyPlayer()
 
 def handle_cmd(cmd):
     if cmd.get('cmd') == 'spotify_play':
-        spotify_player.handle_spotify_play(cmd)
+        play = spotify_player.handle_spotify_play(cmd)
+        if not play:
+            pass
+
 
         # add responses to handle_spotify_play
         # response = spotify_player.handle_spotify_play(cmd)
@@ -19,6 +22,5 @@ def handle_cmd(cmd):
     # "type": "media"
     # }
 
-    # Need to respond with tts response
+    # Need to return true or false
     # To to effectively take state
-    pass

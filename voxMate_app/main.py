@@ -102,7 +102,15 @@ def main() -> None:
                 else:
                     logger.warning("No sound recorded")
                     no_recoding_response = "Nothing heard, sleeping"
-                    ai_service.text_to_speech(cmd_response)
+                    ai_service.text_to_speech(no_recoding_response)
+                try:
+                    # Resume Spotify play if paused
+                    if app_state.is_spotify_paused:
+                        cmd_response = handle_cmd({"cmd": "spotify_play"})
+                    if cmd_response:
+                        app_state.set_state("spotify", "playing")
+                except Exception as e:
+                    logger.error(f'Main loop error, re-starting Spotify: {e}')
 
 
             except KeyboardInterrupt:

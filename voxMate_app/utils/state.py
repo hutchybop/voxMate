@@ -6,7 +6,7 @@ class AppState:
     
     def __init__(self):
         self._state = {
-            "status": "WAITING",      # General app status
+            "status": "waiting",      # General app status
             "spotify": "stopped",     # Could be 'playing', 'paused', etc.
             "alarm": "off"            # Future: 'ringing', 'off', etc.
         }
@@ -26,7 +26,7 @@ class AppState:
 
     def is_waiting(self):
         with self._lock:
-            return self._state["status"] == "WAITING"
+            return self._state["status"] == "waiting"
 
     def is_spotify_playing(self):
         with self._lock:

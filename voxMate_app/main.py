@@ -52,12 +52,14 @@ def main() -> None:
         while True:
             try:
 
+                app_state.set_state("status", "waiting")
+
                 # Wake word phase (PyAudio holds mic)
                 with wakeword.audio_wake_stream(ai_service.access_key) as (porcupine, pa, stream):
                     wakeword.wake_word_detection(porcupine, stream)
 
                 # Mic now released — record using sounddevice
-                app_state.set_state("PROCESSING")
+                app_state.set_state("status", "processing")
 
                 start_total = time.time()
                 audio_file = AudioProcessor.record_audio_to_file()
@@ -86,9 +88,9 @@ def main() -> None:
                     # Handle the user command and play response
                     try:
                         if cmd:
-                            cmd_response = handle_cmd(cmd)
-                        if cmd_response:
-                            ai_service.text_to_speech(cmd_response, sound_process)
+                            cmd_response, message = handle_cmd(cmd)
+                        if not cmd_response and message:
+                            ai_service.text_to_speech(message)
                     except Exception as e:
                         logger.error(f'Main loop error, processing user command: {e}')
 
@@ -108,12 +110,11 @@ def main() -> None:
                 try:
                     # Resume Spotify play if paused
                     if app_state.is_spotify_paused:
-                        cmd_response = handle_cmd({"cmd": "spotify_play"})
-                    if cmd_response:
-                        app_state.set_state("spotify", "playing")
+                        cmd_response, message = handle_cmd({"cmd": "spotify_play"})
+                        if not cmd_response and message:
+                            ai_service.text_to_speech(message)
                 except Exception as e:
                     logger.error(f'Main loop error, re-starting Spotify: {e}')
-
 
             except KeyboardInterrupt:
                 logger.info("Interrupted by user")

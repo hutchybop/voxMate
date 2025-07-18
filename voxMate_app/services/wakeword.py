@@ -34,7 +34,7 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
             channels=constrants.CHANNELS,
             format=pyaudio.paInt16,
             input=True,
-            input_device_index=1,
+            input_device_index=0,
             frames_per_buffer=porcupine.frame_length,
         )
         yield porcupine, pa, stream

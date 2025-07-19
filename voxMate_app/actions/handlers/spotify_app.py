@@ -376,7 +376,7 @@ class SpotifyPlayer:
                     elif content_type in ["track", "episode"]:
                         self.sp.start_playback(
                             device_id=device_id,
-                            uris=uri,
+                            uris=[uri],
                             offset={"position": 0}
                         )
                         logger.info(f"Started playing {content_type} context: {query}")

@@ -5,16 +5,13 @@ import pyaudio
 import pvporcupine
 import struct
 import time
-import traceback
 
 # Required local imports
 import config.constrants as constrants
 from utils.logging import logger
 from services.audio import AudioProcessor
-from actions.handlers.spotify_app import SpotifyPlayer
 from utils.state import app_state
 from actions.dispatcher import handle_cmd
-import config.settings as settings
 
 
 @contextmanager
@@ -25,27 +22,22 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
     stream = None
     try:
         pa = pyaudio.PyAudio()
-        device_index = settings.CONFIG.get("MIC_DEVICE_INDEX")
         porcupine = pvporcupine.create(
             access_key=access_key,
             keyword_paths=[constrants.KEYWORD_PATH],
             sensitivities=[0.85]
         )
         try:
-            print("Opening stream with index:", device_index)
-            print("Format:", pyaudio.paInt16, "Rate:", porcupine.sample_rate, "Channels:", constrants.CHANNELS)
             stream = pa.open(
                 rate=porcupine.sample_rate,
                 channels=constrants.CHANNELS,
                 format=pyaudio.paInt16,
                 input=True,
-                # input_device_index=device_index,
-                input_device_index=None,
                 frames_per_buffer=porcupine.frame_length,
             )
         except Exception as e:
-            print("Failed to open audio stream:")
-            traceback.print_exc()
+            logger.error(f"Failed to open audio stream: {e}")
+            raise
     
         yield porcupine, pa, stream
     except Exception as e:
@@ -64,7 +56,6 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
 def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream) -> None:
     """Listen for wake word and respond when detected"""
     logger.info(f"Listening for wake word... (say '{constrants.WAKE_WORD}')")
-    # max_pause_attempts = 3
     while True:
         try:
             pcm = stream.read(porcupine.frame_length, exception_on_overflow=False)
@@ -75,13 +66,10 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
                 logger.info("Wake word detected! Ask your question...")
                 # Stop Spotify only if we haven't already done so
                 if app_state.is_spotify_playing():
-                    # for attempt in range(max_pause_attempts):
                     cmd_response = handle_cmd({"cmd": "spotify_stop"})
                     if cmd_response:
                         app_state.set_state("spotify", "paused")
                         logger.info("Spotify paused successfully")
-                            # break
-                        # elif attempt == max_pause_attempts - 1:
                     else:
                         logger.critical("Critical: Failed to detect wake word, failed to pause Spotify after retries")
                         return  # Exit wake word detection entirely

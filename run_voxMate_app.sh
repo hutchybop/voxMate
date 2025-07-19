@@ -1,5 +1,5 @@
 #!/bin/bash
 
 cd ~/voxMate/voxMate_app
-source ~/voxMate/.voxMate/bin/activate
+source ~/voxMate/.voxenv/bin/activate
 git pull

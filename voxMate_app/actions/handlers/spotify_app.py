@@ -307,7 +307,7 @@ class SpotifyPlayer:
                 return True
             return True  # No active playback is fine
         except spotipy.SpotifyException as e:
-            if e.http_status == 404:  # Nothing is playing
+            if e.http_status in [404, 403]:  # Nothing is playing
                 logger.warning("No active playback to stop")
                 return True
             logger.error(f"Failed to stop playback: {e}")

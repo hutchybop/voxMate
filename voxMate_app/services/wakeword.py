@@ -5,6 +5,7 @@ import pyaudio
 import pvporcupine
 import struct
 import time
+import traceback
 
 # Required local imports
 import config.constrants as constrants
@@ -30,15 +31,21 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
             keyword_paths=[constrants.KEYWORD_PATH],
             sensitivities=[0.85]
         )
-
-        stream = pa.open(
-            rate=porcupine.sample_rate,
-            channels=constrants.CHANNELS,
-            format=pyaudio.paInt16,
-            input=True,
-            input_device_index=device_index,
-            frames_per_buffer=porcupine.frame_length,
-        )
+        try:
+            print("Opening stream with index:", device_index)
+            print("Format:", pyaudio.paInt16, "Rate:", porcupine.sample_rate, "Channels:", constrants.CHANNELS)
+            stream = pa.open(
+                rate=porcupine.sample_rate,
+                channels=constrants.CHANNELS,
+                format=pyaudio.paInt16,
+                input=True,
+                input_device_index=device_index,
+                frames_per_buffer=porcupine.frame_length,
+            )
+        except Exception as e:
+            print("Failed to open audio stream:")
+            traceback.print_exc()
+    
         yield porcupine, pa, stream
     except Exception as e:
         logger.error(f"Error initializing: {e}")

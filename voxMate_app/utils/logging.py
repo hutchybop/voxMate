@@ -9,7 +9,7 @@ load_dotenv('../../.env')
 
 # Setup logging with more detailed format
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(asctime)s - %(module)s[%(funcName)s] - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),

@@ -368,7 +368,7 @@ class SpotifyPlayer:
                     content_type, uri = self.detect_spotify_type(query, user_content_type)
                 else:
                     content_type, uri = self.detect_spotify_type(query)
-                logger.debug(f"Spotify detect result - type: {content_type}, uri: {uri}")
+                logger.info(f"Spotify detect result - type: {content_type}, uri: {uri}")
                 if uri and isinstance(uri, str) and uri.startswith("spotify:"):
                     # Case 1: Artist → Auto-play artist radio
                     if content_type == "artist":

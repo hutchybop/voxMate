@@ -56,9 +56,7 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
 def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream) -> None:
     """Listen for wake word and respond when detected"""
     logger.info(f"Listening for wake word... (say '{constrants.WAKE_WORD}')")
-    # Initialize SpotifyPlayer once outside the loop
-    spotify_player = SpotifyPlayer()
-    max_pause_attempts = 3
+    # max_pause_attempts = 3
     while True:
         try:
             pcm = stream.read(porcupine.frame_length, exception_on_overflow=False)
@@ -69,18 +67,19 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
                 logger.info("Wake word detected! Ask your question...")
                 # Stop Spotify only if we haven't already done so
                 if app_state.is_spotify_playing():
-                    for attempt in range(max_pause_attempts):
-                        cmd_response = handle_cmd({"cmd": "spotify_stop"})
-                        if cmd_response:
-                            app_state.set_state("spotify", "paused")
-                            logger.info("Spotify paused successfully")
-                            break
-                        elif attempt == max_pause_attempts - 1:
-                            logger.error("Critical: Failed to detect wake word, failed to pause Spotify after retries")
-                            return  # Exit wake word detection entirely
-                        time.sleep(0.1)
+                    # for attempt in range(max_pause_attempts):
+                    cmd_response = handle_cmd({"cmd": "spotify_stop"})
+                    if cmd_response:
+                        app_state.set_state("spotify", "paused")
+                        logger.info("Spotify paused successfully")
+                            # break
+                        # elif attempt == max_pause_attempts - 1:
+                    else:
+                        logger.critical("Critical: Failed to detect wake word, failed to pause Spotify after retries")
+                        return  # Exit wake word detection entirely
+                time.sleep(0.5)
                 AudioProcessor.play_sound(constrants.GREETING_SOUND)
-                break
+                # break
         except Exception as e:
             logger.error(f"Error: {e}")
             raise

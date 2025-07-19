@@ -25,6 +25,7 @@ class AppSettings:
     noise_reduction: bool = True
     stt_model: str = 'whisper-large-v3-turbo'
     ai_model: str = 'mistral-saba-24b'
+    MIC_DEVICE_INDEX: Optional[str] = None
 
 
 @dataclass

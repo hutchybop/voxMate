@@ -13,16 +13,7 @@ from services.audio import AudioProcessor
 from actions.handlers.spotify_app import SpotifyPlayer
 from utils.state import app_state
 from actions.dispatcher import handle_cmd
-
-
-def find_input_device(pa: pyaudio.PyAudio, name_substring: str, channels_required=1) -> int:
-    for i in range(pa.get_device_count()):
-        info = pa.get_device_info_by_index(i)
-        if (info["maxInputChannels"] >= channels_required and
-                name_substring.lower() in info["name"].lower()):
-            logger.info(f"Selected input device: {info['name']} (index {i})")
-            return i
-    raise RuntimeError(f"Input device containing '{name_substring}' not found")
+import config.settings as settings
 
 
 @contextmanager
@@ -31,10 +22,9 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
     pa = None
     porcupine = None
     stream = None
-
     try:
         pa = pyaudio.PyAudio()
-        device_index = find_input_device(pa, name_substring="seeed2", channels_required=constrants.CHANNELS)
+        device_index = settings.CONFIG.get("MIC_DEVICE_INDEX")
         porcupine = pvporcupine.create(
             access_key=access_key,
             keyword_paths=[constrants.KEYWORD_PATH],

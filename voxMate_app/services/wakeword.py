@@ -39,7 +39,8 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
                 channels=constrants.CHANNELS,
                 format=pyaudio.paInt16,
                 input=True,
-                input_device_index=device_index,
+                # input_device_index=device_index,
+                input_device_index=None,
                 frames_per_buffer=porcupine.frame_length,
             )
         except Exception as e:

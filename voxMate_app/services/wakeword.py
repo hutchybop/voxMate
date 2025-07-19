@@ -79,7 +79,7 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
                         return  # Exit wake word detection entirely
                 time.sleep(0.5)
                 AudioProcessor.play_sound(constrants.GREETING_SOUND)
-                # break
+                break
         except Exception as e:
             logger.error(f"Error: {e}")
             raise

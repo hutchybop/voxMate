@@ -365,26 +365,29 @@ class SpotifyPlayer:
                 else:
                     content_type, uri = self.detect_spotify_type(query)
                 if uri:
-                    # context_uri
-                    if content_type in ["album", "playlist", "show", "artist", "audiobook"]:
-                        self.sp.start_playback(
-                            device_id=device_id,
-                            context_uri=uri,
-                        )
-                        logger.info(f"Started playing {content_type} context: {query}")
-                        return True
-                    elif content_type in ["track", "episode"]:
-                        self.sp.start_playback(
-                            device_id=device_id,
-                            uris=[uri],
-                            offset={"position": 0}
-                        )
-                        logger.info(f"Started playing {content_type} context: {query}")
-                        return True
+                    # Case 1: Artist → Auto-play artist radio
+                    if content_type == "artist":
+                        radio_uri = f"{uri}:radio"
+                        self.sp.start_playback(device_id=device_id, context_uri=radio_uri)
+                        logger.info(f"Playing artist radio: {query}")
+                    # Case 2: Track → Play track, then queue its radio
+                    elif content_type == "track":
+                        # Play the track first
+                        self.sp.start_playback(device_id=device_id, uris=[uri])
+                        # Queue the track's radio (no playlist saved)
+                        radio_uri = f"{uri}:radio"
+                        self.sp.add_to_queue(radio_uri, device_id=device_id)
+                        logger.info(f"Playing track + queued its radio: {query}")
+                    # Case 3: Playlist/Album/Episode → Normal playback
+                    else:
+                        self.sp.start_playback(device_id=device_id, context_uri=uri)
+                        logger.info(f"Playing {content_type}: {query}")
+                    return True
+            else:
+                logger.warning(f"No URI found for query: {query}, falling back to resume playback")
         except Exception as e:
             logger.error(f"Playback error: {e}")
-            return False
-        
+            logger.info("Falling back to generic playback")
         #  If no query given just resume playback
         try:
             self.sp.start_playback(device_id=device_id)

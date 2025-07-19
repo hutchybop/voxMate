@@ -93,7 +93,7 @@ def main() -> None:
                         if cmd:
                             cmd_response, message = handle_cmd(cmd)
                         if not cmd_response and message:
-                            ai_service.text_to_speech(message)
+                            ai_service.text_to_speech(message, sound_process=None)
                     except Exception as e:
                         logger.error(f'Main loop error, processing user command: {e}')
 
@@ -108,16 +108,14 @@ def main() -> None:
                     # Fall back if no recording
                     logger.warning("No sound recorded")
                     no_recoding_response = "Nothing heard, sleeping"
-                    ai_service.text_to_speech(no_recoding_response)
+                    ai_service.text_to_speech(no_recoding_response, sound_process=None)
 
                 try:
-                    print(app_state.get_state("spotify"))
-                    print(app_state.is_spotify_paused())
                     # Resume Spotify play if paused
                     if app_state.is_spotify_paused():
                         cmd_response, message = handle_cmd({"cmd": "spotify_play"})
                         if not cmd_response and message:
-                            ai_service.text_to_speech(message)
+                            ai_service.text_to_speech(message, sound_process=None)
                 except Exception as e:
                     logger.error(f'Main loop error, re-starting Spotify: {e}')
 

@@ -31,9 +31,10 @@ def handle_cmd(cmd):
 
     # Play stoptify
     if cmd.get('cmd') == 'spotify_play':
-        play = spotify_player.handle_spotify_play(cmd)
+        play, message = spotify_player.handle_spotify_play(cmd)
         if not play:
-            message = "Error playing Spotify"
+            if not message:
+                message = "Error playing Spotify"
         else:
             app_state.set_state("spotify", "playing")
         return play, message

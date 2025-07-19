@@ -331,16 +331,19 @@ class SpotifyPlayer:
             bool: True if playback was successfully started, False otherwise
         """
         if not self.sp and not self.initialize_spotify():
-            return False
+            message = "Spotify did not initialize, could not play Spotify"
+            return False, message
         device_id = self.get_valid_device_id()
         if not device_id:
             logger.error("No valid playback device available")
-            return False
+            message = "No valid playback device available, could not play Spotify"
+            return False, message
         logger.info(f"Attempting playback on device ID: {device_id}")
         # Transfer playback (with retry logic)
         if not self.transfer_playback(device_id):
             logger.error("Failed to transfer playback")
-            return False
+            message = "Failed to transfer playback, could not play Spotify"
+            return False, message
         # Wait for transfer to complete with verification
         timeout = time.time() + 5  # 5 second timeout
         while time.time() < timeout:
@@ -353,7 +356,8 @@ class SpotifyPlayer:
                 logger.warning(f"Error checking playback state: {e}")
         else:  # This goes here - executes if while loop completes without breaking
             logger.error("Playback transfer verification timed out")
-            return False
+            message = "Failed to transfer playback, could not play Spotify"
+            return False, message
         query = cmd.get("params", None)
         user_content_type = cmd.get("type", None)
 
@@ -382,7 +386,7 @@ class SpotifyPlayer:
                     else:
                         self.sp.start_playback(device_id=device_id, context_uri=uri)
                         logger.info(f"Playing {content_type}: {query}")
-                    return True
+                    return True, None
             else:
                 logger.warning(f"No URI found for query: {query}, falling back to resume playback")
         except Exception as e:
@@ -392,7 +396,7 @@ class SpotifyPlayer:
         try:
             self.sp.start_playback(device_id=device_id)
             logger.info("Resumed playback successfully")
-            return True
+            return True, None
         except spotipy.SpotifyException as e:
             if e.http_status in [403, 404]:
                 # If nothing is playing, start a default playlist
@@ -401,9 +405,10 @@ class SpotifyPlayer:
                     context_uri="spotify:playlist:37i9dQZF1DXcBWIGoYBM5M"  # Today's Top Hits
                 )
                 logger.info("Started default playlist")
-                return True
+                return True, None
             logger.error(f"Playback resume error: {e}")
-            return False
+            message = "Spotify has had an error"
+            return False, message
             
     
     def load_spotify_doc(self) -> Optional[VoxSpotify]:

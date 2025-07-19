@@ -72,7 +72,7 @@ def find_input_device(
             info = pa.get_device_info_by_index(i)
             if info["maxInputChannels"] >= channels_required and name_substring.lower() in info["name"].lower():
                 logger.info(f"Found matching input device: {info['name']} (index {i})")
-                if mongodb:
+                if mongodb is not None:
                     try:
                         mongodb.appSettings.update_one(
                             {"user_id": user_id},
@@ -102,7 +102,7 @@ def load_config() -> Dict[str, Any]:
     settings = DEFAULT_CONFIG.copy()  # Always copy to avoid mutating global
     db_mic_index = None  # Initialize here to use in fallback too
     try:
-        if mongodb and user_id:
+        if mongodb is not None and user_id:
             # Try user settings first, then fall back to default in DB
             user_settings = mongodb.appSettings.find_one({"user_id": user_id}) or {}
             if not user_settings:

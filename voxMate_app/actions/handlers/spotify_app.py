@@ -368,7 +368,7 @@ class SpotifyPlayer:
                     content_type, uri = self.detect_spotify_type(query, user_content_type)
                 else:
                     content_type, uri = self.detect_spotify_type(query)
-                if uri:
+                if uri is not None:
                     # Case 1: Artist → Auto-play artist radio
                     if content_type == "artist":
                         radio_uri = f"{uri}:radio"

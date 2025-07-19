@@ -15,6 +15,16 @@ from utils.state import app_state
 from actions.dispatcher import handle_cmd
 
 
+def find_input_device(pa: pyaudio.PyAudio, name_substring: str, channels_required=1) -> int:
+    for i in range(pa.get_device_count()):
+        info = pa.get_device_info_by_index(i)
+        if (info["maxInputChannels"] >= channels_required and
+                name_substring.lower() in info["name"].lower()):
+            logger.info(f"Selected input device: {info['name']} (index {i})")
+            return i
+    raise RuntimeError(f"Input device containing '{name_substring}' not found")
+
+
 @contextmanager
 def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine, pyaudio.PyAudio, pyaudio.Stream], None, None]:
     """Context manager for Porcupine wake word detection"""
@@ -24,10 +34,11 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
 
     try:
         pa = pyaudio.PyAudio()
+        device_index = find_input_device(pa, name_substring="seeed2", channels_required=constrants.CHANNELS)
         porcupine = pvporcupine.create(
             access_key=access_key,
             keyword_paths=[constrants.KEYWORD_PATH],
-            sensitivities=[0.7]
+            sensitivities=[0.85]
         )
 
         stream = pa.open(
@@ -35,7 +46,7 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
             channels=constrants.CHANNELS,
             format=pyaudio.paInt16,
             input=True,
-            input_device_index=2,
+            input_device_index=device_index,
             frames_per_buffer=porcupine.frame_length,
         )
         yield porcupine, pa, stream

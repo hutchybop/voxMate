@@ -44,7 +44,7 @@ def handle_cmd(cmd):
         if not stop:
             message = "Error stopping Spotify"
         else:
-            wait_for_device_release()
+            # wait_for_device_release()
             app_state.set_state("spotify", "stopped")
         return stop, message
 

@@ -14,8 +14,10 @@ class AppState:
 
     def get_state(self, key=None):
         if key:
-            return self._state.get(key)
-        return self._state
+            with self._lock:
+                return self._state.get(key)
+        with self._lock:
+            return self._state.copy()
 
     def set_state(self, key, value):
         with self._lock:

@@ -246,13 +246,11 @@ class SpotifyPlayer:
                             return user_content_type, items[0]["uri"]
             
             result = self.sp.search(q=query, type="track,album,artist,playlist,show,episode,audiobook", limit=1)
-            type_priority = ["track", "playlist", "album", "artist", "show", "episode", "audiobook"]  # You can adjust this order
-
+            type_priority = ["album", "artist", "track", "playlist", "show", "episode", "audiobook"]  # You can adjust this order
             for content_type in type_priority:
                 items = result.get(f"{content_type}s", {}).get("items", [])
                 if items:
                     return content_type, items[0]["uri"]
-
         except Exception as e:
             logger.error(f"Failed to detect Spotify type: {e}")
         return None, None

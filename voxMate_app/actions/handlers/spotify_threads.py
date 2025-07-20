@@ -90,3 +90,4 @@ class SpotifyRadioExtender(threading.Thread):
     def stop(self):
         logger.info("Stopping Spotify radio extender thread")
         self._stop_event.set()
+        SpotifyRadioExtender._instance = None

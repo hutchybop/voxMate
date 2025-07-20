@@ -35,49 +35,19 @@ class SpotifyRadioExtender(threading.Thread):
             logger.warning("No current track info found")
             return
 
-        # Try to extract artist ID (preferred)
         artist_id = current_track.get("artists", [{}])[0].get("id")
-        track_id = current_track.get("id")
+        if not artist_id:
+            logger.warning("No artist ID found")
+            return
 
-        recommendations = None
-
-        # Try with artist ID
-        if artist_id:
-            try:
-                logger.info(f"Fetching recommendations based on artist: {artist_id}")
-                recommendations = self.spotify_player.sp.recommendations(seed_artists=[artist_id], limit=5)
-            except Exception as e:
-                logger.warning(f"Artist-based recommendation failed: {e}")
-
-        # Fallback to track ID
-        if (not recommendations or not recommendations.get("tracks")) and track_id:
-            try:
-                logger.info(f"Fetching recommendations based on track: {track_id}")
-                recommendations = self.spotify_player.sp.recommendations(seed_tracks=[track_id], limit=5)
-            except Exception as e:
-                logger.warning(f"Track-based recommendation failed: {e}")
-
-        # Final fallback to genre
-        if not recommendations or not recommendations.get("tracks"):
-            try:
-                logger.info("Falling back to pop genre for recommendations")
-                recommendations = self.spotify_player.sp.recommendations(seed_genres=["pop"], limit=5)
-            except Exception as e:
-                logger.error(f"Genre-based fallback recommendation failed: {e}")
-                return
-
-        # Queue the recommended tracks
-        for track in recommendations.get("tracks", []):
-            uri = track.get("uri")
-            name = track.get("name")
-            artist_name = track.get("artists", [{}])[0].get("name")
-            if uri:
-                try:
-                    self.spotify_player.sp.add_to_queue(uri)
-                    logger.info(f"Queued recommendation: {name} by {artist_name}")
-                except Exception as e:
-                    logger.warning(f"Failed to queue track {name}: {e}")
-
+        try:
+            logger.info(f"Fetching top tracks for artist: {artist_id}")
+            top_tracks = self.spotify_player.sp.artist_top_tracks(artist_id, country="GB")["tracks"]
+            for track in top_tracks[:3]:
+                self.spotify_player.sp.add_to_queue(track["uri"])
+                logger.info(f"Queued top track: {track['name']} by {track['artists'][0]['name']}")
+        except Exception as e:
+            logger.error(f"Failed to fetch or queue top tracks: {e}")
 
     def stop(self):
         logger.info("Stopping Spotify radio extender thread")

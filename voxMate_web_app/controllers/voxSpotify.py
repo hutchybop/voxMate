@@ -48,7 +48,6 @@ def create_spotify_oauth(state=None):
     )
 
 def get_token_and_refresh(user_id=None):
-    
     if user_id:
         user_token = current_app.db.voxSpotify.find_one({'user_id': user_id})
     else:
@@ -58,15 +57,22 @@ def get_token_and_refresh(user_id=None):
 
     if user_token is not None:
         token_info = user_token.get("token_info")
+
+        if token_info is None:
+            return None  # Safeguard added here
+
         if time.time() > token_info['expires_at']:
             oauth = create_spotify_oauth()
             new_token_info = oauth.refresh_access_token(token_info['refresh_token'])
             if not new_token_info:
                 return None
             else:
-                current_app.db.voxSpotify.update_one({'user_id': session.get("user_id")}, {'$set': {'token_info': new_token_info}})
+                current_app.db.voxSpotify.update_one(
+                    {'user_id': session.get("user_id")},
+                    {'$set': {'token_info': new_token_info}}
+                )
                 return new_token_info
-                
+
     return token_info
 
 
@@ -164,7 +170,7 @@ def check_status():
             user = current_app.db.voxSpotify.find_one({"user_id": session.get("user_id")})
             # If the user is already in the db update, if not add new user
             if user:
-                current_app.db.voxSpotify.update_one({"user_id": session.get("user_id")}, {"$Set": {"user_code": user_code}})
+                current_app.db.voxSpotify.update_one({"user_id": session.get("user_id")}, {"$set": {"user_code": user_code}})
             else:
                 user_spotify = VoxSpotify(
                     user_id=session.get("user_id"),

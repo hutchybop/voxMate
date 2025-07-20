@@ -238,15 +238,15 @@ class SpotifyPlayer:
             return None, None
         try:
             if user_content_type:
-                if user_content_type in ["track", "playlist", "album", "artist", "show", "episode", "audiobook"]:
+                if user_content_type in ["track", "playlist", "album", "artist"]:
                     result = self.sp.search(q=query, type=user_content_type, limit=1)
                     if result:
                         items = result.get(f"{user_content_type}s", {}).get("items", [])
                         if items:
                             return user_content_type, items[0]["uri"]
             
-            result = self.sp.search(q=query, type="track,album,artist,playlist,show,episode,audiobook", limit=1)
-            type_priority = ["album", "artist", "track", "playlist", "show", "episode", "audiobook"]  # You can adjust this order
+            result = self.sp.search(q=query, type="track,album,artist,playlist", limit=1)
+            type_priority = ["album", "artist", "track", "playlist"]  # You can adjust this order
             for content_type in type_priority:
                 items = result.get(f"{content_type}s", {}).get("items", [])
                 if items:
@@ -358,7 +358,7 @@ class SpotifyPlayer:
             return False, message
         query = cmd.get("params", None)
         user_content_type = cmd.get("type", None)
-
+        logger.info(f"Handling Spotify play — query: {query}, user_type: {user_content_type}")
         # Handle search query and type if provided
         try:
             if query is not None:
@@ -368,20 +368,16 @@ class SpotifyPlayer:
                     content_type, uri = self.detect_spotify_type(query)
                 logger.info(f"Spotify detect result - type: {content_type}, uri: {uri}")
                 if uri and isinstance(uri, str) and uri.startswith("spotify:"):
-                    # Case 1: Artist → Auto-play artist radio
+                    # Case 1: Artist
                     if content_type == "artist":
-                        radio_uri = f"{uri}:radio"
-                        self.sp.start_playback(device_id=device_id, context_uri=radio_uri)
-                        logger.info(f"Playing artist radio: {query}")
-                    # Case 2: Track → Play track, then queue its radio
+                        self.sp.start_playback(device_id=device_id, context_uri=uri)
+                        logger.info(f"Playing artist: {query}")
+                    # Case 2: Track
                     elif content_type == "track":
-                        # Play the track first
+                        # Play the track
                         self.sp.start_playback(device_id=device_id, uris=[uri])
-                        # Queue the track's radio (no playlist saved)
-                        radio_uri = f"{uri}:radio"
-                        self.sp.add_to_queue(radio_uri, device_id=device_id)
-                        logger.info(f"Playing track + queued its radio: {query}")
-                    # Case 3: Playlist/Album/Episode → Normal playback
+                        logger.info(f"Playing track: {query}")
+                    # Case 3: Playlist/Album
                     else:
                         self.sp.start_playback(device_id=device_id, context_uri=uri)
                         logger.info(f"Playing {content_type}: {query}")

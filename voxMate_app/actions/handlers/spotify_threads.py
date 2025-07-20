@@ -16,7 +16,7 @@ class SpotifyRadioExtender(threading.Thread):
         self.spotify_player = spotify_player
         self.app_state = app_state
         self.interval = interval
-        self._running = True
+        self._stop_event = threading.Event()
         SpotifyRadioExtender._instance = self
 
     @classmethod
@@ -30,15 +30,17 @@ class SpotifyRadioExtender(threading.Thread):
             cls._instance.start()
         return cls._instance
 
+
     def run(self):
         logger.info("Spotify radio extender thread started")
-        while self._running:
+        while not self._stop_event.is_set():
             if self.app_state.is_spotify_playing():
                 try:
                     self.extend_queue()
                 except Exception as e:
                     logger.error(f"Error in queue extender: {e}")
-            time.sleep(self.interval)
+            # Wait for up to `interval` seconds, but return immediately if stop is set
+            self._stop_event.wait(timeout=self.interval)
 
 
     def extend_queue(self):
@@ -87,4 +89,4 @@ class SpotifyRadioExtender(threading.Thread):
 
     def stop(self):
         logger.info("Stopping Spotify radio extender thread")
-        self._running = False
+        self._stop_event.set()

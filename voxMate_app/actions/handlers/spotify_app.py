@@ -228,56 +228,56 @@ class SpotifyPlayer:
         return None
     
 
-def detect_spotify_type(self, query: str, user_content_type: Optional[str] = None) -> Tuple[str, str]:
-    """
-    Try to determine if the query is a song, album, artist, playlist, or podcast.
-    Returns:
-        A tuple of (content_type, uri) or (None, None) if not found.
-    """
-    if not self.sp and not self.initialize_spotify():
+    def detect_spotify_type(self, query: str, user_content_type: Optional[str] = None) -> Tuple[str, str]:
+        """
+        Try to determine if the query is a song, album, artist, playlist, or podcast.
+        Returns:
+            A tuple of (content_type, uri) or (None, None) if not found.
+        """
+        if not self.sp and not self.initialize_spotify():
+            return None, None
+
+        query_lower = query.strip().lower()
+
+        try:
+            # If a user-specified type is given, search for it first with exact match
+            if user_content_type in ["track", "playlist", "album", "artist"]:
+                results = self.sp.search(q=query, type=user_content_type, limit=5)
+                items = results.get(f"{user_content_type}s", {}).get("items", [])
+
+                # Try exact match first
+                for item in items:
+                    name = item.get("name", "").strip().lower()
+                    if name == query_lower:
+                        return user_content_type, item["uri"]
+
+                # Fallback to first result if no exact match
+                if items:
+                    return user_content_type, items[0]["uri"]
+
+            # Fallback: Try all types
+            results = self.sp.search(q=query, type="track,album,artist,playlist", limit=5)
+            type_priority = ["album", "artist", "track", "playlist"]
+
+            for content_type in type_priority:
+                items = results.get(f"{content_type}s", {}).get("items", [])
+
+                # Try to find an exact match
+                for item in items:
+                    name = item.get("name", "").strip().lower()
+                    if name == query_lower:
+                        return content_type, item["uri"]
+
+            # If no exact match found, return the first result from the prioritized types
+            for content_type in type_priority:
+                items = results.get(f"{content_type}s", {}).get("items", [])
+                if items:
+                    return content_type, items[0]["uri"]
+
+        except Exception as e:
+            logger.error(f"Failed to detect Spotify type: {e}")
+
         return None, None
-
-    query_lower = query.strip().lower()
-
-    try:
-        # If a user-specified type is given, search for it first with exact match
-        if user_content_type in ["track", "playlist", "album", "artist"]:
-            results = self.sp.search(q=query, type=user_content_type, limit=5)
-            items = results.get(f"{user_content_type}s", {}).get("items", [])
-
-            # Try exact match first
-            for item in items:
-                name = item.get("name", "").strip().lower()
-                if name == query_lower:
-                    return user_content_type, item["uri"]
-
-            # Fallback to first result if no exact match
-            if items:
-                return user_content_type, items[0]["uri"]
-
-        # Fallback: Try all types
-        results = self.sp.search(q=query, type="track,album,artist,playlist", limit=5)
-        type_priority = ["album", "artist", "track", "playlist"]
-
-        for content_type in type_priority:
-            items = results.get(f"{content_type}s", {}).get("items", [])
-
-            # Try to find an exact match
-            for item in items:
-                name = item.get("name", "").strip().lower()
-                if name == query_lower:
-                    return content_type, item["uri"]
-
-        # If no exact match found, return the first result from the prioritized types
-        for content_type in type_priority:
-            items = results.get(f"{content_type}s", {}).get("items", [])
-            if items:
-                return content_type, items[0]["uri"]
-
-    except Exception as e:
-        logger.error(f"Failed to detect Spotify type: {e}")
-
-    return None, None
     
 
     def transfer_playback(self, device_id: str) -> bool:

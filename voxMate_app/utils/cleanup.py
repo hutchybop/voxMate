@@ -1,21 +1,34 @@
-# Required local import
+# Required local imports
 from utils.logging import logger
 from services.audio import AudioProcessor
 from actions.handlers.spotify_app import SpotifyPlayer
+from actions.handlers.spotify_threads import SpotifyRadioExtender
 
-def cleanup(audio_processor=None) -> None:
-    """Cleanup resources before exit"""
-    if hasattr(cleanup, '_called'):
+
+def cleanup(audio_processor: AudioProcessor = None) -> None:
+    """Cleanup resources before exit."""
+    if getattr(cleanup, '_called', False):
         return
-    cleanup._called = True  # Mark as called to prevent duplicate execution
+    cleanup._called = True
+
     logger.info("Performing cleanup...")
+
     try:
-        # Stop Spotify if playing
+        # Stop Spotify playback
         SpotifyPlayer().stop_playback()
+
+        # Stop radio extender thread if running
+        radio_extender = SpotifyRadioExtender.get_instance()  # Assuming you're managing it as a singleton
+        if radio_extender and radio_extender.is_alive():
+            radio_extender.stop()
+            radio_extender.join()
+
         # Stop looping sound if playing
         if audio_processor:
-            audio_processor.stop_looping_sound(process=getattr(audio_processor, '_current_process', None))
+            process = getattr(audio_processor, '_current_process', None)
+            audio_processor.stop_looping_sound(process=process)
+
     except Exception as e:
         logger.error(f"Cleanup error: {e}")
     finally:
-        logger.info("Cleanup completed")
+        logger.info("Cleanup completed.")

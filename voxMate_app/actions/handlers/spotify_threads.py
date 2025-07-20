@@ -7,12 +7,28 @@ from utils.logging import logger
 
 
 class SpotifyRadioExtender(threading.Thread):
+    _instance = None  # Singleton instance
+
     def __init__(self, spotify_player, app_state, interval=30):
+        if SpotifyRadioExtender._instance is not None:
+            raise RuntimeError("Use get_instance() to access the SpotifyRadioExtender singleton.")
         super().__init__(daemon=True)
         self.spotify_player = spotify_player
         self.app_state = app_state
-        self.interval = interval  # Time between queue updates
+        self.interval = interval
         self._running = True
+        SpotifyRadioExtender._instance = self
+
+    @classmethod
+    def get_instance(cls):
+        return cls._instance
+
+    @classmethod
+    def start_instance(cls, spotify_player, app_state, interval=30):
+        if cls._instance is None:
+            cls._instance = cls(spotify_player, app_state, interval)
+            cls._instance.start()
+        return cls._instance
 
     def run(self):
         logger.info("Spotify radio extender thread started")
@@ -31,11 +47,17 @@ class SpotifyRadioExtender(threading.Thread):
             return
 
         current_track = playback.get("item")
-        if not current_track:
-            logger.warning("No current track info found")
-            return
+        current_uri = current_track.get("uri") if current_track else None
 
-        artist_id = current_track.get("artists", [{}])[0].get("id")
+        try:
+            # Try to get current queue (Spotify API now supports this)
+            queue_info = self.spotify_player.sp.queue()
+            queued_uris = [t["uri"] for t in queue_info.get("queue", [])]
+        except Exception as e:
+            logger.warning(f"Could not fetch queue info: {e}")
+            queued_uris = []
+
+        artist_id = current_track.get("artists", [{}])[0].get("id") if current_track else None
         if not artist_id:
             logger.warning("No artist ID found")
             return
@@ -43,11 +65,25 @@ class SpotifyRadioExtender(threading.Thread):
         try:
             logger.info(f"Fetching top tracks for artist: {artist_id}")
             top_tracks = self.spotify_player.sp.artist_top_tracks(artist_id, country="GB")["tracks"]
-            for track in top_tracks[:3]:
-                self.spotify_player.sp.add_to_queue(track["uri"])
-                logger.info(f"Queued top track: {track['name']} by {track['artists'][0]['name']}")
+
+            added = 0
+            for track in top_tracks:
+                uri = track["uri"]
+                if uri == current_uri or uri in queued_uris or uri in getattr(self, "_queued_uris", set()):
+                    continue  # Skip if currently playing or already queued/added
+
+                self.spotify_player.sp.add_to_queue(uri)
+                logger.info(f"Queued new top track: {track['name']} by {track['artists'][0]['name']}")
+                self._queued_uris = getattr(self, "_queued_uris", set())
+                self._queued_uris.add(uri)
+
+                added += 1
+                if added >= 3:
+                    break  # Limit how many we add at a time
+
         except Exception as e:
             logger.error(f"Failed to fetch or queue top tracks: {e}")
+
 
     def stop(self):
         logger.info("Stopping Spotify radio extender thread")

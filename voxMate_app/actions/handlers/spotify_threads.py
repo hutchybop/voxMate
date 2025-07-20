@@ -45,7 +45,7 @@ class SpotifyRadioExtender(threading.Thread):
         if artist_id:
             try:
                 logger.info(f"Fetching recommendations based on artist: {artist_id}")
-                recommendations = self.spotify_player.sp.recommendations(seed_artists=artist_id, limit=5)
+                recommendations = self.spotify_player.sp.recommendations(seed_artists=[artist_id], limit=5)
             except Exception as e:
                 logger.warning(f"Artist-based recommendation failed: {e}")
 
@@ -53,7 +53,7 @@ class SpotifyRadioExtender(threading.Thread):
         if (not recommendations or not recommendations.get("tracks")) and track_id:
             try:
                 logger.info(f"Fetching recommendations based on track: {track_id}")
-                recommendations = self.spotify_player.sp.recommendations(seed_tracks=track_id, limit=5)
+                recommendations = self.spotify_player.sp.recommendations(seed_tracks=[track_id], limit=5)
             except Exception as e:
                 logger.warning(f"Track-based recommendation failed: {e}")
 
@@ -61,7 +61,7 @@ class SpotifyRadioExtender(threading.Thread):
         if not recommendations or not recommendations.get("tracks"):
             try:
                 logger.info("Falling back to pop genre for recommendations")
-                recommendations = self.spotify_player.sp.recommendations(seed_genres="pop", limit=5)
+                recommendations = self.spotify_player.sp.recommendations(seed_genres=["pop"], limit=5)
             except Exception as e:
                 logger.error(f"Genre-based fallback recommendation failed: {e}")
                 return

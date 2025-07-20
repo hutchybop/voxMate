@@ -30,7 +30,7 @@ SCOPES = " ".join([
     "user-library-read",
     "playlist-read-private",
     "user-top-read",
-    "user-read-recently-played"
+    "user-read-recently-played",
 ])
 
 # Disable spotipy's default file cache

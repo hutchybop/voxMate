@@ -44,6 +44,9 @@ class SpotifyRadioExtender(threading.Thread):
 
 
     def extend_queue(self):
+        # Check and refresh the users Spotify access token
+        self.spotify_player.load_spotify_token()
+        
         playback = self.spotify_player.sp.current_playback()
         if not playback or not playback.get("is_playing"):
             return

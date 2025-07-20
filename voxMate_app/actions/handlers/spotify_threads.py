@@ -26,47 +26,70 @@ class SpotifyRadioExtender(threading.Thread):
 
 
     def extend_queue(self):
-        playback = self.spotify_player.sp.current_playback()
-        if not playback or not playback.get("is_playing"):
-            return
-
-        current_track = playback.get("item")
-        if not current_track:
-            logger.warning("No current track info found")
-            return
-
-        # Try to extract artist ID (preferred)
-        artist_id = current_track.get("artists", [{}])[0].get("id")
-        track_id = current_track.get("id")
-
-        recommendations = None
-
-        # Try with artist ID
-        if artist_id:
-            try:
-                logger.info(f"Fetching recommendations based on artist: {artist_id}")
-                recommendations = self.spotify_player.sp.recommendations(seed_artists=[artist_id], limit=5)
-            except Exception as e:
-                logger.warning(f"Artist-based recommendation failed: {e}")
-
-        # Fallback to track ID
-        if (not recommendations or not recommendations.get("tracks")) and track_id:
-            try:
-                logger.info(f"Fetching recommendations based on track: {track_id}")
-                recommendations = self.spotify_player.sp.recommendations(seed_tracks=[track_id], limit=5)
-            except Exception as e:
-                logger.warning(f"Track-based recommendation failed: {e}")
-
-        # Final fallback to genre
-        if not recommendations or not recommendations.get("tracks"):
-            try:
-                logger.info("Falling back to pop genre for recommendations")
-                recommendations = self.spotify_player.sp.recommendations(seed_genres=["pop"], limit=5)
-            except Exception as e:
-                logger.error(f"Genre-based fallback recommendation failed: {e}")
+        try:
+            playback = self.spotify_player.sp.current_playback()
+            if not playback or not playback.get("is_playing"):
+                logger.info("No active playback to extend")
                 return
 
-        # Queue the recommended tracks
+            current_track = playback.get("item")
+            if not current_track:
+                logger.warning("No current track info found")
+                return
+
+            # Verify authentication first
+            try:
+                # Simple API call to verify auth
+                self.spotify_player.sp.current_user()
+            except Exception as auth_error:
+                logger.error(f"Authentication failed: {auth_error}")
+                return
+
+            # Try to extract artist ID (preferred)
+            artist_id = current_track.get("artists", [{}])[0].get("id")
+            track_id = current_track.get("id")
+
+            # Build parameters properly
+            params = {'limit': 5}
+            
+            if artist_id:
+                params['seed_artists'] = [artist_id]
+                try:
+                    logger.info(f"Fetching recommendations based on artist: {artist_id}")
+                    recommendations = self.spotify_player.sp.recommendations(**params)
+                    if recommendations and recommendations.get('tracks'):
+                        self._queue_recommendations(recommendations)
+                        return
+                except Exception as e:
+                    logger.warning(f"Artist-based recommendation failed: {e}")
+
+            if track_id:
+                params.pop('seed_artists', None)
+                params['seed_tracks'] = [track_id]
+                try:
+                    logger.info(f"Fetching recommendations based on track: {track_id}")
+                    recommendations = self.spotify_player.sp.recommendations(**params)
+                    if recommendations and recommendations.get('tracks'):
+                        self._queue_recommendations(recommendations)
+                        return
+                except Exception as e:
+                    logger.warning(f"Track-based recommendation failed: {e}")
+
+            # Final fallback
+            params.pop('seed_tracks', None)
+            params['seed_genres'] = ["pop"]
+            try:
+                logger.info("Falling back to pop genre for recommendations")
+                recommendations = self.spotify_player.sp.recommendations(**params)
+                if recommendations and recommendations.get('tracks'):
+                    self._queue_recommendations(recommendations)
+            except Exception as e:
+                logger.error(f"Genre-based fallback recommendation failed: {e}")
+
+        except Exception as e:
+            logger.error(f"Unexpected error in extend_queue: {e}")
+
+    def _queue_recommendations(self, recommendations):
         for track in recommendations.get("tracks", []):
             uri = track.get("uri")
             name = track.get("name")

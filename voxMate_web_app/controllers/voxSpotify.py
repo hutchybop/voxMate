@@ -56,7 +56,7 @@ def get_token_and_refresh(user_id=None):
 
     token_info = None
 
-    if user_token:
+    if user_token is not None:
         token_info = user_token.get("token_info")
         if time.time() > token_info['expires_at']:
             oauth = create_spotify_oauth()

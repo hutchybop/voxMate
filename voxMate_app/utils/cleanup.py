@@ -1,3 +1,6 @@
+# Required python imports
+import subprocess
+
 # Required local imports
 from utils.logging import logger
 from services.audio import AudioProcessor
@@ -27,6 +30,9 @@ def cleanup(audio_processor: AudioProcessor = None) -> None:
         if audio_processor:
             process = getattr(audio_processor, '_current_process', None)
             audio_processor.stop_looping_sound(process=process)
+        
+        # Stop all mpg123 audio
+        subprocess.run(["killall", "mpg123"])
 
     except Exception as e:
         logger.error(f"Cleanup error: {e}")

@@ -40,7 +40,6 @@ def ai_prompt(prompt):
                 "{\"response\":\"Resuming playback.\",\"action\":{\"cmd\":\"spotify_play\"}}\n"
                 "User: What's the weather?\n"
                 "{\"response\":\"It's currently sunny and 72 degrees.\"}\n"
-                "\nRespond **only** with a valid, minified JSON object. No explanations, no markdown, no extra characters."
             )
         },
         {

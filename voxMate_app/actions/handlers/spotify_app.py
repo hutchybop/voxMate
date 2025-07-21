@@ -4,6 +4,8 @@ import time
 import traceback
 import requests
 import traceback
+from typing import Optional, Tuple
+from rapidfuzz.fuzz import ratio
 from typing import Optional, Tuple, Dict, Any
 from datetime import datetime, timezone
 from spotipy.oauth2 import SpotifyOAuth
@@ -228,7 +230,7 @@ class SpotifyPlayer:
         return None
     
 
-    def detect_spotify_type(self, query: str, user_content_type: Optional[str] = None) -> Tuple[str, str]:
+    def detect_spotify_type(self, query: str, artist: str, user_content_type: Optional[str] = None) -> Tuple[str, str]:
         """
         Try to determine if the query is a song, album, artist, playlist, or podcast.
         Returns:
@@ -238,40 +240,68 @@ class SpotifyPlayer:
             return None, None
 
         query_lower = query.strip().lower()
+        artist_lower = artist.strip().lower() if artist else None
 
         try:
-            # If a user-specified type is given, search for it first with exact match
+            # Construct the query string
+            q = f'track:{query_lower} artist:{artist_lower}' if artist_lower else query_lower
+
+            # If a user-specified type is given, search for it first
             if user_content_type in ["track", "playlist", "album", "artist"]:
-                results = self.sp.search(q=query, type=user_content_type, limit=5)
+                results = self.sp.search(q=q, type=user_content_type, limit=5)
                 items = results.get(f"{user_content_type}s", {}).get("items", [])
 
-                # Try exact match first
                 for item in items:
                     name = item.get("name", "").strip().lower()
+
+                    # Exact match
                     if name == query_lower:
                         return user_content_type, item["uri"]
 
-                # Fallback to first result if no exact match
+                    # Partial match
+                    if query_lower in name:
+                        logger.info(f"Partial match: '{query_lower}' in '{name}'")
+                        return user_content_type, item["uri"]
+
+                    # Fuzzy match
+                    if ratio(query_lower, name) > 80:
+                        logger.info(f"Fuzzy match ({ratio(query_lower, name)}%): '{query_lower}' vs '{name}'")
+                        return user_content_type, item["uri"]
+
+                # Fallback to first result if no match
                 if items:
+                    logger.info(f"No exact/partial/fuzzy match for '{query_lower}' in type '{user_content_type}'")
+                    logger.info(f"Returning best available match: {items[0]['name']} [{user_content_type}]")
                     return user_content_type, items[0]["uri"]
 
             # Fallback: Try all types
-            results = self.sp.search(q=query, type="track,album,artist,playlist", limit=5)
+            results = self.sp.search(q=q, type="track,album,artist,playlist", limit=5)
             type_priority = ["album", "artist", "track", "playlist"]
 
             for content_type in type_priority:
                 items = results.get(f"{content_type}s", {}).get("items", [])
-
-                # Try to find an exact match
                 for item in items:
                     name = item.get("name", "").strip().lower()
+
+                    # Exact match
                     if name == query_lower:
                         return content_type, item["uri"]
 
-            # If no exact match found, return the first result from the prioritized types
+                    # Partial match
+                    if query_lower in name:
+                        logger.info(f"Partial match: '{query_lower}' in '{name}'")
+                        return content_type, item["uri"]
+
+                    # Fuzzy match
+                    if ratio(query_lower, name) > 80:
+                        logger.info(f"Fuzzy match ({ratio(query_lower, name)}%): '{query_lower}' vs '{name}'")
+                        return content_type, item["uri"]
+
+            # Fallback: first available result
             for content_type in type_priority:
                 items = results.get(f"{content_type}s", {}).get("items", [])
                 if items:
+                    logger.info(f"No strong match for '{query_lower}' — returning best available: {items[0]['name']} [{content_type}]")
                     return content_type, items[0]["uri"]
 
         except Exception as e:
@@ -339,7 +369,7 @@ class SpotifyPlayer:
             return False
  
  
-    def handle_spotify_play(self, cmd: Dict) -> bool:
+    def handle_spotify_play(self, params: Dict) -> bool:
         """
         Main method to handle Spotify playback with full error handling.
         Args:
@@ -376,20 +406,24 @@ class SpotifyPlayer:
                 time.sleep(1)
             except Exception as e:
                 logger.warning(f"Error checking playback state: {e}")
-        else:  # This goes here - executes if while loop completes without breaking
+        else:  # Executes if while loop completes without breaking
             logger.error("Playback transfer verification timed out")
             message = "Failed to transfer playback, could not play Spotify"
             return False, message
-        query = cmd.get("params", None)
-        user_content_type = cmd.get("type", None)
+        query = params.get("query", None)
+        artist = params.get("artist", None)
+        user_content_type = params.get("type", None)
         logger.info(f"Handling Spotify play — query: {query}, user_type: {user_content_type}")
         # Handle search query and type if provided
         try:
             if query is not None:
-                if user_content_type:
-                    content_type, uri = self.detect_spotify_type(query, user_content_type)
-                else:
-                    content_type, uri = self.detect_spotify_type(query)
+                content_type, uri = self.detect_spotify_type(query, artist, user_content_type)
+                # if user_content_type:
+                #     content_type, uri = self.detect_spotify_type(query, artist, user_content_type)
+                # elif user_content_type:
+                #     content_type, uri = self.detect_spotify_type(query, artist, user_content_type)
+                # else:
+                #     content_type, uri = self.detect_spotify_type(query)
                 logger.info(f"Spotify detect result - type: {content_type}, uri: {uri}")
                 if uri and isinstance(uri, str) and uri.startswith("spotify:"):
                     # Case 1: Artist
@@ -407,7 +441,7 @@ class SpotifyPlayer:
                         logger.info(f"Playing {content_type}: {query}")
                     return True, None
             else:
-                logger.warning(f"No URI found for query: {query}, falling back to resume playback")
+                logger.warning(f"Could not resolve Spotify URI for query: '{query}' — attempting to resume playback")
         except Exception as e:
             logger.error(f"Playback error: {e}")
             logger.info("Falling back to generic playback")

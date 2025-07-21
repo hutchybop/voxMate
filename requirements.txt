@@ -21,3 +21,4 @@ spotipy
 wtforms
 requests
 websocket-client
+rapidfuzz

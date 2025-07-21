@@ -71,13 +71,13 @@ def main() -> None:
                     # AI response generation
                     ai_start = time.time()
                     try:
-                        ai_response, cmd = ai_service.generate_response(transcript)
+                        ai_response, action = ai_service.generate_response(transcript)
                         if not isinstance(ai_response, str):
                             ai_response = str(ai_response)
                     except Exception as e:
                         logger.error(f"AI processing failed: {e}")
                         ai_response = "Sorry, I encountered an error processing your request"
-                        cmd = None
+                        action = None
                     ai_time = time.time() - ai_start
 
                     # Text-to-speech
@@ -90,9 +90,9 @@ def main() -> None:
 
                     # Handle the user command and play response
                     try:
-                        if cmd:
-                            cmd_response, message = handle_cmd(cmd)
-                        if not cmd_response and message:
+                        if action:
+                            success, message = handle_cmd(action)
+                        if not success and message:
                             ai_service.text_to_speech(message, sound_process=None)
                     except Exception as e:
                         logger.error(f'Main loop error, processing user command: {e}')
@@ -113,8 +113,8 @@ def main() -> None:
                 try:
                     # Resume Spotify play if paused
                     if app_state.is_spotify_paused():
-                        cmd_response, message = handle_cmd({"cmd": "spotify_play"})
-                        if not cmd_response and message:
+                        success, message = handle_cmd({"cmd": "spotify_play"})
+                        if not success and message:
                             ai_service.text_to_speech(message, sound_process=None)
                 except Exception as e:
                     logger.error(f'Main loop error, re-starting Spotify: {e}')

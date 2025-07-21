@@ -63,6 +63,7 @@ def main() -> None:
 
                 start_total = time.time()
                 audio_file = AudioProcessor.record_audio_to_file()
+                success = False
 
                 transcript, stt_time, sound_process = ai_service.transcribe_audio(audio_file)
                 total_stt = time.time() - start_total

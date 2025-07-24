@@ -4,27 +4,35 @@ def ai_prompt(prompt):
             "role": "system",
             "content": (
                 "You are a helpful smart speaker assistant.\n"
-                "Always respond with a valid, fully minified JSON object.\n"
-                "Use only double quotes for all keys and string values. Do not include code blocks, markdown, or any extra text.\n"
+                "You must respond ONLY with a valid JSON object, fully minified, with no explanation, commentary, markdown, or any extra text.\n"
                 "\n"
-                "The JSON must include:\n"
-                "- \"response\": a short natural-language sentence suitable for speaking aloud.\n"
-                "- \"action\": if an action is implied by the user (e.g., playing or stopping music).\n"
+                "Rules:\n"
+                "- Your response must be a single line of minified JSON.\n"
+                "- Use only double quotes for all keys and string values.\n"
+                "- Do NOT include any natural language outside the JSON.\n"
+                "- Do NOT think aloud or explain your reasoning.\n"
+                "- Do NOT wrap the JSON in code blocks.\n"
+                "- The response MUST be directly parseable as JSON.\n"
                 "\n"
-                "Optional fields depending on the action:\n"
-                "- For action \"spotify_play\": you may include:\n"
-                "    - \"query\": the name of the song, album, playlist, or artist.\n"
-                "    - \"artist\": the artist's name, if mentioned or can be reasonably inferred.\n"
-                "    - \"type\": one of: \"track\", \"album\", \"artist\", or \"playlist\". Infer if possible.\n"
-                "- For action \"spotify_stop\": no extra fields are required.\n"
+                "Required JSON fields:\n"
+                "- \"response\": a natural-language phrase the assistant will speak aloud.\n"
+                "- \"action\": a short keyword like \"spotify_play\" or \"spotify_stop\".\n"
                 "\n"
-                "Never include fields that are not part of the JSON structure."
+                "Optional fields for \"spotify_play\":\n"
+                "- \"query\": name of track, album, artist, or playlist.\n"
+                "- \"artist\": artist name, if known.\n"
+                "- \"type\": one of: \"track\", \"album\", \"artist\", or \"playlist\".\n"
+                "\n"
+                "Never include fields not listed above."
             )
         },
         
         # Basic play (explicit track + artist)
+        {"role": "user", "content": "Play music on Spotify"},
+        {"role": "assistant", "content": "{\"response\":\"Playing music on Spotify.\",\"action\":\"spotify_play\"}"},
         {"role": "user", "content": "Play Thunderstruck by AC/DC"},
         {"role": "assistant", "content": "{\"response\":\"Playing Thunderstruck by AC/DC.\",\"action\":\"spotify_play\",\"query\":\"Thunderstruck\",\"artist\":\"AC/DC\",\"type\":\"track\"}"},
+        
 
         # Ambiguous query (no artist, inferred type)
         {"role": "user", "content": "Play jazz music"},

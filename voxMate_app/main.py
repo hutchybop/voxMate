@@ -33,7 +33,7 @@ def main() -> None:
     # Initialize services
     audio = AudioProcessor()
     atexit.register(cleanup, audio_processor=audio)  # Pass audio to cleanup
-    lights = MicLights(num_leds=2)
+    lights = MicLights(num_leds=3)
 
     # Check environment variables before proceeding  
     settings.check_environment(audio_player=audio)

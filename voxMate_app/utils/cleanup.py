@@ -6,6 +6,7 @@ from utils.logging import logger
 from services.audio import AudioProcessor
 from actions.handlers.spotify_app import SpotifyPlayer
 from actions.handlers.spotify_threads import SpotifyRadioExtender
+from utils.mic_lights import MicLights
 
 
 def cleanup(audio_processor: AudioProcessor = None) -> None:
@@ -17,6 +18,9 @@ def cleanup(audio_processor: AudioProcessor = None) -> None:
     logger.info("Performing cleanup...")
 
     try:
+        # Initialise MicLights
+        lights = MicLights(num_leds=3)
+
         # Stop Spotify playback
         SpotifyPlayer().stop_playback()
 
@@ -33,6 +37,9 @@ def cleanup(audio_processor: AudioProcessor = None) -> None:
         
         # Stop all mpg123 audio
         subprocess.run(["killall", "mpg123"])
+
+        # Turn off the mic lights
+        lights.off()
 
     except Exception as e:
         logger.error(f"Cleanup error: {e}")

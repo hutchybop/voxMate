@@ -81,7 +81,12 @@ class AIService:
                     logger.warning("Parsed response is not a JSON object.")
                     return cleaned, None
                 response_text = parsed.get("response", cleaned)
-                action = parsed.get("action")
+                cmd = parsed.get("action", "")
+                query = parsed.get("query", "")
+                artist = parsed.get("artist", "")
+                type = parsed.get("type", "")
+                action = {"cmd": cmd, "params": {"query": query, "artist": artist, "type": type}}
+
                 
                 # Only return cmd if it's a dict and has a 'cmd' key
                 if isinstance(action, dict) and "cmd" in action:

@@ -3,50 +3,42 @@ def ai_prompt(prompt):
         {
             "role": "system",
             "content": (
-                "You are a helpful smart speaker assistant.\n"
-                "You must respond ONLY with a valid JSON object, fully minified, with no explanation, commentary, markdown, or any extra text.\n"
+                "You are a smart speaker assistant that controls music playback. "
+                "You MUST respond ONLY with a minified JSON object using double quotes. "
+                "NEVER include any commentary, thinking, explanations, or non-JSON text. "
+                "NEVER use markdown or code blocks. "
+                "The response must be a single line of pure JSON that can be directly parsed. "
                 "\n"
-                "Rules:\n"
-                "- Your response must be a single line of minified JSON.\n"
-                "- Use only double quotes for all keys and string values.\n"
-                "- Do NOT include any natural language outside the JSON.\n"
-                "- Do NOT think aloud or explain your reasoning.\n"
-                "- Do NOT wrap the JSON in code blocks.\n"
-                "- The response MUST be directly parseable as JSON.\n"
+                "Required fields:\n"
+                "- \"response\": A short phrase the assistant will speak (e.g., \"Playing music\").\n"
+                "- \"action\": One of: \"spotify_play\", \"spotify_stop\".\n"
                 "\n"
-                "Required JSON fields:\n"
-                "- \"response\": a natural-language phrase the assistant will speak aloud.\n"
-                "- \"action\": a short keyword like \"spotify_play\" or \"spotify_stop\".\n"
+                "Optional fields (only for \"spotify_play\"):\n"
+                "- \"query\": Track/album/playlist name (if specified)\n"
+                "- \"artist\": Artist name (if specified)\n"
+                "- \"type\": One of: \"track\", \"album\", \"artist\", \"playlist\" (if known)\n"
                 "\n"
-                "Optional fields for \"spotify_play\":\n"
-                "- \"query\": name of track, album, artist, or playlist.\n"
-                "- \"artist\": artist name, if known.\n"
-                "- \"type\": one of: \"track\", \"album\", \"artist\", or \"playlist\".\n"
+                "Example responses:\n"
+                "User: \"Play jazz music\"\n"
+                "Assistant: {\"response\":\"Playing jazz music.\",\"action\":\"spotify_play\",\"query\":\"jazz music\",\"type\":\"playlist\"}\n"
+                "User: \"Stop\"\n"
+                "Assistant: {\"response\":\"Stopping music.\",\"action\":\"spotify_stop\"}\n"
                 "\n"
-                "Never include fields not listed above."
+                "REMEMBER:\n"
+                "- Only JSON, nothing else\n"
+                "- No thinking or explanations\n"
+                "- No markdown or code blocks\n"
+                "- Single line only"
             )
         },
-        
-        # Basic play (explicit track + artist)
         {"role": "user", "content": "Play music on Spotify"},
         {"role": "assistant", "content": "{\"response\":\"Playing music on Spotify.\",\"action\":\"spotify_play\"}"},
         {"role": "user", "content": "Play Thunderstruck by AC/DC"},
         {"role": "assistant", "content": "{\"response\":\"Playing Thunderstruck by AC/DC.\",\"action\":\"spotify_play\",\"query\":\"Thunderstruck\",\"artist\":\"AC/DC\",\"type\":\"track\"}"},
-        
-
-        # Ambiguous query (no artist, inferred type)
         {"role": "user", "content": "Play jazz music"},
         {"role": "assistant", "content": "{\"response\":\"Playing jazz music.\",\"action\":\"spotify_play\",\"query\":\"jazz music\",\"type\":\"playlist\"}"},
-
-        # Stop command
         {"role": "user", "content": "Stop the music"},
         {"role": "assistant", "content": "{\"response\":\"Stopping the music.\",\"action\":\"spotify_stop\"}"},
-
-        # Artist-only request
-        {"role": "user", "content": "Play something by Taylor Swift"},
-        {"role": "assistant", "content": "{\"response\":\"Playing music by Taylor Swift.\",\"action\":\"spotify_play\",\"artist\":\"Taylor Swift\",\"type\":\"artist\"}"},
-
-        # User prompt
         {"role": "user", "content": prompt}
     ]
 

@@ -20,7 +20,7 @@ DEFAULT_CONFIG = {
     "VOLUME_DISPLAY": False,
     "NOISE_REDUCTION_ENABLED": True,
     "STT_MODEL": "whisper-large-v3-turbo",
-    "AI_MODEL": "mistral-saba-24b",
+    "AI_MODEL": "qwen/qwen3-32b",
     "MIC_DEVICE_INDEX": None
 }
 

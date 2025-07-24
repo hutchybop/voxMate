@@ -22,3 +22,5 @@ wtforms
 requests
 websocket-client
 rapidfuzz
+rasa
+spidev

@@ -23,6 +23,7 @@ import services.wakeword as wakeword
 from utils.state import app_state
 from actions.handlers.spotify_app import SpotifyPlayer
 from actions.dispatcher import handle_cmd
+from utils.mic_lights import MicLights
 
 def main() -> None:
     """Main execution loop"""
@@ -32,6 +33,7 @@ def main() -> None:
     # Initialize services
     audio = AudioProcessor()
     atexit.register(cleanup, audio_processor=audio)  # Pass audio to cleanup
+    lights = MicLights(num_leds=2)
 
     # Check environment variables before proceeding  
     settings.check_environment(audio_player=audio)
@@ -53,6 +55,7 @@ def main() -> None:
             try:
 
                 app_state.set_state("status", "waiting")
+                lights.blue(brightness=0x10)
 
                 # Wake word phase (PyAudio holds mic)
                 with wakeword.audio_wake_stream(ai_service.access_key) as (porcupine, pa, stream):
@@ -60,6 +63,7 @@ def main() -> None:
 
                 # Mic now released — record using sounddevice
                 app_state.set_state("status", "processing")
+                lights.green(brightness=0x10)
 
                 start_total = time.time()
                 audio_file = AudioProcessor.record_audio_to_file()

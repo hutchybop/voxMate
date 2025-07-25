@@ -16,12 +16,13 @@ from actions.dispatcher import handle_cmd
 from utils.logging import logger
 
 def test_handle_spotify():
-    # Simulate an AI response's action
     action = {
         "cmd": "spotify_play",
-        "artist": "Radiohead",
-        "track": "Paranoid Android",
-        "type": "track"
+        "params": {
+            "query": "Born in the U.S.A",
+            "artist": "Bruce Springsteen",
+            "type": "album"
+        }
     }
 
     success, message = handle_cmd(action)

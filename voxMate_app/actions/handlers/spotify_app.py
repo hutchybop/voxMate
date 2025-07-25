@@ -241,6 +241,7 @@ class SpotifyPlayer:
 
         query_lower = query.strip().lower()
         artist_lower = artist.strip().lower() if artist else None
+        logger.info(f"user_type: {user_content_type}")
 
         try:
             # Construct the query string

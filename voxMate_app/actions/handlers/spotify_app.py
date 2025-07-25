@@ -446,7 +446,7 @@ class SpotifyPlayer:
                 saved_tracks = [item["uri"] for item in current_queue.get("queue", [])]
                 save_queue_end = time.time() - save_queue_start
 
-                logger.info("Saved queue: ", saved_tracks)
+                logger.info(f"Saved queue: {saved_tracks}")
 
                 add_request_start = time.time()
                 # Step 2: Start playing the requested content

@@ -464,12 +464,12 @@ class SpotifyPlayer:
                 # Optional: wait briefly for playback to update (Spotify can lag)
                 time.sleep(1)
 
-                re_add_queue_start = time.time()
-                # Step 3: Re-add previous queue
-                for track_uri in saved_tracks:
-                    self.sp.add_to_queue(track_uri, device_id=device_id)
-                    logger.info(f"Re-added to queue: {track_uri}")
-                re_add_queue_end = time.time() - re_add_queue_start
+                # re_add_queue_start = time.time()
+                # # Step 3: Re-add previous queue
+                # for track_uri in saved_tracks:
+                #     self.sp.add_to_queue(track_uri, device_id=device_id)
+                #     logger.info(f"Re-added to queue: {track_uri}")
+                # re_add_queue_end = time.time() - re_add_queue_start
 
                 logger.info("\n Spotify playing times:")
                 logger.info(f"Saving queue: {save_queue_end:.2f}s")

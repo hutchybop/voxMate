@@ -457,7 +457,7 @@ class SpotifyPlayer:
                 elif content_type == "artist":
                     self.sp.start_playback(device_id=device_id, context_uri=uri)
                     logger.info(f"Playing artist: {query}")
-                add_request_end = time.time() - add_request_end
+                add_request_end = time.time() - add_request_start
 
                 # Optional: wait briefly for playback to update (Spotify can lag)
                 # import time

@@ -21,8 +21,8 @@ def handle_cmd(action):
         success, message = spotify_player.handle_spotify_play(params)
         if success:
             app_state.set_state("spotify", "playing")
-            if not radio_extender or not radio_extender.is_alive():
-                radio_extender = SpotifyRadioExtender.start_instance(spotify_player, app_state)
+            # if not radio_extender or not radio_extender.is_alive():
+            #     radio_extender = SpotifyRadioExtender.start_instance(spotify_player, app_state)
         else:
             if not message:
                 message = "Error playing Spotify"

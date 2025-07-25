@@ -425,21 +425,57 @@ class SpotifyPlayer:
                 # else:
                 #     content_type, uri = self.detect_spotify_type(query)
                 logger.info(f"Spotify detect result - type: {content_type}, uri: {uri}")
-                if uri and isinstance(uri, str) and uri.startswith("spotify:"):
-                    # Case 1: Artist
-                    if content_type == "artist":
-                        self.sp.start_playback(device_id=device_id, context_uri=uri)
-                        logger.info(f"Playing artist: {query}")
-                    # Case 2: Track
-                    elif content_type == "track":
-                        # Play the track
-                        self.sp.start_playback(device_id=device_id, uris=[uri])
-                        logger.info(f"Playing track: {query}")
-                    # Case 3: Playlist/Album
-                    else:
-                        self.sp.start_playback(device_id=device_id, context_uri=uri)
-                        logger.info(f"Playing {content_type}: {query}")
-                    return True, None
+                # if uri and isinstance(uri, str) and uri.startswith("spotify:"):
+                #     # Case 1: Artist
+                #     if content_type == "artist":
+                #         self.sp.start_playback(device_id=device_id, context_uri=uri)
+                #         logger.info(f"Playing artist: {query}")
+                #     # Case 2: Track
+                #     elif content_type == "track":
+                #         # Play the track
+                #         self.sp.start_playback(device_id=device_id, uris=[uri])
+                #         logger.info(f"Playing track: {query}")
+                #     # Case 3: Playlist/Album
+                #     else:
+                #         self.sp.start_playback(device_id=device_id, context_uri=uri)
+                #         logger.info(f"Playing {content_type}: {query}")
+                #     return True, None
+                        # Step 1: Get current queue
+                save_queue_start = time.time()
+                current_queue = self.sp.queue()
+                saved_tracks = [item["uri"] for item in current_queue.get("queue", [])]
+                save_queue_end = time.time() - save_queue_start
+
+                add_request_start = time.time()
+                # Step 2: Start playing the requested content
+                if content_type == "track":
+                    self.sp.start_playback(device_id=device_id, uris=[uri])
+                    logger.info(f"Playing track: {query}")
+                elif content_type in ["album", "playlist"]:
+                    self.sp.start_playback(device_id=device_id, context_uri=uri)
+                    logger.info(f"Playing {content_type}: {query}")
+                elif content_type == "artist":
+                    self.sp.start_playback(device_id=device_id, context_uri=uri)
+                    logger.info(f"Playing artist: {query}")
+                add_request_end = time.time() - add_request_end
+
+                # Optional: wait briefly for playback to update (Spotify can lag)
+                # import time
+                # time.sleep(1)
+
+                re_add_queue_start = time.time()
+                # Step 3: Re-add previous queue
+                for track_uri in saved_tracks:
+                    self.sp.add_to_queue(track_uri, device_id=device_id)
+                    logger.debug(f"Re-added to queue: {track_uri}")
+                re_add_queue_end = time.time() - re_add_queue_start
+
+                logger.info("Spotify playing times: \n")
+                logger.info(f"Saving queue: {save_queue_end:.2f}s")
+                logger.info(f"Playing request: {add_request_end:.2f}s")
+                logger.info(f"Re-add queue: {re_add_queue_end:.2f}s")
+
+                return True, None
             else:
                 logger.warning(f"Could not resolve Spotify URI for query: '{query}' — attempting to resume playback")
         except Exception as e:

@@ -256,16 +256,17 @@ class SpotifyPlayer:
 
                     # Exact match
                     if name == query_lower:
+                        logger.info(f"Exact match: '{query_lower}' in '{name}', type '{user_content_type}'")
                         return user_content_type, item["uri"]
 
                     # Partial match
                     if query_lower in name:
-                        logger.info(f"Partial match: '{query_lower}' in '{name}'")
+                        logger.info(f"Partial match: '{query_lower}' in '{name}', type '{user_content_type}'")
                         return user_content_type, item["uri"]
 
                     # Fuzzy match
                     if ratio(query_lower, name) > 80:
-                        logger.info(f"Fuzzy match ({ratio(query_lower, name)}%): '{query_lower}' vs '{name}'")
+                        logger.info(f"Fuzzy match ({ratio(query_lower, name)}%): '{query_lower}' vs '{name}', type '{user_content_type}'")
                         return user_content_type, item["uri"]
 
                 # Fallback to first result if no match

@@ -446,6 +446,8 @@ class SpotifyPlayer:
                 saved_tracks = [item["uri"] for item in current_queue.get("queue", [])]
                 save_queue_end = time.time() - save_queue_start
 
+                logger.info("Saved queue: ", saved_tracks)
+
                 add_request_start = time.time()
                 # Step 2: Start playing the requested content
                 if content_type == "track":
@@ -467,10 +469,10 @@ class SpotifyPlayer:
                 # Step 3: Re-add previous queue
                 for track_uri in saved_tracks:
                     self.sp.add_to_queue(track_uri, device_id=device_id)
-                    logger.debug(f"Re-added to queue: {track_uri}")
+                    logger.info(f"Re-added to queue: {track_uri}")
                 re_add_queue_end = time.time() - re_add_queue_start
 
-                logger.info("Spotify playing times: \n")
+                logger.info("\n Spotify playing times:")
                 logger.info(f"Saving queue: {save_queue_end:.2f}s")
                 logger.info(f"Playing request: {add_request_end:.2f}s")
                 logger.info(f"Re-add queue: {re_add_queue_end:.2f}s")

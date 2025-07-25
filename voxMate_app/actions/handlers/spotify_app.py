@@ -382,9 +382,11 @@ class SpotifyPlayer:
         Returns:
             Tuple[bool, Optional[str]]: Playback success and optional error message
         """
+        # Initialising Spotify
         if not self.sp and not self.initialize_spotify():
             return False, "Spotify did not initialize, could not play Spotify"
 
+        # Getting the device id
         device_id = self.get_valid_device_id()
         if not device_id:
             logger.error("No valid playback device available")
@@ -392,10 +394,12 @@ class SpotifyPlayer:
 
         logger.info(f"Attempting playback on device ID: {device_id}")
 
+        # Transfering Playback
         if not self.transfer_playback(device_id):
             logger.error("Failed to transfer playback")
             return False, "Failed to transfer playback, could not play Spotify"
 
+        # Waiting for the transfer to complete
         timeout = time.time() + 5
         while time.time() < timeout:
             try:
@@ -409,17 +413,20 @@ class SpotifyPlayer:
             logger.error("Playback transfer verification timed out")
             return False, "Failed to transfer playback, could not play Spotify"
 
-        query = params.get("query")
-        artist = params.get("artist")
-        user_content_type = params.get("type")
+        # Getting user params
+        query = params.get("query", "")
+        artist = params.get("artist", "")
+        user_content_type = params.get("type", "")
 
         logger.info(f"Handling Spotify play — query: {query}, user_type: {user_content_type}")
 
         if query:
             try:
+                # Using Spotify search to get type and track uri
                 content_type, uri = self.detect_spotify_type(query, artist, user_content_type)
                 logger.info(f"Spotify detect result - type: {content_type}, uri: {uri}")
 
+                # Using context_uri to play album, playlist or artist
                 if content_type in ["album", "playlist", "artist"]:
                     self.sp.start_playback(device_id=device_id, context_uri=uri)
                     logger.info(f"Playing {content_type}: {query}")
@@ -427,6 +434,7 @@ class SpotifyPlayer:
 
                 if content_type == "track":
                     try:
+                        # Getting the users current queue
                         current_queue = self.sp.queue()
                         has_queue = bool(current_queue.get("queue"))
                     except Exception as e:
@@ -434,15 +442,18 @@ class SpotifyPlayer:
                         has_queue = False
 
                     try:
-                        # Add track to play next
+                        # Add the track to queue and play next skipping current track if playing
                         self.sp.add_to_queue(uri, device_id=device_id)
-                        logger.info(f"Queued track to play next: {query}")
+                        if has_queue:
+                            self.sp.next_track()
+                        logger.info(f"Skipped current track and queued track to play next: {query}")
                     except Exception as e:
                         logger.warning(f"Failed to queue track: {e}")
 
                     if not has_queue:
                         logger.info("Queue was empty — building queue based on track context")
                         try:
+                            #  Building a queue
                             track_info = self.sp.track(uri)
                             artist_uri = track_info["artists"][0]["uri"]
 
@@ -451,7 +462,7 @@ class SpotifyPlayer:
                                 self.sp.add_to_queue(track["uri"], device_id=device_id)
                                 logger.info(f"Added artist track to queue: {track['name']}")
 
-                            # Add user's top tracks
+                            # Add user's top 10 tracks
                             top_tracks = self.sp.current_user_top_tracks(limit=10, time_range="short_term")["items"]
                             for track in top_tracks:
                                 self.sp.add_to_queue(track["uri"], device_id=device_id)
@@ -459,8 +470,8 @@ class SpotifyPlayer:
                         except Exception as e:
                             logger.warning(f"Failed to build fallback queue: {e}")
 
-                    # Start playback if not already playing
                     try:
+                        # Start playback if not already playing
                         self.sp.start_playback(device_id=device_id)
                         logger.info(f"Started playback of queued track")
                     except Exception as e:
@@ -475,27 +486,33 @@ class SpotifyPlayer:
         else:
             logger.warning(f"No query provided — attempting to resume playback")
 
-        # Fallback: resume or default playlist
         try:
+            # Fallback: resume or default playlist
             self.sp.start_playback(device_id=device_id)
             logger.info("Resumed playback successfully")
             return True, None
         except spotipy.SpotifyException as e:
             if e.http_status in [403, 404]:
                 try:
-                    # Try queuing user's top tracks first
                     top_tracks = self.sp.current_user_top_tracks(limit=10, time_range="short_term")["items"]
-                    for t in top_tracks:
-                        self.sp.add_to_queue(t["uri"], device_id=device_id)
-                        logger.info(f"Added top track to queue: {t['name']}")
+                    if top_tracks:
+                        # Add top tracks to playlist
+                        for t in top_tracks:
+                            self.sp.add_to_queue(t["uri"], device_id=device_id)
+                            logger.info(f"Added top track to queue: {t['name']}")
 
-                    # Then start a default playlist to kick things off
-                    self.sp.start_playback(
-                        device_id=device_id,
-                        context_uri="spotify:playlist:37i9dQZF1DXcBWIGoYBM5M"
-                    )
-                    logger.info("Started default playlist")
-                    return True, None
+                        # Start playback with the top tracks
+                        self.sp.start_playback(device_id=device_id)
+                        logger.info("Started playback with top track")
+                        return True, None
+                    else:
+                        # If no top tracks, start a default playlist
+                        self.sp.start_playback(
+                            device_id=device_id,
+                            context_uri="spotify:playlist:37i9dQZF1DXcBWIGoYBM5M"
+                        )
+                        logger.info("Started default playlist")
+                        return True, None
                 except Exception as inner_e:
                     logger.error(f"Failed to start default playlist with top tracks: {inner_e}")
                     return False, "Could not resume or start fallback playlist"

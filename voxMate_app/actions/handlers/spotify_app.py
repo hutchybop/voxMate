@@ -462,8 +462,8 @@ class SpotifyPlayer:
                 add_request_end = time.time() - add_request_start
 
                 # Optional: wait briefly for playback to update (Spotify can lag)
-                # import time
-                # time.sleep(1)
+                import time
+                time.sleep(1)
 
                 re_add_queue_start = time.time()
                 # Step 3: Re-add previous queue

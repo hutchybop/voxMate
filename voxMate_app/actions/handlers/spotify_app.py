@@ -428,44 +428,43 @@ class SpotifyPlayer:
                 if content_type == "track":
                     try:
                         current_queue = self.sp.queue()
-                        saved_tracks = [item["uri"] for item in current_queue.get("queue", [])]
-                        logger.info(f"Saved queue: {saved_tracks}")
+                        has_queue = bool(current_queue.get("queue"))
                     except Exception as e:
-                        logger.warning(f"Failed to save queue: {e}")
-                        saved_tracks = []
+                        logger.warning(f"Failed to fetch queue: {e}")
+                        has_queue = False
 
                     try:
-                        self.sp.start_playback(device_id=device_id, uris=[uri])
-                        logger.info(f"Playing track: {query}")
+                        # Add track to play next
+                        self.sp.add_to_queue(uri, device_id=device_id)
+                        logger.info(f"Queued track to play next: {query}")
                     except Exception as e:
-                        logger.warning(f"Failed to play track: {e}")
+                        logger.warning(f"Failed to queue track: {e}")
 
-                    time.sleep(1)
-
-                    if saved_tracks:
-                        try:
-                            for track_uri in saved_tracks:
-                                self.sp.add_to_queue(track_uri, device_id=device_id)
-                                logger.info(f"Re-added to queue: {track_uri}")
-                        except Exception as e:
-                            logger.warning(f"Failed to re-add previous queue: {e}")
-                    else:
+                    if not has_queue:
                         logger.info("Queue was empty — building queue based on track context")
                         try:
                             track_info = self.sp.track(uri)
                             artist_uri = track_info["artists"][0]["uri"]
 
-                            artist_top_tracks = self.sp.artist_top_tracks(artist_uri)["tracks"]
-                            for t in artist_top_tracks[:3]:
-                                self.sp.add_to_queue(t["uri"], device_id=device_id)
-                                logger.info(f"Added artist track to queue: {t['name']}")
+                            # Add 3 more tracks by the same artist
+                            for track in self.sp.artist_top_tracks(artist_uri)["tracks"][:3]:
+                                self.sp.add_to_queue(track["uri"], device_id=device_id)
+                                logger.info(f"Added artist track to queue: {track['name']}")
 
+                            # Add user's top tracks
                             top_tracks = self.sp.current_user_top_tracks(limit=10, time_range="short_term")["items"]
-                            for t in top_tracks:
-                                self.sp.add_to_queue(t["uri"], device_id=device_id)
-                                logger.info(f"Added top track to queue: {t['name']}")
+                            for track in top_tracks:
+                                self.sp.add_to_queue(track["uri"], device_id=device_id)
+                                logger.info(f"Added top track to queue: {track['name']}")
                         except Exception as e:
                             logger.warning(f"Failed to build fallback queue: {e}")
+
+                    # Start playback if not already playing
+                    try:
+                        self.sp.start_playback(device_id=device_id)
+                        logger.info(f"Started playback of queued track")
+                    except Exception as e:
+                        logger.warning(f"Failed to start playback of queued track: {e}")
 
                     return True, None
 

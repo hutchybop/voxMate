@@ -78,7 +78,6 @@ def main() -> None:
                     # AI response generation
                     ai_start = time.time()
                     try:
-                        lights.lights_speaking()
                         ai_response, action = ai_service.generate_response(transcript)
                         if not isinstance(ai_response, str):
                             ai_response = str(ai_response)

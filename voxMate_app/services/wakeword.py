@@ -12,6 +12,7 @@ from utils.logging import logger
 from services.audio import AudioProcessor
 from utils.state import app_state
 from actions.dispatcher import handle_cmd
+from utils.mic_lights import MicLights
 
 
 @contextmanager
@@ -53,7 +54,7 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
             porcupine.delete()
 
 
-def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream) -> None:
+def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream, lights) -> None:
     """Listen for wake word and respond when detected"""
     logger.info(f"Listening for wake word... (say '{constrants.WAKE_WORD}')")
     while True:
@@ -63,6 +64,7 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
             samples = struct.unpack_from("h" * porcupine.frame_length * 2, pcm)  # 2 channels
             mono_samples = [(samples[i] + samples[i+1]) // 2 for i in range(0, len(samples), 2)]
             if porcupine.process(mono_samples) >= 0:
+                lights.lights_listening()
                 logger.info("Wake word detected! Ask your question...")
                 # Stop Spotify only if we haven't already done so
                 if app_state.is_spotify_playing():

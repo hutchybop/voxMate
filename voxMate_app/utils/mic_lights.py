@@ -1,9 +1,11 @@
 import spidev
+import time
+import threading
 
 class MicLights:
     """Control ReSpeaker 2-Mic APA102 LEDs via SPI."""
     
-    def __init__(self, num_leds=2, bus=0, device=0):
+    def __init__(self, num_leds=3, bus=0, device=0):
         """
         Initialize SPI for LED control.
         
@@ -57,6 +59,53 @@ class MicLights:
                 red & 0xFF
             ])
         self._send_frame(led_data)
+
+    def lights_wake_word(self, flashes=3, interval=0.2):
+        """Flash bright blue when wake word is detected."""
+        for _ in range(flashes):
+            self.set_color(brightness=0x1F, red=0, green=0, blue=255)
+            time.sleep(interval)
+            self.off()
+            time.sleep(interval / 2)
+
+    def lights_listening(self):
+        """Set LEDs to cyan while listening."""
+        self.set_color(brightness=0x1F, red=0, green=255, blue=255)
+
+    def lights_processing(self):
+        """Set LEDs to amber/orange while processing."""
+        self.set_color(brightness=0x1F, red=255, green=165, blue=0)
+
+    def lights_speaking(self):
+        """Set LEDs to green while speaking."""
+        self.set_color(brightness=0x1F, red=0, green=255, blue=0)
+
+    def lights_error(self, flashes=3, interval=0.3):
+        """Flash red to indicate an error."""
+        for _ in range(flashes):
+            self.red()
+            time.sleep(interval)
+            self.off()
+            time.sleep(interval / 2)
+
+    def lights_idle(self, brightness=0x08):
+        """Dim blue when idle."""
+        self.set_color(brightness=brightness, red=0, green=0, blue=255)
+
+    def lights_pulse_listening(self, duration=5):
+        """Optional: Pulse LEDs gently while listening."""
+        def pulse():
+            end_time = time.time() + duration
+            while time.time() < end_time:
+                for b in range(5, 32, 2):
+                    self.set_color(brightness=b, red=0, green=255, blue=255)
+                    time.sleep(0.03)
+                for b in range(31, 4, -2):
+                    self.set_color(brightness=b, red=0, green=255, blue=255)
+                    time.sleep(0.03)
+            self.off()
+        
+        threading.Thread(target=pulse, daemon=True).start()
     
     def green(self, brightness=0x1F):
         self.set_color(brightness=brightness, green=255)

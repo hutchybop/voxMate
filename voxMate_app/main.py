@@ -33,7 +33,7 @@ def main() -> None:
     # Initialize services
     audio = AudioProcessor()
     atexit.register(cleanup, audio_processor=audio)  # Pass audio to cleanup
-    lights = MicLights(num_leds=3)
+    lights = MicLights()
 
     # Check environment variables before proceeding  
     settings.check_environment(audio_player=audio)
@@ -55,19 +55,21 @@ def main() -> None:
             try:
 
                 app_state.set_state("status", "waiting")
-                lights.blue(brightness=0x10)
+                lights.lights_idle()
 
                 # Wake word phase (PyAudio holds mic)
                 with wakeword.audio_wake_stream(ai_service.access_key) as (porcupine, pa, stream):
-                    wakeword.wake_word_detection(porcupine, stream)
+                    wakeword.wake_word_detection(porcupine, stream, lights)
 
                 # Mic now released — record using sounddevice
                 app_state.set_state("status", "processing")
-                lights.green(brightness=0x10)
+                lights.lights_pulse_listening()
 
                 start_total = time.time()
                 audio_file = AudioProcessor.record_audio_to_file()
                 success = False
+
+                lights.lights_processing()
 
                 transcript, stt_time, sound_process = ai_service.transcribe_audio(audio_file)
                 total_stt = time.time() - start_total
@@ -79,6 +81,7 @@ def main() -> None:
                         ai_response, action = ai_service.generate_response(transcript)
                         if not isinstance(ai_response, str):
                             ai_response = str(ai_response)
+                        lights.lights_speaking()
                     except Exception as e:
                         logger.error(f"AI processing failed: {e}")
                         ai_response = "Sorry, I encountered an error processing your request"

@@ -3,7 +3,6 @@
 # Required local imports
 from actions.handlers.spotify_app import SpotifyPlayer
 from utils.state import app_state
-from actions.handlers.spotify_threads import SpotifyRadioExtender
 
 
 # Initisalse
@@ -21,8 +20,6 @@ def handle_cmd(action):
         success, message = spotify_player.handle_spotify_play(params)
         if success:
             app_state.set_state("spotify", "playing")
-            # if not radio_extender or not radio_extender.is_alive():
-            #     radio_extender = SpotifyRadioExtender.start_instance(spotify_player, app_state)
         else:
             if not message:
                 message = "Error playing Spotify"
@@ -32,9 +29,6 @@ def handle_cmd(action):
         success = spotify_player.stop_playback()
         if success:
             app_state.set_state("spotify", "stopped")
-            if radio_extender and radio_extender.is_alive():
-                radio_extender.stop()
-                radio_extender.join()
         else:
             message = "Error stopping Spotify"
         return success, message

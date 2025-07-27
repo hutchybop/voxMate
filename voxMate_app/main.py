@@ -69,6 +69,7 @@ def main() -> None:
                 audio_file = AudioProcessor.record_audio_to_file()
                 success = False
 
+                lights.stop_pulsing()
                 lights.lights_processing()
 
                 transcript, stt_time, sound_process = ai_service.transcribe_audio(audio_file)

@@ -20,6 +20,8 @@ class MicLights:
         self.spi = spidev.SpiDev()
         self.spi.open(bus, device)
         self.spi.max_speed_hz = 8000000  # APA102 works at 8MHz
+        self._pulsing = False
+        self._pulse_thread = None
 
 
     def _send_frame(self, led_data):
@@ -64,30 +66,49 @@ class MicLights:
                 red & 0xFF
             ])
         self._send_frame(led_data)
+    
 
-
-    def lights_wake_word(self, flashes=3, interval=0.2):
-        """Flash bright blue when wake word is detected."""
-        for _ in range(flashes):
-            self.set_color(brightness=0x1F, red=0, green=0, blue=255)
-            time.sleep(interval)
-            self.off()
-            time.sleep(interval / 2)
-
+    # Functions to control the mic lights scheme
+    def lights_idle(self, brightness=0x08):
+        """Dim blue when idle."""
+        self.set_color(brightness=brightness, red=0, green=0, blue=255)
+    
 
     def lights_listening(self):
         """Set LEDs to cyan while listening."""
         self.set_color(brightness=0x1F, red=0, green=255, blue=255)
 
 
+    def lights_pulse_listening(self, duration=5):
+        def pulse():
+            end_time = time.time() + duration
+            while time.time() < end_time and self._pulsing:
+                for b in range(5, 32, 2):
+                    if not self._pulsing:
+                        break
+                    self.set_color(brightness=b, red=0, green=255, blue=255)
+                    time.sleep(0.03)
+                for b in range(31, 4, -2):
+                    if not self._pulsing:
+                        break
+                    self.set_color(brightness=b, red=0, green=255, blue=255)
+                    time.sleep(0.03)
+            # When stopped, don't clear LEDs here
+
+        self._pulsing = True
+        self._pulse_thread = threading.Thread(target=pulse, daemon=True)
+        self._pulse_thread.start()
+
+
+    def stop_pulsing(self):
+        self._pulsing = False
+        if self._pulse_thread:
+            self._pulse_thread.join()  # wait for thread to finish cleanup (optional)
+
+
     def lights_processing(self):
         """Set LEDs to amber/orange while processing."""
         self.set_color(brightness=0x10, red=255, green=100, blue=0)
-
-
-    def lights_speaking(self):
-        """Set LEDs to green while speaking."""
-        self.set_color(brightness=0x1F, red=0, green=255, blue=0)
 
 
     def lights_error(self, flashes=3, interval=0.3):
@@ -99,29 +120,10 @@ class MicLights:
             time.sleep(interval / 2)
 
 
-    def lights_idle(self, brightness=0x08):
-        """Dim blue when idle."""
-        self.set_color(brightness=brightness, red=0, green=0, blue=255)
-
-
-    def lights_pulse_listening(self, duration=5):
-        """Optional: Pulse LEDs gently while listening."""
-        def pulse():
-            end_time = time.time() + duration
-            while time.time() < end_time:
-                for b in range(5, 32, 2):
-                    self.set_color(brightness=b, red=0, green=255, blue=255)
-                    time.sleep(0.03)
-                for b in range(31, 4, -2):
-                    self.set_color(brightness=b, red=0, green=255, blue=255)
-                    time.sleep(0.03)
-            self.off()
-        
-        threading.Thread(target=pulse, daemon=True).start()
-
     def off(self):
         """Turn off all LEDs."""
         self.set_color(brightness=0x00, red=0, green=0, blue=0)
+
 
     def __del__(self):
         """Cleanup SPI on object destruction."""

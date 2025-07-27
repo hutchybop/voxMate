@@ -66,7 +66,6 @@ class AIService:
                 messages=ai_prompt(prompt),
                 max_tokens=200,
                 temperature=0.3,
-                # response_format={"type": "json_object"}  # Uncomment if model supports it
             )
             message = response.choices[0].message.content
 

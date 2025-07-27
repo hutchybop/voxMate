@@ -88,7 +88,7 @@ class AIService:
 
                 
                 # Only return cmd if it's a dict and has a 'cmd' key
-                if isinstance(action, dict) and "cmd" in action:
+                if isinstance(action, dict) and action.get("cmd"):
                     return response_text, action
                 else:
                     return response_text, None

@@ -25,6 +25,24 @@ class MicLights:
         end_frame = [0xFF] * ((self.num_leds + 15) // 16)
         self.spi.xfer(start_frame + led_data + end_frame)
 
+    # def set_color(self, brightness=0x1F, red=0, green=0, blue=0):
+    #     """
+    #     Set all LEDs to the same RGB color.
+        
+    #     Args:
+    #         brightness (int): 0x00 (min) to 0x1F (max).
+    #         red (int): 0-255.
+    #         green (int): 0-255.
+    #         blue (int): 0-255.
+    #     """
+    #     led_frame = [
+    #         0xE0 | (brightness & 0x1F),  # Brightness + header
+    #         blue & 0xFF,                 # Blue
+    #         green & 0xFF,                # Green
+    #         red & 0xFF                   # Red
+    #     ]
+    #     self._send_frame(led_frame * self.num_leds)
+
     def set_color(self, brightness=0x1F, red=0, green=0, blue=0):
         """
         Set all LEDs to the same RGB color.

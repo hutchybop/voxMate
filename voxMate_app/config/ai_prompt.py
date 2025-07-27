@@ -3,7 +3,7 @@ def ai_prompt(prompt):
         {
             "role": "system",
             "content": (
-                "You are a smart speaker assistant that controls music playback. "
+                "You are a smart speaker assistant that controls music playback or answers questions. "
                 "You MUST respond ONLY with a minified JSON object using double quotes. "
                 "NEVER include any commentary, thinking, explanations, or non-JSON text. "
                 "NEVER use markdown or code blocks. "
@@ -39,6 +39,8 @@ def ai_prompt(prompt):
         {"role": "assistant", "content": "{\"response\":\"Playing jazz music.\",\"action\":\"spotify_play\",\"query\":\"jazz music\",\"type\":\"playlist\"}"},
         {"role": "user", "content": "Stop the music"},
         {"role": "assistant", "content": "{\"response\":\"Stopping the music.\",\"action\":\"spotify_stop\"}"},
+        {"role": "user", "content": "What is the captial of France"},
+        {"role": "assistant", "content": "{\"response\":\"The captial of France is Paris\"}"},
         {"role": "user", "content": prompt}
     ]
 

@@ -98,7 +98,7 @@ def main() -> None:
 
                     # Handle the user command and play response
                     try:
-                        if isinstance(action, dict) and "cmd" in action:
+                        if action is not None:
                             success, message = handle_cmd(action)
                         if not success and message:
                             ai_service.text_to_speech(message, sound_process=None)

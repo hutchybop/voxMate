@@ -4,7 +4,7 @@ import socketio
 # Required local imports
 from utils.logging import logger
 from config.settings import load_config
-import config.constrants as constrants
+import config.constraints as constraints
 from utils.state import app_state
 
 
@@ -39,4 +39,4 @@ def on_settings_updated():
         logger.info(f"Noise reduction: {'ENABLED' if NOISE_REDUCTION_ENABLED else 'DISABLED'}")
         logger.info(f"Volume Display: {'ENABLED' if VOLUME_DISPLAY else 'DISABLED'}")
         if app_state.is_waiting():
-            logger.info(f"Listening for wake word... (say '{constrants.WAKE_WORD}')")
+            logger.info(f"Listening for wake word... (say '{constraints.WAKE_WORD}')")

@@ -9,7 +9,7 @@ from pymongo.database import Database
 
 # Required local imports
 from utils.logging import logger
-import config.constrants as constrants
+import config.constraints as constraints
 
 
 # ================= CONFIGURATION =================
@@ -93,7 +93,7 @@ def check_environment(audio_player=None):
     ENV_CHECKS = {
         "warnings": {
             "MONGODB_URI": {
-                "sound": constrants.MONGODB_WARNING_SOUND,
+                "sound": constraints.MONGODB_WARNING_SOUND,
                 "message": "Continuing with default configuration (MongoDB not available)"
             }
         },
@@ -103,7 +103,7 @@ def check_environment(audio_player=None):
             "SECRET_KEY": {},
             "SPOTIFY_CLIENT_ID": {},
             "SPOTIFY_CLIENT_SECRET": {},
-            "_sound": constrants.CRITICAL_ENV_VAR_SOUND
+            "_sound": constraints.CRITICAL_ENV_VAR_SOUND
         }
     }
     

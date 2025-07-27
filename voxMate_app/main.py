@@ -21,7 +21,6 @@ from services.ai import AIService
 import config.settings as settings
 import services.wakeword as wakeword
 from utils.state import app_state
-from actions.handlers.spotify_app import SpotifyPlayer
 from actions.dispatcher import handle_cmd
 from utils.mic_lights import MicLights
 
@@ -72,7 +71,7 @@ def main() -> None:
                 lights.stop_pulsing()
                 lights.lights_processing()
 
-                transcript, stt_time, sound_process = ai_service.transcribe_audio(audio_file)
+                transcript, stt_time = ai_service.transcribe_audio(audio_file)
                 total_stt = time.time() - start_total
 
                 if transcript:
@@ -91,7 +90,7 @@ def main() -> None:
                     # Text-to-speech
                     tts_start = time.time()
                     try:
-                        tts_time = ai_service.text_to_speech(ai_response, sound_process)
+                        tts_time = ai_service.text_to_speech(ai_response)
                     except Exception as e:
                         logger.error(f"TTS playback failed: {e}")
                     total_tts = time.time() - tts_start
@@ -101,7 +100,7 @@ def main() -> None:
                         if action is not None:
                             success, message = handle_cmd(action)
                         if not success and message:
-                            ai_service.text_to_speech(message, sound_process=None)
+                            ai_service.text_to_speech(message)
                     except Exception as e:
                         logger.error(f'Main loop error, processing user command: {e}')
 
@@ -116,14 +115,14 @@ def main() -> None:
                     # Fall back if no recording
                     logger.warning("No sound recorded")
                     no_recoding_response = "Nothing heard, sleeping"
-                    ai_service.text_to_speech(no_recoding_response, sound_process=None)
+                    ai_service.text_to_speech(no_recoding_response)
 
                 try:
                     # Resume Spotify play if paused
                     if app_state.is_spotify_paused():
                         success, message = handle_cmd({"cmd": "spotify_play"})
                         if not success and message:
-                            ai_service.text_to_speech(message, sound_process=None)
+                            ai_service.text_to_speech(message)
                 except Exception as e:
                     logger.error(f'Main loop error, re-starting Spotify: {e}')
 

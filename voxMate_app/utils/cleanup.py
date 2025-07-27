@@ -3,12 +3,11 @@ import subprocess
 
 # Required local imports
 from utils.logging import logger
-from services.audio import AudioProcessor
 from actions.handlers.spotify_app import SpotifyPlayer
 from utils.mic_lights import MicLights
 
 
-def cleanup(audio_processor: AudioProcessor = None) -> None:
+def cleanup() -> None:
     """Cleanup resources before exit."""
     if getattr(cleanup, '_called', False):
         return
@@ -22,11 +21,6 @@ def cleanup(audio_processor: AudioProcessor = None) -> None:
 
         # Stop Spotify playback
         SpotifyPlayer().stop_playback()
-
-        # Stop looping sound if playing
-        if audio_processor:
-            process = getattr(audio_processor, '_current_process', None)
-            audio_processor.stop_looping_sound(process=process)
         
         # Stop all mpg123 audio
         subprocess.run(["killall", "mpg123"])

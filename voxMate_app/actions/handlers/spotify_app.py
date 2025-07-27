@@ -12,7 +12,7 @@ from spotipy.oauth2 import SpotifyOAuth
 from threading import Lock
 
 # Required local imports
-import config.constrants as constrants
+import config.constraints as constraints
 from utils.logging import logger
 from config.settings import load_user
 from models.models import VoxSpotify
@@ -50,8 +50,8 @@ class SpotifyPlayer:
             user_id: Unique identifier for the current user
             max_retries: Maximum number of retry attempts for API calls
         """
-        self.SPOTIFY_CLIENT_ID = constrants.SPOTIFY_CLIENT_ID
-        self.SPOTIFY_CLIENT_SECRET = constrants.SPOTIFY_CLIENT_SECRET
+        self.SPOTIFY_CLIENT_ID = constraints.SPOTIFY_CLIENT_ID
+        self.SPOTIFY_CLIENT_SECRET = constraints.SPOTIFY_CLIENT_SECRET
         self.user_id = load_user().get("user_id", None)
         self.max_retries = max_retries
         self.memory_cache = {'device_id': None, 'last_updated': None}
@@ -101,10 +101,10 @@ class SpotifyPlayer:
             return None  # Connection error already logged
         state = mongodb.users.find_one({"user_id": self.user_id}).get("api_token" "")
         return SpotifyOAuth(
-            client_id=constrants.SPOTIFY_CLIENT_ID,
-            client_secret=constrants.SPOTIFY_CLIENT_SECRET,
+            client_id=constraints.SPOTIFY_CLIENT_ID,
+            client_secret=constraints.SPOTIFY_CLIENT_SECRET,
             redirect_uri='https://voxmate.longrunner.co.uk/voxSpotify/callback',
-            scope=constrants.SCOPES,
+            scope=constraints.SCOPES,
             cache_handler=None,
             state=state
         )

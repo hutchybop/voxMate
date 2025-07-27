@@ -7,7 +7,7 @@ import tempfile
 import json
 from gtts import gTTS
 import subprocess
-from typing import Optional, Tuple
+from typing import Tuple
 
 
 # Required local imports
@@ -15,6 +15,7 @@ from utils.logging import logger
 from services.audio import AudioProcessor
 import config.settings as settings
 from config.ai_prompt import ai_prompt
+import config.constraints as constraints
 
 
 class AIService:
@@ -32,9 +33,8 @@ class AIService:
         
     def transcribe_audio(self, audio_path: str) -> Tuple[str, float, subprocess.Popen]:
         """Transcribe audio using Whisper API"""
-        sound_process = AudioProcessor.start_looping_sound()
+        AudioProcessor.play_sound(constraints.GENERATING_SOUND)
         start_time = time.time()
-
         try:
             with open(audio_path, "rb") as audio_file:
                 transcript = self.client.audio.transcriptions.create(
@@ -43,13 +43,11 @@ class AIService:
                     language="en",
                     response_format="text"
                 )
-
             if transcript:
                 logger.info(f"Transcription: {transcript.strip()}")
-            return transcript.strip(), time.time() - start_time, sound_process
+            return transcript.strip(), time.time() - start_time
         except Exception as e:
             logger.error(f"Error: {e}")
-            AudioProcessor.stop_looping_sound(sound_process)
             raise
         finally:
             try:
@@ -101,7 +99,7 @@ class AIService:
             logger.error(f"Failed to generate response: {e}")
             return "Sorry, I encountered an error processing your request.", None
 
-    def text_to_speech(self, message: str, sound_process: Optional[subprocess.Popen]) -> float:
+    def text_to_speech(self, message: str) -> float:
         """Convert text to speech and play it"""
         if not message:
             return 0
@@ -113,8 +111,6 @@ class AIService:
                 # Clean special characters that might cause TTS issues
                 clean_text = re.sub(r"[_*~]", "", message)
                 gTTS(text=clean_text, lang='en').save(f.name)
-                if sound_process:
-                    AudioProcessor.stop_looping_sound(sound_process)
                 stop_time = time.time()
                 AudioProcessor.play_sound(f.name)
                 return stop_time - start_time

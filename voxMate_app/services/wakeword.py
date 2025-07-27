@@ -7,7 +7,7 @@ import struct
 import time
 
 # Required local imports
-import config.constrants as constrants
+import config.constraints as constraints
 from utils.logging import logger
 from services.audio import AudioProcessor
 from utils.state import app_state
@@ -25,13 +25,13 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
         pa = pyaudio.PyAudio()
         porcupine = pvporcupine.create(
             access_key=access_key,
-            keyword_paths=[constrants.KEYWORD_PATH],
+            keyword_paths=[constraints.KEYWORD_PATH],
             sensitivities=[0.85]
         )
         try:
             stream = pa.open(
                 rate=porcupine.sample_rate,
-                channels=constrants.CHANNELS,
+                channels=constraints.CHANNELS,
                 format=pyaudio.paInt16,
                 input=True,
                 frames_per_buffer=porcupine.frame_length,
@@ -56,7 +56,7 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
 
 def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream, lights) -> None:
     """Listen for wake word and respond when detected"""
-    logger.info(f"Listening for wake word... (say '{constrants.WAKE_WORD}')")
+    logger.info(f"Listening for wake word... (say '{constraints.WAKE_WORD}')")
     while True:
         try:
             pcm = stream.read(porcupine.frame_length, exception_on_overflow=False)
@@ -76,7 +76,7 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
                         logger.critical("Critical: Failed to detect wake word, failed to pause Spotify after retries")
                         return  # Exit wake word detection entirely
                 time.sleep(0.5)
-                AudioProcessor.play_sound(constrants.GREETING_SOUND)
+                AudioProcessor.play_sound(constraints.GREETING_SOUND)
                 break
         except Exception as e:
             logger.error(f"Error: {e}")

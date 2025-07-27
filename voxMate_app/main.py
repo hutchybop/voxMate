@@ -31,7 +31,7 @@ def main() -> None:
 
     # Initialize services
     audio = AudioProcessor()
-    atexit.register(cleanup, audio_processor=audio)  # Pass audio to cleanup
+    atexit.register(cleanup)
     lights = MicLights()
 
     # Check environment variables before proceeding  
@@ -133,12 +133,13 @@ def main() -> None:
                 logger.error(f"Error in main loop: {e}")
                 time.sleep(2)
                 continue
+            finally:
+                lights.stop_pulsing()
+                lights.lights_idle()
     except Exception as e:
         logger.critical(f"Fatal error: {e}", exc_info=True)
         sys.exit(1)
-    finally:
-        lights.stop_pulsing()
-        lights.lights_idle()
+
 
 if __name__ == "__main__":
     main()

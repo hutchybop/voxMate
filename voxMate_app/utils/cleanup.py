@@ -5,7 +5,6 @@ import subprocess
 from utils.logging import logger
 from services.audio import AudioProcessor
 from actions.handlers.spotify_app import SpotifyPlayer
-from actions.handlers.spotify_threads import SpotifyRadioExtender
 from utils.mic_lights import MicLights
 
 
@@ -23,12 +22,6 @@ def cleanup(audio_processor: AudioProcessor = None) -> None:
 
         # Stop Spotify playback
         SpotifyPlayer().stop_playback()
-
-        # Stop radio extender thread if running
-        radio_extender = SpotifyRadioExtender.get_instance()  # Assuming you're managing it as a singleton
-        if radio_extender and radio_extender.is_alive():
-            radio_extender.stop()
-            radio_extender.join()
 
         # Stop looping sound if playing
         if audio_processor:

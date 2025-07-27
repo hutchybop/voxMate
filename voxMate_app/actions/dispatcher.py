@@ -7,11 +7,9 @@ from utils.state import app_state
 
 # Initisalse
 spotify_player = SpotifyPlayer()
-radio_extender = None  # Global thread reference
 
 
 def handle_cmd(action):
-    global radio_extender
     message = ""
     command = action.get('cmd', '')
     params = action.get('params', '')

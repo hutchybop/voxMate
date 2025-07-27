@@ -23,7 +23,11 @@ def cleanup() -> None:
         SpotifyPlayer().stop_playback()
         
         # Stop all mpg123 audio
-        subprocess.run(["killall", "mpg123"])
+        result = subprocess.run(["killall", "mpg123"], capture_output=True, text=True)
+        if result.stdout:
+            logger.info(f"killall output: {result.stdout.strip()}")
+        if result.stderr:
+            logger.error(f"killall errors: {result.stderr.strip()}")
 
         # Turn off the mic lights
         lights.off()

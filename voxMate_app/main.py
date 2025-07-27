@@ -62,14 +62,14 @@ def main() -> None:
 
                 # Mic now released — record using sounddevice
                 app_state.set_state("status", "processing")
-                lights.lights_pulse_listening()
+                lights.lights_listening()
 
                 start_total = time.time()
                 audio_file = AudioProcessor.record_audio_to_file()
                 success = False
 
-                lights.stop_pulsing()
-                lights.lights_processing()
+                
+                lights.lights_pulsing_processing()
 
                 transcript, stt_time = ai_service.transcribe_audio(audio_file)
                 total_stt = time.time() - start_total
@@ -136,6 +136,9 @@ def main() -> None:
     except Exception as e:
         logger.critical(f"Fatal error: {e}", exc_info=True)
         sys.exit(1)
+    finally:
+        lights.stop_pulsing()
+        lights.lights_idle()
 
 if __name__ == "__main__":
     main()

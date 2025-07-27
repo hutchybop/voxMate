@@ -74,12 +74,17 @@ class MicLights:
         self.set_color(brightness=brightness, red=0, green=0, blue=255)
     
 
-    def lights_listening(self):
+    def lights_wake_word(self):
         """Set LEDs to cyan while listening."""
         self.set_color(brightness=0x1F, red=0, green=255, blue=255)
+    
+
+    def lights_listening(self):
+        """Set LEDs to amber/orange while processing."""
+        self.set_color(brightness=0x10, red=255, green=100, blue=0)
 
 
-    def lights_pulse_listening(self, duration=5):
+    def lights_pulsing_processing(self, duration=5):
         def pulse():
             end_time = time.time() + duration
             while time.time() < end_time and self._pulsing:
@@ -104,11 +109,6 @@ class MicLights:
         self._pulsing = False
         if self._pulse_thread:
             self._pulse_thread.join()  # wait for thread to finish cleanup (optional)
-
-
-    def lights_processing(self):
-        """Set LEDs to amber/orange while processing."""
-        self.set_color(brightness=0x10, red=255, green=100, blue=0)
 
 
     def lights_error(self, flashes=3, interval=0.3):

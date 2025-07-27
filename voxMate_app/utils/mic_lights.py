@@ -82,7 +82,7 @@ class MicLights:
 
     def lights_processing(self):
         """Set LEDs to amber/orange while processing."""
-        self.set_color(brightness=0x1F, red=255, green=165, blue=0)
+        self.set_color(brightness=0x10, red=255, green=100, blue=0)
 
 
     def lights_speaking(self):

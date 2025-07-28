@@ -10,7 +10,7 @@ from utils.state import app_state
 spotify_player = SpotifyPlayer()
 
 
-def handle_cmd(parsed) -> Tuple[bool, Optional[str]]:
+def handle_action(parsed) -> Tuple[bool, Optional[str]]:
     message = ""
     action = parsed.get("action", "")
 

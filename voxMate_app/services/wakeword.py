@@ -11,7 +11,7 @@ import config.constraints as constraints
 from utils.logging import logger
 from services.audio import AudioProcessor
 from utils.state import app_state
-from actions.dispatcher import handle_cmd
+from actions.dispatcher import handle_action
 from utils.mic_lights import MicLights
 
 
@@ -68,13 +68,12 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
                 logger.info("Wake word detected! Ask your question...")
                 # Stop Spotify only if we haven't already done so
                 if app_state.is_spotify_playing():
-                    cmd_response = handle_cmd({"cmd": "spotify_stop"})
-                    if cmd_response:
+                    success, message = handle_action({"action": "spotify_stop"})
+                    if success:
                         app_state.set_state("spotify", "paused")
                         logger.info("Spotify paused successfully")
                     else:
-                        logger.critical("Critical: Failed to detect wake word, failed to pause Spotify after retries")
-                        return  # Exit wake word detection entirely
+                        logger.warning("Failed to pause Spotify")
                 time.sleep(0.5)
                 AudioProcessor.play_sound(constraints.GREETING_SOUND)
                 break

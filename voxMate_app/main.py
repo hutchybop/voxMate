@@ -22,7 +22,7 @@ from services.ai import AIService
 import config.settings as settings
 import services.wakeword as wakeword
 from utils.state import app_state
-from actions.dispatcher import handle_cmd
+from actions.dispatcher import handle_action
 from utils.mic_lights import MicLights
 
 def main() -> None:
@@ -99,9 +99,9 @@ def main() -> None:
                     try:
                         tts_start = time.time()
                         if parsed is not None and parsed.get("action"):
-                            success, message = handle_cmd(parsed)
+                            success, message = handle_action(parsed)
                             if not success and message:
-                                ai_service.text_to_speech(message)
+                                tts_time = ai_service.text_to_speech(message)
                         else:
                             tts_time = ai_service.text_to_speech(response_text)
                         total_tts = time.time() - tts_start
@@ -124,9 +124,9 @@ def main() -> None:
                 try:
                     # Resume Spotify play if paused
                     if app_state.is_spotify_paused():
-                        success, message = handle_cmd({"cmd": "spotify_play"})
+                        success, message = handle_action({"action": "spotify_play"})
                         if not success and message:
-                            ai_service.text_to_speech(message)
+                            tts_time = ai_service.text_to_speech(message)
                 except Exception as e:
                     logger.error(f'Main loop error, re-starting Spotify: {e}')
 

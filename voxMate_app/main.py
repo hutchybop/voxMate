@@ -79,7 +79,9 @@ def main() -> None:
 
                 else: 
                     transcript = input("{\"response\":\"Playing Thunderstruck by AC/DC.\",\"action\":\"spotify_play\",\"query\":\"Thunderstruck\",\"artist\":\"AC/DC\",\"type\":\"track\"}")
-
+                    stt_time = time.time()
+                    total_stt = time.time()
+                    
                 if transcript:
                     # AI response generation
                     ai_start = time.time()

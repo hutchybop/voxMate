@@ -78,10 +78,10 @@ def main() -> None:
                     total_stt = time.time() - start_total
 
                 else: 
-                    transcript = input("{\"response\":\"Playing Thunderstruck by AC/DC.\",\"action\":\"spotify_play\",\"query\":\"Thunderstruck\",\"artist\":\"AC/DC\",\"type\":\"track\"}")
+                    transcript = input("Enter the simulated ai repsonse")
                     stt_time = time.time()
                     total_stt = time.time()
-                    
+
                 if transcript:
                     # AI response generation
                     ai_start = time.time()

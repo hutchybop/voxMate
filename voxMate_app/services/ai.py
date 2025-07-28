@@ -7,7 +7,7 @@ import tempfile
 import json
 from gtts import gTTS
 import subprocess
-from typing import Tuple
+from typing import Tuple, Optional
 
 
 # Required local imports
@@ -56,7 +56,7 @@ class AIService:
                 logger.error(f"Error deleting temp audio file: {e}")
 
 
-    def generate_response(self, prompt: str) -> str:
+    def generate_response(self, prompt: str) -> Tuple[str, Optional[dict]]:
         """Generate AI response using chat completion"""
         try:
             response = self.client.chat.completions.create(
@@ -69,27 +69,17 @@ class AIService:
 
             # Remove any special formatting tags
             cleaned = re.sub(r"<think>.*?</think>", "", message, flags=re.DOTALL)
-            cleaned = re.sub(r"^```(?:json)?\s*|```$", "", cleaned, flags=re.MULTILINE).strip()
-            logger.info(f"AI Response (cleaned): {cleaned}")
+            cleaned = re.sub(r"```(?:json)?\n(.*?)```", r"\1", cleaned, flags=re.DOTALL).strip()
 
             try:
                 parsed = json.loads(cleaned)
                 if not isinstance(parsed, dict):
-                    logger.warning("Parsed response is not a JSON object.")
+                    logger.warning(f"Parsed response is not a JSON object: {cleaned}")
+                    logger.info(f"Original ai response: {message}")
                     return cleaned, None
-                response_text = parsed.get("response", cleaned)
-                # cmd = parsed.get("action", "")
-                # query = parsed.get("query", "")
-                # artist = parsed.get("artist", "")
-                # type = parsed.get("type", "")
-                # action = {"cmd": cmd, "params": {"query": query, "artist": artist, "type": type}}
-
-                
-                # Only return cmd if it's a dict and has a 'cmd' key
-                # if isinstance(action, dict) and action.get("cmd"):
-                #     return response_text, action
-                # Only return cmd if it's a dict and has a 'cmd' key
-                if isinstance(parsed, dict) and parsed.get("cmd"):
+                logger.info(f"AI Response: {parsed}")
+                response_text = parsed.get("response") or message
+                if parsed.get("action"):
                     return response_text, parsed
                 else:
                     return response_text, None
@@ -101,6 +91,7 @@ class AIService:
         except Exception as e:
             logger.error(f"Failed to generate response: {e}")
             return "Sorry, I encountered an error processing your request.", None
+
 
     def text_to_speech(self, message: str) -> float:
         """Convert text to speech and play it"""

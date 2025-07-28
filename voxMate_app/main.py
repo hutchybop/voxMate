@@ -5,6 +5,7 @@ import signal
 import atexit
 import sys
 import time
+import os
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -53,54 +54,55 @@ def main() -> None:
         while True:
             try:
 
-                app_state.set_state("status", "waiting")
-                lights.lights_idle()
+                if os.getenv("remote") == "false":
 
-                # Wake word phase (PyAudio holds mic)
-                with wakeword.audio_wake_stream(ai_service.access_key) as (porcupine, pa, stream):
-                    wakeword.wake_word_detection(porcupine, stream, lights)
+                    app_state.set_state("status", "waiting")
+                    lights.lights_idle()
 
-                # Mic now released — record using sounddevice
-                app_state.set_state("status", "processing")
-                lights.lights_listening()
+                    # Wake word phase (PyAudio holds mic)
+                    with wakeword.audio_wake_stream(ai_service.access_key) as (porcupine, pa, stream):
+                        wakeword.wake_word_detection(porcupine, stream, lights)
 
-                start_total = time.time()
-                audio_file = AudioProcessor.record_audio_to_file()
-                success = False
+                    # Mic now released — record using sounddevice
+                    app_state.set_state("status", "processing")
+                    lights.lights_listening()
 
-                
-                lights.lights_pulsing_processing()
+                    start_total = time.time()
+                    audio_file = AudioProcessor.record_audio_to_file()
+                    success = False
 
-                transcript, stt_time = ai_service.transcribe_audio(audio_file)
-                total_stt = time.time() - start_total
+                    
+                    lights.lights_pulsing_processing()
+
+                    transcript, stt_time = ai_service.transcribe_audio(audio_file)
+                    total_stt = time.time() - start_total
+
+                else: 
+                    transcript = input("{\"response\":\"Playing Thunderstruck by AC/DC.\",\"action\":\"spotify_play\",\"query\":\"Thunderstruck\",\"artist\":\"AC/DC\",\"type\":\"track\"}")
 
                 if transcript:
                     # AI response generation
                     ai_start = time.time()
                     try:
-                        ai_response, action = ai_service.generate_response(transcript)
-                        if not isinstance(ai_response, str):
-                            ai_response = str(ai_response)
+                        response_text, parsed = ai_service.generate_response(transcript)
+                        if not isinstance(response_text, str):
+                            response_text = str(response_text)
                     except Exception as e:
                         logger.error(f"AI processing failed: {e}")
-                        ai_response = "Sorry, I encountered an error processing your request"
-                        action = None
+                        response_text = "Sorry, I encountered an error processing your request"
+                        parsed = None
                     ai_time = time.time() - ai_start
-
-                    # Text-to-speech
-                    tts_start = time.time()
-                    try:
-                        tts_time = ai_service.text_to_speech(ai_response)
-                    except Exception as e:
-                        logger.error(f"TTS playback failed: {e}")
-                    total_tts = time.time() - tts_start
 
                     # Handle the user command and play response
                     try:
-                        if action is not None:
-                            success, message = handle_cmd(action)
-                        if not success and message:
-                            ai_service.text_to_speech(message)
+                        tts_start = time.time()
+                        if parsed is not None and parsed.get("action"):
+                            success, message = handle_cmd(parsed)
+                            if not success and message:
+                                ai_service.text_to_speech(message)
+                        else:
+                            tts_time = ai_service.text_to_speech(response_text)
+                        total_tts = time.time() - tts_start
                     except Exception as e:
                         logger.error(f'Main loop error, processing user command: {e}')
 

@@ -6,7 +6,7 @@ import requests
 import traceback
 from typing import Optional, Tuple
 from rapidfuzz.fuzz import ratio
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Tuple, Dict
 from datetime import datetime, timezone
 from spotipy.oauth2 import SpotifyOAuth
 from threading import Lock
@@ -349,25 +349,60 @@ class SpotifyPlayer:
         return False
 
 
-    def stop_playback(self) -> bool:
+    def stop_playback(self) -> Tuple[bool, Optional[str]]:
         """Stop playback while maintaining playback context"""
         if not self.sp and not self.initialize_spotify():
-            return False    
+            return False, "Error, failed to initialise Spotify"
         try:
             playback = self.sp.current_playback()
             if playback and playback['is_playing']:
                 self.sp.pause_playback()
-                return True
-            return True  # No active playback is fine
+                return True, None
+            return True, None  # No active playback is fine
         except spotipy.SpotifyException as e:
             if e.http_status in [404, 403]:  # Nothing is playing
                 logger.warning("No active playback to stop")
                 return True
             logger.error(f"Failed to stop playback: {e}")
-            return False
+            return False, "Failed to stop Spotify"
         except Exception as e:
             logger.error(f"Unexpected error stopping playback: {e}")
-            return False
+            return False, "Failed to stop Spotify"
+    
+
+    def skip_playback(self) -> Tuple[bool, Optional[str]]:
+        """Skip current track if content is playing"""
+        if not self.sp and not self.initialize_spotify():
+            return False, "Error, failed to initialise Spotify"
+        try:
+            playback = self.sp.current_playback()
+            if playback and playback['is_playing']:
+                playback = self.sp.next_track()
+                return True, None
+            else:
+                return False, "No music playing, cannot skip track"
+        except Exception as e:
+            logger.error(f"Failed to skip track: {e}")
+            return False, "There was an error trying to skip the track"
+        
+
+    def repeat_playback(self, repeat) -> Tuple[bool, Optional[str]]:
+        """Toggle repeat mode (true -> 'context', false -> 'off')"""
+        if not self.sp and not self.initialize_spotify():
+            return False, "Error, failed to initialise Spotify"
+        try:
+            playback = self.sp.current_playback()
+            if playback and playback['is_playing']:
+                if repeat == "true":
+                    self.sp.repeat(state="context")
+                elif repeat == "false":
+                    self.sp.repeat(state="off")
+                return True, None
+            else:
+                return False, "No music playing, cannot toggle repeat"
+        except Exception as e:
+            logger.error(f"Failed to toggle repeat: {e}")
+            return False, "There was an error trying to toggle repeat"
  
  
     def handle_spotify_play(self, params: Dict) -> Tuple[bool, Optional[str]]:
@@ -376,8 +411,8 @@ class SpotifyPlayer:
         Args:
             params (Dict): Dictionary in format:
                 {
-                    "cmd": "spotify_play",
-                    "params": query (optional),
+                    "query": user query,
+                    "artist": artist (optional),
                     "type": media_type (optional)
                 }
         Returns:

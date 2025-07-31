@@ -61,12 +61,3 @@ def ai_prompt(prompt):
         {"role": "assistant", "content": "{\"response\":\"The captial of France is Paris\"}"},
         {"role": "user", "content": prompt}
     ]
-
-# current expected output
-# {
-#     "response":"Playing Shape of You by Ed Sheeran on Spotify.",
-#     "action": "spotify_play", # optional if user asked to play or stop spotify/music ect
-#     "query":"Shape of You", # optional
-#     "artist":"Ed Sheeran", # optional possibly inferred
-#     "type":"track" # optional possibly inferred
-# }

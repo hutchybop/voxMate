@@ -78,7 +78,7 @@ def main() -> None:
                     total_stt = time.time() - start_total
 
                 else: 
-                    transcript = input("Enter the simulated ai repsonse")
+                    transcript = input("Enter the user question: ")
                     stt_time = time.time()
                     total_stt = time.time()
 
@@ -102,6 +102,8 @@ def main() -> None:
                             success, message = handle_action(parsed)
                             if not success and message:
                                 tts_time = ai_service.text_to_speech(message)
+                            else:
+                                tts_time = ai_service.text_to_speech(response_text)
                         else:
                             tts_time = ai_service.text_to_speech(response_text)
                         total_tts = time.time() - tts_start

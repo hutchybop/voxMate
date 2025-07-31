@@ -436,7 +436,7 @@ class SpotifyPlayer:
             return True, None
         except spotipy.SpotifyException as e:
             if "Restriction violated" in str(e):
-                return False, "Can't turn shuffle on right now — try playing a playlist or resuming music."
+                return False, "Can't turn shuffle on right now — try playing a playlist or an album."
             logger.error(f"Failed to toggle shuffle: {e}")
             return False, "There was an error trying to toggle shuffle"
         except Exception as e:

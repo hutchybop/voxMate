@@ -376,11 +376,11 @@ class SpotifyPlayer:
             return False, "Error, failed to initialise Spotify"
         try:
             playback = self.sp.current_playback()
-            if playback and playback['is_playing']:
-                playback = self.sp.next_track()
+            if playback and playback.get("item"):
+                self.sp.next_track()
                 return True, None
             else:
-                return False, "No music playing, cannot skip track"
+                return False, "No active track or playback context, cannot skip track"
         except Exception as e:
             logger.error(f"Failed to skip track: {e}")
             return False, "There was an error trying to skip the track"
@@ -392,17 +392,30 @@ class SpotifyPlayer:
             return False, "Error, failed to initialise Spotify"
         try:
             playback = self.sp.current_playback()
-            if playback and playback['is_playing']:
-                if repeat == "true":
-                    self.sp.repeat(state="context")
-                elif repeat == "false":
-                    self.sp.repeat(state="off")
+            if playback and playback.get("item"):
+                self.sp.repeat(state=repeat)
                 return True, None
             else:
                 return False, "No music playing, cannot toggle repeat"
         except Exception as e:
             logger.error(f"Failed to toggle repeat: {e}")
             return False, "There was an error trying to toggle repeat"
+    
+
+    def shuffle_playback(self, shuffle) -> Tuple[bool, Optional[str]]:
+        """Toggle shuffle mode"""
+        if not self.sp and not self.initialize_spotify():
+            return False, "Error, failed to initialise Spotify"
+        try:
+            playback = self.sp.current_playback()
+            if playback and playback.get("item"):
+                self.sp.shuffle(state=shuffle)
+                return True, None
+            else:
+                return False, "No music playing, cannot toggle shuffle"
+        except Exception as e:
+            logger.error(f"Failed to toggle shuffle: {e}")
+            return False, "There was an error trying to toggle shuffle"
  
  
     def handle_spotify_play(self, params: Dict) -> Tuple[bool, Optional[str]]:

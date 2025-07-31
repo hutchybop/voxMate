@@ -48,3 +48,10 @@ def handle_action(parsed) -> Tuple[bool, Optional[str]]:
         if not success and not message:
             message = "Error toggling repeat mode"
         return success, message
+    
+    elif action == 'spotify_shuffle':
+        shuffle = {"true": True, "false": False}.get(parsed.get("shuffle", "").lower().strip())
+        success, message = spotify_player.shuffle_playback(shuffle)
+        if not success and not message:
+            message = "Error toggling shuffle mode"
+        return success, message

@@ -333,6 +333,9 @@ class SpotifyPlayer:
         """Safely start playback with retry logic"""
         for attempt in range(self.max_retries + 1):
             try:
+                # Set Spotify Connect device volume to 100%
+                self.sp.volume(100, device_id=device_id)
+                # Start playback
                 self.sp.start_playback(device_id=device_id)
                 return True
             except spotipy.SpotifyException as e:

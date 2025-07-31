@@ -3,6 +3,7 @@ from typing import Optional, Tuple
 
 # Required local imports
 from actions.handlers.spotify_app import SpotifyPlayer
+from actions.handlers.volume import change_volume
 from utils.state import app_state
 
 
@@ -56,4 +57,13 @@ def handle_action(parsed) -> Tuple[bool, Optional[str]]:
             app_state.set_state("spotify", "playing")
         elif not message:
             message = "Error toggling shuffle mode"
+        return success, message
+    
+    elif action == 'volume':
+        level = parsed.get("level", "")
+        if not level:
+            return False, "No volume level provided"
+        success, message = change_volume(level)
+        if not success and not message:
+            message = "Error setting volume"
         return success, message

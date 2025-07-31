@@ -8,6 +8,7 @@ class AppState:
         self._state = {
             "status": "waiting",      # General app status
             "spotify": "stopped",     # Could be 'playing', 'paused', etc.
+            "volume": 70,             # Current voulme setting
             "alarm": "off"            # Future: 'ringing', 'off', etc.
         }
         self._lock = threading.Lock()

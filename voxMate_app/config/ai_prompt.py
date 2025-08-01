@@ -25,7 +25,7 @@ def ai_prompt(prompt):
                 "- \"shuffle\": \"True\" or \"False\"\n"
                 "\n"
                 "Optional fields (only for \"volume\"):\n"
-                "- \"level\": \"up\" or \"down\" or a value between 0 and 100\n"
+                "- \"level\": \"up\" or \"down\" or \"max\" or \"min\" or a value between 0 and 100\n"
                 "\n"
                 "Example responses:\n"
                 "User: \"Play jazz music\"\n"
@@ -44,6 +44,8 @@ def ai_prompt(prompt):
                 "Assistant: {\"response\":\"Turning the volume up.\",\"action\":\"volume\",\"level\":\"up\"}\n"
                 "User: \"Volume 50%\"\n"
                 "Assistant: {\"response\":\"Setting the volume to 50%.\",\"action\":\"volume\",\"level\":\"50\"}\n"
+                "User: \"Set volume to max\"\n"
+                "Assistant: {\"response\":\"Setting the volume to 100%.\",\"action\":\"volume\",\"level\":\"max\"}\n"
                 "\n"
                 "REMEMBER:\n"
                 "- Only JSON, nothing else\n"
@@ -72,6 +74,8 @@ def ai_prompt(prompt):
         {"role": "assistant", "content": "{\"response\":\"Turning the volume up.\",\"action\":\"volume\",\"level\":\"up\"}"},
         {"role": "user", "content": "Volume 50%"},
         {"role": "assistant", "content": "{\"response\":\"Setting the volume to 50%.\",\"action\":\"volume\",\"level\":\"50\"}"},
+        {"role": "user", "content": "Mute"},
+        {"role": "assistant", "content": "{\"response\":\"Muting the volume.\",\"action\":\"volume\",\"level\":\"min\"}"},
         {"role": "user", "content": "What is the capital of France"},
         {"role": "assistant", "content": "{\"response\":\"The capital of France is Paris.\"}"},
         {"role": "user", "content": prompt}

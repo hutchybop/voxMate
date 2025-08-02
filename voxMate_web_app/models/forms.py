@@ -24,6 +24,7 @@ class SettingsForm(FlaskForm):
     noise_reduction = BooleanField("Noise Reduction")
     stt_model = StringField("STT Model", validators=[InputRequired()])
     ai_model = StringField("AI Model", validators=[InputRequired()])
+    default_volume = IntegerField("Default Volume (%)", validators=[InputRequired()])
     submit = SubmitField("Save Settings")
 
 class VerifyForm(FlaskForm):

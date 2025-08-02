@@ -12,6 +12,8 @@ def change_volume(level) -> Tuple[bool, Optional[str]]:
     Changes the system and Spotify volume levels:
     - up: +10
     - down: -10
+    - max: 100
+    - min: 0
     - Sets volume to user defined level
     """
     try:

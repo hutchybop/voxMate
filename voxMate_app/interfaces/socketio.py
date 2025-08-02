@@ -27,7 +27,7 @@ def on_settings_updated():
     logger.info("Received updated voxMate settings")
 
     try:
-        global CONFIG, SILENCE_THRESHOLD, SILENCE_DURATION, VOLUME_DISPLAY, NOISE_REDUCTION_ENABLED, STT_MODEL, AI_MODEL
+        global CONFIG, SILENCE_THRESHOLD, SILENCE_DURATION, VOLUME_DISPLAY, NOISE_REDUCTION_ENABLED, STT_MODEL, AI_MODEL, DEFAULT_VOLUME
         CONFIG = load_config()
         SILENCE_THRESHOLD = CONFIG["SILENCE_THRESHOLD"]
         SILENCE_DURATION = CONFIG["SILENCE_DURATION"]
@@ -35,6 +35,7 @@ def on_settings_updated():
         NOISE_REDUCTION_ENABLED = CONFIG["NOISE_REDUCTION_ENABLED"]
         STT_MODEL = CONFIG["STT_MODEL"]
         AI_MODEL = CONFIG["AI_MODEL"]
+        DEFAULT_VOLUME = CONFIG["DEFAULT_VOLUME"]
     finally:
         logger.info(f"Noise reduction: {'ENABLED' if NOISE_REDUCTION_ENABLED else 'DISABLED'}")
         logger.info(f"Volume Display: {'ENABLED' if VOLUME_DISPLAY else 'DISABLED'}")

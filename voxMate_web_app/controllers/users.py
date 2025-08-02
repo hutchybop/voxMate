@@ -51,7 +51,8 @@ def save_user_config(user_id, email):
             volume_display=default_settings.get("volume_display"),
             noise_reduction=default_settings.get("noise_reduction"),
             stt_model=default_settings.get("stt_model"),
-            ai_model=default_settings.get("ai_model")
+            ai_model=default_settings.get("ai_model"),
+            default_volume=default_settings.get("default_volume")
         )
         # Insert the new user settings into the database
         current_app.db.appSettings.insert_one(asdict(new_user_settings))

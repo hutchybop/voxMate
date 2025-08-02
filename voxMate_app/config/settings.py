@@ -21,7 +21,8 @@ DEFAULT_CONFIG = {
     "NOISE_REDUCTION_ENABLED": True,
     "STT_MODEL": "whisper-large-v3-turbo",
     "AI_MODEL": "qwen/qwen3-32b",
-    "MIC_DEVICE_INDEX": None
+    "MIC_DEVICE_INDEX": None,
+    "DEFAULT_VOLUME": 70
 }
 
 def load_user() -> Optional[Dict[str, Any]]:
@@ -68,6 +69,7 @@ def load_config() -> Dict[str, Any]:
             "NOISE_REDUCTION_ENABLED": settings.get('noise_reduction', DEFAULT_CONFIG["NOISE_REDUCTION_ENABLED"]),
             "STT_MODEL": settings.get('stt_model', DEFAULT_CONFIG["STT_MODEL"]),
             "AI_MODEL": settings.get('ai_model', DEFAULT_CONFIG["AI_MODEL"]),
+            "DEFAULT_VOLUME": settings.get('default_volume', DEFAULT_CONFIG["DEFAULT_VOLUME"])
         }
     except Exception as e:
         logger.error(f"Failed to connect to MongoDB or load config: {e}")
@@ -85,6 +87,7 @@ VOLUME_DISPLAY = CONFIG["VOLUME_DISPLAY"]
 NOISE_REDUCTION_ENABLED = CONFIG["NOISE_REDUCTION_ENABLED"]
 STT_MODEL = CONFIG["STT_MODEL"]
 AI_MODEL = CONFIG["AI_MODEL"]
+DEFAULT_VOLUME = CONFIG["DEFAULT_VOLUME"]
 
 
 # ================= ENVIRONMENT CHECK =================

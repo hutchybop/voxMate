@@ -27,6 +27,46 @@
 
         <div class="row mt-2 mb-2">
 
+            <!-- Default Volume Card -->
+            {% set default_volume_title %}
+                Default System Volume
+            {% endset %}
+            {% set default_volume_description %}
+                Set the default system volume from <span class="text-danger">0% to 100%</span>. 
+                This will affect all audio output including Spotify
+                <br><br>
+                <span class="text-info">Default value: {{ default_settings.default_volume }}%</span>
+            {% endset %}
+            {% set default_volume_current_setting %}
+                Current Setting: <strong>{{ settings.default_volume }}%</strong>
+            {% endset %}
+            {% set default_volume_input_controls %}
+                <div class="row mb-3">
+                    <div class="col-4">
+                        <label for="default_volume_input" class="form-label pt-2">Volume %:</label>
+                    </div>
+                    <div class="col-8 d-flex align-items-center">
+                        <span class="editable-label me-1">✏️</span>
+                        {{ settingsForm.default_volume(
+                            type="number",
+                            id="default_volume_input",
+                            class="form-control no_border flex-grow-1" + (" is-invalid" if settingsForm.default_volume.errors else ""),
+                            value=settings.default_volume,
+                            step="50"
+                        ) }}
+                    </div>
+                </div>
+                <input type="range" id="default_volume_slider" class="form-range" min="-500" max="500" step="50" value="0">
+                <div class="d-flex justify-content-between"><small>0%</small><small>100%</small></div>
+            {% endset %}
+            {{ render_settings_card_field(
+                default_volume_title,
+                default_volume_description,
+                default_volume_current_setting,
+                default_volume_input_controls
+            ) }}
+
+
             <!-- Silence Threshold Card -->
             {% set silence_threshold_title %}
                 Slience Threshold

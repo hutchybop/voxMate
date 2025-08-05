@@ -239,76 +239,60 @@ class SpotifyPlayer:
         """
         if not self.sp and not self.initialize_spotify():
             return None, None
-
         query_lower = query.strip().lower()
         artist_lower = artist.strip().lower() if artist else None
-
         try:
             # Construct the query string
             q = f'track:{query_lower} artist:{artist_lower}' if artist_lower else query_lower
-
             # If a user-specified type is given, search for it first
             if user_content_type in ["track", "playlist", "album", "artist"]:
                 results = self.sp.search(q=q, type=user_content_type, limit=5)
                 items = results.get(f"{user_content_type}s", {}).get("items", [])
-
                 for item in items:
                     name = item.get("name", "").strip().lower()
-
                     # Exact match
                     if name == query_lower:
                         logger.info(f"Exact match: '{query_lower}' in '{name}', type '{user_content_type}'")
                         return user_content_type, item["uri"]
-
                     # Partial match
                     if query_lower in name:
                         logger.info(f"Partial match: '{query_lower}' in '{name}', type '{user_content_type}'")
                         return user_content_type, item["uri"]
-
                     # Fuzzy match
                     if ratio(query_lower, name) > 80:
                         logger.info(f"Fuzzy match ({ratio(query_lower, name)}%): '{query_lower}' vs '{name}', type '{user_content_type}'")
                         return user_content_type, item["uri"]
-
                 # Fallback to first result if no match
                 if items:
                     logger.info(f"No exact/partial/fuzzy match for '{query_lower}' in type '{user_content_type}'")
                     logger.info(f"Returning best available match: {items[0]['name']} [{user_content_type}]")
                     return user_content_type, items[0]["uri"]
-
             # Fallback: Try all types
             results = self.sp.search(q=q, type="track,album,artist,playlist", limit=5)
             type_priority = ["album", "artist", "track", "playlist"]
-
             for content_type in type_priority:
                 items = results.get(f"{content_type}s", {}).get("items", [])
                 for item in items:
                     name = item.get("name", "").strip().lower()
-
                     # Exact match
                     if name == query_lower:
                         return content_type, item["uri"]
-
                     # Partial match
                     if query_lower in name:
                         logger.info(f"Partial match: '{query_lower}' in '{name}'")
                         return content_type, item["uri"]
-
                     # Fuzzy match
                     if ratio(query_lower, name) > 80:
                         logger.info(f"Fuzzy match ({ratio(query_lower, name)}%): '{query_lower}' vs '{name}'")
                         return content_type, item["uri"]
-
             # Fallback: first available result
             for content_type in type_priority:
                 items = results.get(f"{content_type}s", {}).get("items", [])
                 if items:
                     logger.info(f"No strong match for '{query_lower}' — returning best available: {items[0]['name']} [{content_type}]")
                     return content_type, items[0]["uri"]
-
         except Exception as e:
             logger.error(f"Failed to detect Spotify type: {e}")
-
         return None, None
     
 
@@ -326,30 +310,6 @@ class SpotifyPlayer:
                 if attempt == self.max_retries:
                     traceback.print_exc()
                 time.sleep(1 * (attempt + 1))
-        return False
-    
-
-    def start_playback(self, device_id: str) -> bool:
-        """Safely start playback with retry logic"""
-        for attempt in range(self.max_retries + 1):
-            try:
-                # Set Spotify Connect device volume to 100%
-                self.sp.volume(100, device_id=device_id)
-                # Start playback
-                self.sp.start_playback(device_id=device_id)
-                return True
-            except spotipy.SpotifyException as e:
-                if e.http_status == 404:
-                    logger.error("Device not found - may be offline")
-                    return False
-                logger.error(f"Playback attempt {attempt + 1} failed: {e}")
-                if attempt == self.max_retries:
-                    traceback.print_exc()
-                time.sleep(1 * (attempt + 1))
-            except Exception as e:
-                logger.error(f"Unexpected playback error: {e}")
-                traceback.print_exc()
-                return False
         return False
 
 
@@ -404,24 +364,6 @@ class SpotifyPlayer:
         except Exception as e:
             logger.error(f"Failed to toggle repeat: {e}")
             return False, "There was an error trying to toggle repeat"
-    
-
-    def shuffle_playback(self, shuffle) -> Tuple[bool, Optional[str]]:
-        """Toggle shuffle mode"""
-        if not self.sp and not self.initialize_spotify():
-            return False, "Error, failed to initialise Spotify"
-        try:
-            playback = self.sp.current_playback()
-            if playback and not playback["is_playing"]:
-                self.sp.start_playback()  # resume
-                time.sleep(1)  # brief pause to avoid race condition
-                self.sp.shuffle(state=shuffle)
-                return True, None
-            else:
-                return False, "No music, cannot toggle shuffle"
-        except Exception as e:
-            logger.error(f"Failed to toggle shuffle: {e}")
-            return False, "There was an error trying to toggle shuffle"
         
     
     def shuffle_playback(self, shuffle) -> Tuple[bool, Optional[str]]:
@@ -430,15 +372,12 @@ class SpotifyPlayer:
             return False, "Error, failed to initialise Spotify"
         try:
             playback = self.sp.current_playback()
-            # Resume if paused
-            if playback and not playback.get("is_playing", False):
-                self.sp.start_playback()
-                time.sleep(1)  # small buffer to allow shuffle to be set
-            # Now try to toggle shuffle regardless
-            self.sp.shuffle(state=shuffle)
-            return True, None
+            if playback and playback.get("item"):
+                self.sp.shuffle(state=shuffle)
+                return True, None
         except spotipy.SpotifyException as e:
             if "Restriction violated" in str(e):
+                logger.error(f"Failed to toggle shuffle: {e}")
                 return False, "Can't turn shuffle on right now — try playing a playlist or an album."
             logger.error(f"Failed to toggle shuffle: {e}")
             return False, "There was an error trying to toggle shuffle"
@@ -463,20 +402,16 @@ class SpotifyPlayer:
         # Initialising Spotify
         if not self.sp and not self.initialize_spotify():
             return False, "Spotify did not initialize, could not play Spotify"
-
         # Getting the device id
         device_id = self.get_valid_device_id()
         if not device_id:
             logger.error("No valid playback device available")
             return False, "No valid playback device available, could not play Spotify"
-
         logger.info(f"Attempting playback on device ID: {device_id}")
-
         # Transfering Playback
         if not self.transfer_playback(device_id):
             logger.error("Failed to transfer playback")
             return False, "Failed to transfer playback, could not play Spotify"
-
         # Waiting for the transfer to complete
         timeout = time.time() + 5
         while time.time() < timeout:
@@ -490,26 +425,23 @@ class SpotifyPlayer:
         else:
             logger.error("Playback transfer verification timed out")
             return False, "Failed to transfer playback, could not play Spotify"
-
+        # Setting Spotify Volume to 100%
+        self.sp.volume(100, device_id=device_id)
         # Getting user params
         query = params.get("query", "")
         artist = params.get("artist", "")
         user_content_type = params.get("type", "")
-
         logger.info(f"Handling Spotify play — query: {query}, user_type: {user_content_type}")
-
         if query:
             try:
                 # Using Spotify search to get type and track uri
                 content_type, uri = self.detect_spotify_type(query, artist, user_content_type)
                 logger.info(f"Spotify detect result - type: {content_type}, uri: {uri}")
-
                 # Using context_uri to play album, playlist or artist
                 if content_type in ["album", "playlist", "artist"]:
                     self.sp.start_playback(device_id=device_id, context_uri=uri)
                     logger.info(f"Playing {content_type}: {query}")
                     return True, None
-
                 if content_type == "track":
                     try:
                         # Getting the users current queue
@@ -518,7 +450,6 @@ class SpotifyPlayer:
                     except Exception as e:
                         logger.warning(f"Failed to fetch queue: {e}")
                         has_queue = False
-
                     try:
                         # Add the track to queue and play next skipping current track if playing
                         self.sp.add_to_queue(uri, device_id=device_id)
@@ -527,19 +458,16 @@ class SpotifyPlayer:
                         logger.info(f"Skipped current track and queued track to play next: {query}")
                     except Exception as e:
                         logger.warning(f"Failed to queue track: {e}")
-
                     if not has_queue:
                         logger.info("Queue was empty — building queue based on track context")
                         try:
                             #  Building a queue
                             track_info = self.sp.track(uri)
                             artist_uri = track_info["artists"][0]["uri"]
-
                             # Add 3 more tracks by the same artist
                             for track in self.sp.artist_top_tracks(artist_uri)["tracks"][:3]:
                                 self.sp.add_to_queue(track["uri"], device_id=device_id)
                                 logger.info(f"Added artist track to queue: {track['name']}")
-
                             # Add user's top 10 tracks
                             top_tracks = self.sp.current_user_top_tracks(limit=10, time_range="short_term")["items"]
                             for track in top_tracks:
@@ -547,23 +475,18 @@ class SpotifyPlayer:
                                 logger.info(f"Added top track to queue: {track['name']}")
                         except Exception as e:
                             logger.warning(f"Failed to build fallback queue: {e}")
-
                     try:
                         # Start playback if not already playing
                         self.sp.start_playback(device_id=device_id)
                         logger.info(f"Started playback of queued track")
                     except Exception as e:
                         logger.warning(f"Failed to start playback of queued track: {e}")
-
                     return True, None
-
             except Exception as e:
                 logger.error(f"Playback error during URI detection/playback: {e}")
                 logger.info("Falling back to generic playback")
-
         else:
             logger.warning(f"No query provided — attempting to resume playback")
-
         try:
             # Fallback: resume or default playlist
             self.sp.start_playback(device_id=device_id)

@@ -11,7 +11,7 @@ def ai_prompt(prompt):
                 "\n"
                 "Required fields:\n"
                 "- \"response\": A short phrase the assistant will speak (e.g., \"Playing music\").\n"
-                "- \"action\": One of: \"spotify_play\", \"spotify_skip\", \"spotify_repeat\", \"spotify_shuffle\", \"spotify_stop\", \"volume\".\n"
+                "- \"action\": One of: \"spotify_play\", \"spotify_skip\", \"spotify_repeat\", \"spotify_shuffle\", \"spotify_stop\", \"volume\", \"news\".\n"
                 "\n"
                 "Optional fields (only for \"spotify_play\"):\n"
                 "- \"query\": Track/album/playlist name (if specified)\n"
@@ -46,6 +46,8 @@ def ai_prompt(prompt):
                 "Assistant: {\"response\":\"Setting the volume to 50%.\",\"action\":\"volume\",\"level\":\"50\"}\n"
                 "User: \"Set volume to max\"\n"
                 "Assistant: {\"response\":\"Setting the volume to 100%.\",\"action\":\"volume\",\"level\":\"max\"}\n"
+                "User: \"WHat's the news\"\n"
+                "Assistant: {\"response\":\"Getting the news.\",\"action\":\"news\"}\n"
                 "\n"
                 "REMEMBER:\n"
                 "- Only JSON, nothing else\n"
@@ -76,6 +78,8 @@ def ai_prompt(prompt):
         {"role": "assistant", "content": "{\"response\":\"Setting the volume to 50%.\",\"action\":\"volume\",\"level\":\"50\"}"},
         {"role": "user", "content": "Mute"},
         {"role": "assistant", "content": "{\"response\":\"Muting the volume.\",\"action\":\"volume\",\"level\":\"min\"}"},
+        {"role": "user", "content": "Tell me the news"},
+        {"role": "assistant", "content": "{\"response\":\"Getting the news.\",\"action\":\"news\"}"},
         {"role": "user", "content": "What is the capital of France"},
         {"role": "assistant", "content": "{\"response\":\"The capital of France is Paris.\"}"},
         {"role": "user", "content": prompt}

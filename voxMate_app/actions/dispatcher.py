@@ -4,6 +4,7 @@ from typing import Optional, Tuple
 # Required local imports
 from actions.handlers.spotify_app import SpotifyPlayer
 from actions.handlers.volume import change_volume
+from handlers.news_weather import get_news
 from utils.state import app_state
 
 
@@ -66,4 +67,10 @@ def handle_action(parsed) -> Tuple[bool, Optional[str]]:
         success, message = change_volume(level)
         if not success and not message:
             message = "Error setting volume"
+        return success, message
+    
+    elif action == 'news':
+        success, message = get_news()
+        if not success and not message:
+            message = "Error getting the news"
         return success, message

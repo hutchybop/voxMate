@@ -55,7 +55,8 @@ def main() -> None:
         success, message = handle_action({"action": "volume", "level": settings.DEFAULT_VOLUME})
         if not success:
             logger.error(f"Could not set default system volume of: {settings.DEFAULT_VOLUME}")
-        logger.info(f"Set system volume to: {settings.DEFAULT_VOLUME}")
+        else:
+            logger.info(f"Set system volume to: {settings.DEFAULT_VOLUME}")
    
         
         while True:

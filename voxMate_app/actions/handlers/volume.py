@@ -18,20 +18,21 @@ def change_volume(level) -> Tuple[bool, Optional[str]]:
     """
     try:
         # Sanitising level and removing % sign if present
-        level = level.lower().strip()
-        if level.endswith('%'):
-            level = level[:-1]
-        # Getting the current volume from app_state
-        current_volume = int(app_state.get_state("volume"))
-        # Defining new_volume based on input level
-        if level == "up":
-            new_volume = min(100, current_volume + 10)
-        elif level == "down":
-            new_volume = max(0, current_volume - 10)
-        elif level == "min":
-            new_volume = 0
-        elif level == "max":
-            new_volume = 100
+        if level is str:
+            level = level.lower().strip()
+            if level.endswith('%'):
+                level = level[:-1]
+            # Getting the current volume from app_state
+            current_volume = int(app_state.get_state("volume"))
+            # Defining new_volume based on input level
+            if level == "up":
+                new_volume = min(100, current_volume + 10)
+            elif level == "down":
+                new_volume = max(0, current_volume - 10)
+            elif level == "min":
+                new_volume = 0
+            elif level == "max":
+                new_volume = 100
         else:
             # Trying to convert input to an integer and clamp to 0–100
             try:

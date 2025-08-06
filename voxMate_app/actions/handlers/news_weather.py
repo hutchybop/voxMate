@@ -9,7 +9,8 @@ from utils.logging import logger
 def get_news():
 
     # For BBC
-    news_url = "https://podcasts.files.bbci.co.uk/p02nq0gn.rss"
+    # news_url = "https://podcasts.files.bbci.co.uk/p02nq0gn.rss"
+    news_url = "http://feeds.bbci.co.uk/news/rss.xml?edition=uk"
 
     try:
         feed = feedparser.parse(news_url)

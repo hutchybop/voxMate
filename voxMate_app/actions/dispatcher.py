@@ -4,7 +4,6 @@ from typing import Optional, Tuple
 # Required local imports
 from actions.handlers.spotify_app import SpotifyPlayer
 from actions.handlers.volume import change_volume
-from actions.handlers.news_weather import get_news
 from utils.state import app_state
 
 

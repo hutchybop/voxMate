@@ -324,10 +324,26 @@ class SpotifyPlayer:
 
             if not query:  # Resume playback if no query
                 try:
-                    self.sp.start_playback(device_id=device_id)
+                    self._handle_track_playback(device_id=device_id)
                     return True, None
                 except Exception:
                     return self._start_fallback_playback(device_id)
+            
+            if query == "news":
+                show_uri = "spotify:show:2qZ0xpaBBwf3bTYhA10KZY"
+                try:
+                    episodes = self.sp.show_episodes(show_uri, limit=1)
+                    if not episodes['items']:
+                        return False, "No news episodes found"
+
+                    episode_uri = episodes['items'][0]['uri']
+                    self.sp.add_to_queue(uris=[episode_uri])
+                    self.sp.next_track()
+                    self.sp.start_playback(device_id=device_id)
+####### Play the news only.........
+                    return True, None
+                except Exception as e:
+                    return self._handle_spotify_error("news podcast playback", e), "Error getting news podcast"
 
             # Handle playback with query
             content_type, uri = self.detect_spotify_type(query, artist, user_content_type)
@@ -353,19 +369,22 @@ class SpotifyPlayer:
             )
 
 
-    def _handle_track_playback(self, device_id: str, uri: str) -> None:
+    def _handle_track_playback(self, device_id: str, uri: str = None) -> None:
         """Handle track playback with queue management"""
         try:
             has_queue = bool(self.sp.queue().get("queue"))
         except Exception:
             has_queue = False
 
-        self.sp.add_to_queue(uri, device_id=device_id)
-        if has_queue:
-            self.sp.next_track()
-        else:
+        if uri:
+            self.sp.add_to_queue(uri, device_id=device_id)
+            if has_queue:
+                self.sp.next_track()
+
+        if not has_queue:
             self._build_fallback_queue(device_id)
-            self.sp.start_playback(device_id=device_id)
+
+        self.sp.start_playback(device_id=device_id)
 
     def _start_fallback_playback(self, device_id: str) -> Tuple[bool, str]:
         """Start fallback playback with top tracks or default playlist"""
@@ -449,32 +468,6 @@ class SpotifyPlayer:
                 "shuffle toggle", 
                 e,
                 "Failed to toggle shuffle mode"
-            )
-
-
-    def spotify_news_podcast(self, uri: str = None) -> Tuple[bool, Optional[str]]:
-        """Play news podcast (default: The Times News Briefing)"""
-        try:
-            if not self.sp and not self.initialize_spotify():
-                return False, "Spotify initialization failed"
-
-            show_uri = uri or "spotify:show:2qZ0xpaBBwf3bTYhA10KZY"
-            
-            try:
-                episodes = self.sp.show_episodes(show_uri, limit=1)
-                if not episodes['items']:
-                    return False, "No news episodes found"
-
-                episode_uri = episodes['items'][0]['uri']
-                self.sp.start_playback(uris=[episode_uri])
-                return True, None
-            except Exception as e:
-                return self._handle_spotify_error("news podcast playback", e), "Error getting news podcast"
-        except Exception as e:
-            return self._handle_spotify_error(
-                "news podcast",
-                e,
-                "Failed to play news podcast"
             )
 
 

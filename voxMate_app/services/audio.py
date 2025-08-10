@@ -1,13 +1,12 @@
-# Required python imports
 import subprocess
 import time
 import tempfile
 import os
 import wave
+import threading
 import numpy as np
 import sounddevice as sd
 
-# Required local imports
 from utils.logging import logger
 import config.constraints as contrants
 import config.settings as settings
@@ -57,11 +56,9 @@ class AudioProcessor:
             chunk = indata.copy()
             volume = np.linalg.norm(chunk)
 
-            # Shows volume in terminal while mic is in use if set to true
             if settings.VOLUME_DISPLAY:
                 print(f"Mic Volume detected: {volume}")
 
-            
             if settings.NOISE_REDUCTION_ENABLED:
                 if volume > settings.SILENCE_THRESHOLD:
                     audio_data.append(chunk)
@@ -92,11 +89,10 @@ class AudioProcessor:
                 while stream.active:
                     time.sleep(0.1)
 
-            # Save to temp WAV file
             temp_audio = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
             with wave.open(temp_audio.name, 'wb') as wf:
                 wf.setnchannels(contrants.CHANNELS)
-                wf.setsampwidth(2)  # 16-bit = 2 bytes
+                wf.setsampwidth(2)
                 wf.setframerate(contrants.SAMPLE_RATE)
                 for chunk in audio_data:
                     wf.writeframes(chunk.tobytes())
@@ -106,5 +102,6 @@ class AudioProcessor:
             
         except Exception as e:
             logger.error(f"Error: {e}")
-            os.unlink(temp_audio.name)
+            if 'temp_audio' in locals() and os.path.exists(temp_audio.name):
+                os.unlink(temp_audio.name)
             raise

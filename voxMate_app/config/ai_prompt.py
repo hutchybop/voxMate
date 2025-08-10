@@ -46,7 +46,7 @@ def ai_prompt(prompt):
                 "Assistant: {\"response\":\"Setting the volume to 50%.\",\"action\":\"volume\",\"level\":\"50\"}\n"
                 "User: \"Set volume to max\"\n"
                 "Assistant: {\"response\":\"Setting the volume to 100%.\",\"action\":\"volume\",\"level\":\"max\"}\n"
-                "User: \"WHat's the news\"\n"
+                "User: \"What's the news\"\n"
                 "Assistant: {\"response\":\"Getting the news.\",\"action\":\"news\"}\n"
                 "\n"
                 "REMEMBER:\n"

@@ -70,7 +70,8 @@ def handle_action(parsed) -> Tuple[bool, Optional[str]]:
         return success, message
     
     elif action == 'news':
-        success, message = spotify_player.spotify_news_podcast()
+        params = {"query": "news"}
+        success, message = spotify_player.handle_spotify_play(params)
         if not success and not message:
             message = "Error getting the news"
         return success, message

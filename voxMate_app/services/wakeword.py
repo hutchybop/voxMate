@@ -16,7 +16,7 @@ from utils.mic_lights import MicLights
 
 
 @contextmanager
-def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine, pyaudio.PyAudio, pyaudio.Stream], None, None]:
+def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine, pyaudio.Stream], None, None]:
     """Context manager for Porcupine wake word detection"""
     pa = None
     porcupine = None
@@ -40,7 +40,7 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
             logger.error(f"Failed to open audio stream: {e}")
             raise
     
-        yield porcupine, pa, stream
+        yield porcupine, stream
     except Exception as e:
         logger.error(f"Error initializing: {e}")
         raise
@@ -54,7 +54,7 @@ def audio_wake_stream(access_key: str) -> Generator[Tuple[pvporcupine.Porcupine,
             porcupine.delete()
 
 
-def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream, lights) -> None:
+def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream, mic_lights: MicLights) -> None:
     """Listen for wake word and respond when detected"""
     logger.info(f"Listening for wake word... (say '{constraints.WAKE_WORD}')")
     while True:
@@ -64,11 +64,11 @@ def wake_word_detection(porcupine: pvporcupine.Porcupine, stream: pyaudio.Stream
             samples = struct.unpack_from("h" * porcupine.frame_length * 2, pcm)  # 2 channels
             mono_samples = [(samples[i] + samples[i+1]) // 2 for i in range(0, len(samples), 2)]
             if porcupine.process(mono_samples) >= 0:
-                lights.lights_wake_word()
+                mic_lights.lights_wake_word()
                 logger.info("Wake word detected! Ask your question...")
                 # Stop Spotify only if we haven't already done so
                 if app_state.is_spotify_playing():
-                    success, message = handle_action({"action": "spotify_stop"})
+                    success, _ = handle_action({"action": "spotify_stop"})
                     if success:
                         app_state.set_state("spotify", "paused")
                         logger.info("Spotify paused successfully")

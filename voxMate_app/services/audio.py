@@ -3,7 +3,6 @@ import time
 import tempfile
 import os
 import wave
-import threading
 import numpy as np
 import sounddevice as sd
 
@@ -21,13 +20,14 @@ class AudioProcessor:
     def play_sound(file_path: str) -> None:
         """Play sound with explicit stereo output"""
         try:
-            result = subprocess.run(
+            subprocess.run(
                 ["mpg123", "--stereo", "-q", "-o", "pulse", file_path],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,  # Capture stderr for debugging
                 check=True
             )
         except subprocess.CalledProcessError as e:
+            # Do not need to raise here as this would not cause a critical error
             logger.error(f"Error playing sound {file_path}: {e.stderr.decode().strip()}")
             # Fallback to non-stereo mode if needed
             try:
@@ -38,6 +38,7 @@ class AudioProcessor:
                     check=True
                 )
             except subprocess.CalledProcessError as fallback_e:
+                # Do not need to raise here as this would not cause a critical error
                 logger.error(f"Fallback playback failed: {fallback_e}")
 
 
@@ -48,7 +49,7 @@ class AudioProcessor:
         audio_data = []
         consecutive_silent_chunks = 0
         
-        def callback(indata, frames, time_info, status):
+        def callback(indata: np.ndarray, frames: int, time_info: dict, status: sd.CallbackFlags) -> None:
             nonlocal silence_start, consecutive_silent_chunks
             if status and status.input_overflow:
                 logger.warning("Input overflow in audio stream detected")
@@ -65,7 +66,8 @@ class AudioProcessor:
                     consecutive_silent_chunks = 0
                 elif audio_data:
                     consecutive_silent_chunks += 1
-                    if consecutive_silent_chunks > int(settings.SILENCE_DURATION * contrants.SAMPLE_RATE / contrants.BLOCKSIZE):
+                    threshold_chunks = int(settings.SILENCE_DURATION * contrants.SAMPLE_RATE / contrants.BLOCKSIZE)
+                    if consecutive_silent_chunks > threshold_chunks:
                         raise sd.CallbackStop()
             else:
                 audio_data.append(chunk)
@@ -104,4 +106,5 @@ class AudioProcessor:
             logger.error(f"Error: {e}")
             if 'temp_audio' in locals() and os.path.exists(temp_audio.name):
                 os.unlink(temp_audio.name)
+            # This function is critical, rase here so main.py handles the error in the except block
             raise

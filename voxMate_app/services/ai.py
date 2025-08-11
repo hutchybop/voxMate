@@ -31,10 +31,9 @@ class AIService:
             logger.error("Porcupine API key not found in environment variables")
             raise ValueError("Missing API key")
         
-    def transcribe_audio(self, audio_path: str) -> Tuple[str, float, subprocess.Popen]:
+    def transcribe_audio(self, audio_path: str) -> Optional[str]:
         """Transcribe audio using Whisper API"""
         AudioProcessor.play_sound(constraints.GENERATING_SOUND)
-        start_time = time.time()
         try:
             with open(audio_path, "rb") as audio_file:
                 transcript = self.client.audio.transcriptions.create(
@@ -45,14 +44,17 @@ class AIService:
                 )
             if transcript:
                 logger.info(f"Transcription: {transcript.strip()}")
-            return transcript.strip(), time.time() - start_time
+            # None return is delt with in main.py
+            return transcript.strip()
         except Exception as e:
             logger.error(f"Error: {e}")
+            # This function is critical, rase here so main.py handles the error in the except block
             raise
         finally:
             try:
                 os.unlink(audio_path)
             except Exception as e:
+                # No raise as deleting the temp file with no stop the app
                 logger.error(f"Error deleting temp audio file: {e}")
 
 
@@ -93,21 +95,18 @@ class AIService:
             return "Sorry, I encountered an error processing your request.", None
 
 
-    def text_to_speech(self, message: str) -> float:
+    def text_to_speech(self, message: str) -> None:
         """Convert text to speech and play it"""
         if not message:
-            return 0
+            logger.warning("No message provided for TTS")
         
-        start_time = time.time()
-
         try:
             with tempfile.NamedTemporaryFile(suffix='.mp3', delete=True) as f:
                 # Clean special characters that might cause TTS issues
                 clean_text = re.sub(r"[_*~]", "", message)
                 gTTS(text=clean_text, lang='en').save(f.name)
-                stop_time = time.time()
                 AudioProcessor.play_sound(f.name)
-                return stop_time - start_time
+                return True
+            
         except Exception as e:
             logger.error(f"TTS Error: {e}")
-            return 0

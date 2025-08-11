@@ -33,7 +33,7 @@ def main() -> None:
     # Initialize services
     audio = AudioProcessor()
     atexit.register(cleanup)
-    lights = MicLights()
+    mic_lights = MicLights()
 
     # Check environment variables before proceeding  
     settings.check_environment(audio_player=audio)
@@ -44,7 +44,7 @@ def main() -> None:
         logger.info("Listening for settings updates...")
     except Exception as e:
         # Continue running even if Socket.IO fails
-        logger.warning(f"[main] Could not connect to Socket.IO server: {e}")
+        logger.warning(f"Could not connect to Socket.IO server: {e}")
         
     try:    
         ai_service = AIService()
@@ -53,46 +53,32 @@ def main() -> None:
 
         # Setting system default volume
         success, message = handle_action({"action": "volume", "level": settings.DEFAULT_VOLUME})
-        if not success:
-            logger.error(f"Could not set default system volume of: {settings.DEFAULT_VOLUME}")
-        else:
-            logger.info(f"Set system volume to: {settings.DEFAULT_VOLUME}")
+        if not success and message:
+            ai_service.text_to_speech(message)
    
         
         while True:
             try:
 
-                if os.getenv("remote") == "false":
+                app_state.set_state("status", "waiting")
+                mic_lights.lights_idle()
 
-                    app_state.set_state("status", "waiting")
-                    lights.lights_idle()
+                # Wake word phase (PyAudio holds mic)
+                with wakeword.audio_wake_stream(ai_service.access_key) as (porcupine, stream):
+                    wakeword.wake_word_detection(porcupine, stream, mic_lights)
 
-                    # Wake word phase (PyAudio holds mic)
-                    with wakeword.audio_wake_stream(ai_service.access_key) as (porcupine, pa, stream):
-                        wakeword.wake_word_detection(porcupine, stream, lights)
+                # Mic now released — record using sounddevice
+                app_state.set_state("status", "processing")
+                mic_lights.lights_listening()
 
-                    # Mic now released — record using sounddevice
-                    app_state.set_state("status", "processing")
-                    lights.lights_listening()
+                audio_file = AudioProcessor.record_audio_to_file()
 
-                    start_total = time.time()
-                    audio_file = AudioProcessor.record_audio_to_file()
-                    success = False
+                mic_lights.lights_pulsing_processing()
 
-                    
-                    lights.lights_pulsing_processing()
-
-                    transcript, stt_time = ai_service.transcribe_audio(audio_file)
-                    total_stt = time.time() - start_total
-
-                else: 
-                    transcript = input("Enter the user question: ")
-                    stt_time = time.time()
-                    total_stt = time.time()
+                transcript = ai_service.transcribe_audio(audio_file)
 
                 if transcript:
                     # AI response generation
-                    ai_start = time.time()
                     try:
                         response_text, parsed = ai_service.generate_response(transcript)
                         if not isinstance(response_text, str):
@@ -101,44 +87,34 @@ def main() -> None:
                         logger.error(f"AI processing failed: {e}")
                         response_text = "Sorry, I encountered an error processing your request"
                         parsed = None
-                    ai_time = time.time() - ai_start
 
                     # Handle the user command and play response
                     try:
-                        tts_start = time.time()
                         if parsed is not None and parsed.get("action"):
                             success, message = handle_action(parsed)
                             if not success and message:
-                                tts_time = ai_service.text_to_speech(message)
+                                ai_service.text_to_speech(message)
                             else:
-                                tts_time = ai_service.text_to_speech(response_text)
+                                ai_service.text_to_speech(response_text)
                         else:
-                            tts_time = ai_service.text_to_speech(response_text)
-                        total_tts = time.time() - tts_start
+                            ai_service.text_to_speech(response_text)
                     except Exception as e:
                         logger.error(f'Main loop error, processing user command: {e}')
 
-                    # Performance metrics
-                    logger.info("\nPerformance Metrics:")
-                    logger.info(f"STT Processing: {stt_time:.2f}s")
-                    logger.info(f"STT & Playback: {total_stt:.2f}s")
-                    logger.info(f"AI Response: {ai_time:.2f}s")
-                    logger.info(f"TTS Generation: {tts_time:.2f}s")
-                    logger.info(f"TTS & Playback: {total_tts:.2f}s")
                 else:
                     # Fall back if no recording
                     logger.warning("No sound recorded")
                     no_recoding_response = "Nothing heard, sleeping"
-                    tts_time = ai_service.text_to_speech(no_recoding_response)
+                    ai_service.text_to_speech(no_recoding_response)
 
                 try:
                     # Resume Spotify play if paused
                     if app_state.is_spotify_paused():
                         success, message = handle_action({"action": "spotify_play"})
                         if not success and message:
-                            tts_time = ai_service.text_to_speech(message)
+                            ai_service.text_to_speech(message)
                 except Exception as e:
-                    logger.error(f'Main loop error, re-starting Spotify: {e}')
+                    logger.error(f'Error re-starting Spotify: {e}')
 
             except KeyboardInterrupt:
                 logger.info("Interrupted by user")
@@ -148,8 +124,8 @@ def main() -> None:
                 time.sleep(2)
                 continue
             finally:
-                lights.stop_pulsing()
-                lights.lights_idle()
+                mic_lights.stop_pulsing()
+                mic_lights.lights_idle()
     except Exception as e:
         logger.critical(f"Fatal error: {e}", exc_info=True)
         sys.exit(1)

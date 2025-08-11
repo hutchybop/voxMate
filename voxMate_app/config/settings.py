@@ -91,7 +91,7 @@ DEFAULT_VOLUME = CONFIG["DEFAULT_VOLUME"]
 
 
 # ================= ENVIRONMENT CHECK =================
-def check_environment(audio_player=None):
+def check_environment(audio_player=None) -> Dict:
     """Check environment variables with optional audio feedback"""
     ENV_CHECKS = {
         "warnings": {

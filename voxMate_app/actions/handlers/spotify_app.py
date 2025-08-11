@@ -1,8 +1,6 @@
 # Required python imports
 import spotipy
 import time
-import traceback
-import requests
 from typing import Optional, Tuple, Dict
 from datetime import datetime, timezone
 from spotipy.oauth2 import SpotifyOAuth
@@ -14,7 +12,6 @@ import config.constraints as constraints
 from utils.logging import logger
 from config.settings import load_user, load_mongodb
 from models.models import VoxSpotify
-from utils.state import app_state
 
 
 class SpotifyPlayer:
@@ -39,7 +36,7 @@ class SpotifyPlayer:
         return cls._instance
     
 
-    def __init__(self, max_retries: int = 2):
+    def __init__(self, max_retries: int = 2) -> None:
         self.SPOTIFY_CLIENT_ID = constraints.SPOTIFY_CLIENT_ID
         self.SPOTIFY_CLIENT_SECRET = constraints.SPOTIFY_CLIENT_SECRET
         self.user_id = load_user().get("user_id")
@@ -140,7 +137,7 @@ class SpotifyPlayer:
             return None
 
 
-    def _retry_operation(self, operation, *args, **kwargs):
+    def _retry_operation(self, operation, *args, **kwargs) -> None:
         """Generic retry logic for Spotify operations"""
         for attempt in range(self.max_retries + 1):
             try:

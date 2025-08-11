@@ -12,17 +12,17 @@ from utils.state import app_state
 sio = socketio.Client()
 
 @sio.event
-def connect():
+def connect() -> None:
     logger.info("Connected to server")
 
 @sio.event
-def disconnect():
+def disconnect() -> None:
     logger.warning("Disconnected to server")
 
 
 # Update config if socketio recieved
 @sio.on('settings_updated')
-def on_settings_updated():
+def on_settings_updated() -> None:
     """Handle settings updates with state awareness"""
     logger.info("Received updated voxMate settings")
 

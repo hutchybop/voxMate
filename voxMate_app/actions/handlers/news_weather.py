@@ -1,5 +1,6 @@
 import feedparser
 import re
+from typing import Optional, Tuple
 
 
 from utils.logging import logger
@@ -8,7 +9,7 @@ from services.audio import AudioProcessor
 
 
 
-def format_for_tts(news_list):
+def format_for_tts(news_list: str) -> str:
     formatted_items = []
     for i, item in enumerate(news_list, start=1):
         # Expand common abbreviations
@@ -27,7 +28,7 @@ def format_for_tts(news_list):
     return "  \n\n".join(formatted_items)
 
 
-def get_rss_feed():
+def get_rss_feed() -> str:
     # Parse BBC News RSS feed
     rss_url = "https://feeds.bbci.co.uk/news/rss.xml"
     feed = feedparser.parse(rss_url)
@@ -49,11 +50,13 @@ def get_rss_feed():
         return formatted_news
 
 
-def play_news():
+def play_news() -> Tuple[bool, Optional[str]]:
 
     try:
         formatted_news = get_rss_feed()
         AIService.text_to_speech(formatted_news)
         AudioProcessor.play_sound()
+        return True, None
     except Exception as e:
         logger.warning(f"Error playing the news {e}")
+        return False, "There was an error playing the news"

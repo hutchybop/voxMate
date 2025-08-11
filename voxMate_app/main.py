@@ -60,22 +60,27 @@ def main() -> None:
         while True:
             try:
 
-                app_state.set_state("status", "waiting")
-                mic_lights.lights_idle()
+                if os.getenv("remote") == "false":
 
-                # Wake word phase (PyAudio holds mic)
-                with wakeword.audio_wake_stream(ai_service.access_key) as (porcupine, stream):
-                    wakeword.wake_word_detection(porcupine, stream, mic_lights)
+                    app_state.set_state("status", "waiting")
+                    mic_lights.lights_idle()
 
-                # Mic now released — record using sounddevice
-                app_state.set_state("status", "processing")
-                mic_lights.lights_listening()
+                    # Wake word phase (PyAudio holds mic)
+                    with wakeword.audio_wake_stream(ai_service.access_key) as (porcupine, stream):
+                        wakeword.wake_word_detection(porcupine, stream, mic_lights)
 
-                audio_file = AudioProcessor.record_audio_to_file()
+                    # Mic now released — record using sounddevice
+                    app_state.set_state("status", "processing")
+                    mic_lights.lights_listening()
 
-                mic_lights.lights_pulsing_processing()
+                    audio_file = AudioProcessor.record_audio_to_file()
 
-                transcript = ai_service.transcribe_audio(audio_file)
+                    mic_lights.lights_pulsing_processing()
+
+                    transcript = ai_service.transcribe_audio(audio_file)
+                
+                else: 
+                    transcript = input("Enter the user question: ")
 
                 if transcript:
                     # AI response generation

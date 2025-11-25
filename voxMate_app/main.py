@@ -60,7 +60,7 @@ def main() -> None:
         while True:
             try:
 
-                if os.getenv("remote") == "false":
+                if os.getenv("remote") == "False":
 
                     app_state.set_state("status", "waiting")
                     mic_lights.lights_idle()

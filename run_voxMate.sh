@@ -33,8 +33,8 @@ start_python_app() {
     cd ~/voxMate/voxMate_app
     source ~/voxMate/.voxenv/bin/activate
     # Redirect stderr to suppress ONNX Runtime GPU warnings
-    python3 main.py 2> >(grep -v "GPU device discovery failed" >&2)
-    # python3 main.py
+    # python3 main.py 2> >(grep -v "GPU device discovery failed" >&2)
+    python3 main.py
 }
 
 # --- Git Update ---

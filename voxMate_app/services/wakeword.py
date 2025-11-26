@@ -3,9 +3,9 @@ import warnings
 import pyaudio
 import numpy as np
 import time
+import os
 from contextlib import contextmanager
 from typing import Tuple, Generator
-from openwakeword import Model as oww_Model
 
 # Required local imports
 import config.constraints as constraints
@@ -14,10 +14,17 @@ from services.audio import AudioProcessor
 from utils.state import app_state
 from actions.dispatcher import handle_action
 from utils.mic_lights import MicLights
+from utils import mute_output
 
 
 # --- Suppress .onnx warnings ---
 warnings.filterwarnings("ignore", message=".*CUDAExecutionProvider.*")
+# Import openwakework with warnings muted
+with mute_output:
+    try:
+        from openwakeword import Model as oww_Model
+    except Exception:
+        pass
 
 
 @contextmanager

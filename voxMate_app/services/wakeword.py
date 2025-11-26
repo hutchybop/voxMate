@@ -5,6 +5,7 @@ import pyaudio
 import numpy as np
 import time
 import openwakeword
+
 # Required local imports
 import config.constraints as constraints
 from utils.logging import logger
@@ -12,6 +13,7 @@ from services.audio import AudioProcessor
 from utils.state import app_state
 from actions.dispatcher import handle_action
 from utils.mic_lights import MicLights
+
 @contextmanager
 def audio_wake_stream() -> Generator[Tuple[openwakeword.Model, pyaudio.Stream], None, None]:
     """Context manager for OpenWakeWord wake word detection"""
@@ -52,6 +54,8 @@ def audio_wake_stream() -> Generator[Tuple[openwakeword.Model, pyaudio.Stream], 
         if pa:
             pa.terminate()
         # OpenWakeWord doesn't need explicit cleanup like Porcupine
+
+        
 def wake_word_detection(oww_model: openwakeword.Model, stream: pyaudio.Stream, mic_lights: MicLights) -> None:
     """Listen for wake word and respond when detected"""
     logger.info(f"Listening for wake word... (say '{constraints.WAKE_WORD}')")

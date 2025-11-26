@@ -5,6 +5,7 @@ import pyaudio
 import numpy as np
 import time
 import openwakeword
+from openwakeword.model import Model
 
 # Required local imports
 import config.constraints as constraints
@@ -24,12 +25,14 @@ def audio_wake_stream() -> Generator[Tuple[openwakeword.Model, pyaudio.Stream], 
         pa = pyaudio.PyAudio()
         
         # Initialize OpenWakeWord model
-        oww_model = openwakeword.Model()
+        oww_model = Model(wakeword_models=[str(constraints.KEYWORD_PATH)])
+
+        # oww_model = openwakeword.Model()
         
         # Load pre-trained models (you can add custom ones)
         # Available models: "hey_mycroft", "alexa", "computer", etc.
         # For custom "Hey VoxMate", you'd need to train it
-        oww_model.load_models(["hey_mycroft"])  # Replace with your wake word model
+        # oww_model.load_models(["hey_mycroft"])  # Replace with your wake word model
         
         try:
             stream = pa.open(
@@ -55,7 +58,7 @@ def audio_wake_stream() -> Generator[Tuple[openwakeword.Model, pyaudio.Stream], 
             pa.terminate()
         # OpenWakeWord doesn't need explicit cleanup like Porcupine
 
-        
+
 def wake_word_detection(oww_model: openwakeword.Model, stream: pyaudio.Stream, mic_lights: MicLights) -> None:
     """Listen for wake word and respond when detected"""
     logger.info(f"Listening for wake word... (say '{constraints.WAKE_WORD}')")
@@ -73,7 +76,7 @@ def wake_word_detection(oww_model: openwakeword.Model, stream: pyaudio.Stream, m
             predictions = oww_model.predict(audio_data)
             
             # Check if your wake word is detected (threshold typically 0.5-0.8)
-            if predictions.get("hey_mycroft", 0) > 0.7:  # Adjust threshold as needed
+            if predictions.get(constraints.WAKE_WORD, 0) > 0.7:  # Adjust threshold as needed
                 mic_lights.lights_wake_word()
                 logger.info("Wake word detected! Ask your question...")
                 

@@ -68,8 +68,8 @@ def main() -> None:
                     mic_lights.lights_idle()
 
                     # Wake word phase (PyAudio holds mic)
-                    with wakeword.audio_wake_stream(ai_service.access_key) as (porcupine, stream):
-                        wakeword.wake_word_detection(porcupine, stream, mic_lights)
+                    with wakeword.audio_wake_stream() as (oww_model, stream):
+                        wakeword.wake_word_detection(oww_model, stream, mic_lights)
 
                     # Mic now released — record using sounddevice
                     app_state.set_state("status", "processing")

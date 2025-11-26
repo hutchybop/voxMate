@@ -1,10 +1,10 @@
 # Required python imports
-from contextlib import contextmanager
-from typing import Tuple, Generator
+import warnings
 import pyaudio
 import numpy as np
 import time
-import os
+from contextlib import contextmanager
+from typing import Tuple, Generator
 from openwakeword import Model as oww_Model
 
 # Required local imports
@@ -14,6 +14,11 @@ from services.audio import AudioProcessor
 from utils.state import app_state
 from actions.dispatcher import handle_action
 from utils.mic_lights import MicLights
+
+
+# --- Suppress .onnx warnings ---
+warnings.filterwarnings("ignore", message=".*CUDAExecutionProvider.*")
+
 
 @contextmanager
 def audio_wake_stream() -> Generator[Tuple[oww_Model, pyaudio.Stream], None, None]:

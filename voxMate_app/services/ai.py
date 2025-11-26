@@ -1,12 +1,10 @@
 # Required python imports
 from openai import OpenAI
 import os
-import time
 import re
 import tempfile
 import json
 from gtts import gTTS
-import subprocess
 from typing import Tuple, Optional
 
 

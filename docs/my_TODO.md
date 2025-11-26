@@ -10,6 +10,11 @@
 - [ ] Align logger more to output **horse-racing-game** has
 <br>
 
+##### General
+- [ ] Sort out constriant and .env variables
+- [ ] Look at run_voxMate.sh
+<br>
+
 ##### Internet search
 - [ ] Research internet searches with AI for up to date information. 
 <br>

@@ -102,7 +102,6 @@ def check_environment(audio_player=None) -> Dict:
         },
         "critical": {
             "GROQ_API_KEY": {},
-            "PORCUPINE_API_KEY": {},
             "SECRET_KEY": {},
             "SPOTIFY_CLIENT_ID": {},
             "SPOTIFY_CLIENT_SECRET": {},

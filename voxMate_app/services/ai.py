@@ -23,11 +23,6 @@ class AIService:
             base_url="https://api.groq.com/openai/v1",
             api_key=os.getenv("GROQ_API_KEY")
         )
-        self.access_key = os.getenv("PORCUPINE_API_KEY")
-
-        if not self.access_key:
-            logger.error("Porcupine API key not found in environment variables")
-            raise ValueError("Missing API key")
         
     def transcribe_audio(self, audio_path: str) -> Optional[str]:
         """Transcribe audio using Whisper API"""

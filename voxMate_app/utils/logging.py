@@ -4,16 +4,17 @@ from ctypes import *
 from dotenv import load_dotenv
 
 
-#Load env
+# Load env
 load_dotenv('../../.env')
 
 # Setup logging with more detailed format
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(module)s[%(funcName)s] - %(levelname)s - %(message)s',
+    # Define the format with alignment
+    format = f"%(asctime)s - %(filename)15s:%(lineno)5d - %(levelname)-8s - %(message)s",
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler('/tmp/smart_speaker.log')
+        logging.FileHandler('/home/hutch/voxMate/logs/voxMate_app.log')
     ]
 )
 logger = logging.getLogger(__name__)

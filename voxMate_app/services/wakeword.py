@@ -14,13 +14,13 @@ from services.audio import AudioProcessor
 from utils.state import app_state
 from actions.dispatcher import handle_action
 from utils.mic_lights import MicLights
-from utils import mute_output
+from utils.mute_output import mute_output
 
 
 # --- Suppress .onnx warnings ---
 warnings.filterwarnings("ignore", message=".*CUDAExecutionProvider.*")
-# Import openwakework with warnings muted
-with mute_output:
+# Import openwakeword with warnings muted
+with mute_output():
     try:
         from openwakeword import Model as oww_Model
     except Exception:
@@ -79,7 +79,7 @@ def wake_word_detection(oww_model: oww_Model, stream: pyaudio.Stream, mic_lights
 
             predictions = oww_model.predict(audio_data)
 
-            score = predictions.get(constraints.WAKE_WORD, 0.0)
+            score = predictions.get(constraints.WAKE_WORD_KEY, 0.0)
 
             # Check if your wake word is detected (threshold typically 0.5-0.8)
             if score > 0.7:  # Adjust threshold as needed

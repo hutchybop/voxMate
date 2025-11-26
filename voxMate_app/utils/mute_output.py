@@ -2,7 +2,7 @@ import os
 from contextlib import contextmanager
 
 @contextmanager
-def _mute_output():
+def mute_output():
     """Temporarily silence low level C/C++ writes to stdout & stderr."""
     devnull = open(os.devnull, "w")
     # Save the original file‑descriptors so we can restore them later

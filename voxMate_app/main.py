@@ -13,10 +13,16 @@ from dotenv import load_dotenv
 env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
+# Start up logs
+from utils.logging import logger
+logger.info("")
+logger.info("=" * 60)
+logger.info("Starting New voxMate App Instance")
+logger.info("=" * 60)
+
 # Required local imports
 from utils.cleanup import cleanup
 from interfaces.socketio import sio
-from utils.logging import logger
 from services.audio import AudioProcessor
 from services.ai import AIService
 import config.settings as settings
@@ -60,9 +66,7 @@ def main() -> None:
         while True:
             try:
 
-                print(os.getenv("REMOTE"))
-
-                if os.getenv("REMOTE") == "False":
+                if os.getenv("LOCATION") == "local":
 
                     app_state.set_state("status", "waiting")
                     mic_lights.lights_idle()

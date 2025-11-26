@@ -5,8 +5,7 @@ import pyaudio
 import numpy as np
 import time
 import os
-import openwakeword
-from openwakeword.model import Model
+from openwakeword import Model as oww_Model
 
 # Required local imports
 import config.constraints as constraints
@@ -17,7 +16,7 @@ from actions.dispatcher import handle_action
 from utils.mic_lights import MicLights
 
 @contextmanager
-def audio_wake_stream() -> Generator[Tuple[openwakeword.Model, pyaudio.Stream], None, None]:
+def audio_wake_stream() -> Generator[Tuple[oww_Model, pyaudio.Stream], None, None]:
     """Context manager for OpenWakeWord wake word detection"""
     pa = None
     oww_model = None
@@ -26,17 +25,8 @@ def audio_wake_stream() -> Generator[Tuple[openwakeword.Model, pyaudio.Stream], 
         pa = pyaudio.PyAudio()
         
         # Initialize OpenWakeWord model
-        # oww_model = Model(wakeword_models=[str(constraints.KEYWORD_PATH)])
-        oww_model = Model()
-        # oww_model.load_models([str(constraints.KEYWORD_PATH)])
+        oww_model = oww_Model(wakeword_models=[constraints.KEYWORD_PATH])
 
-        # oww_model = openwakeword.Model()
-        
-        # Load pre-trained models (you can add custom ones)
-        # Available models: "hey_mycroft", "alexa", "computer", etc.
-        # For custom "Hey VoxMate", you'd need to train it
-        # oww_model.load_models(["hey_mycroft"])  # Replace with your wake word model
-        
         try:
             stream = pa.open(
                 rate=constraints.SAMPLE_RATE,
@@ -60,7 +50,6 @@ def audio_wake_stream() -> Generator[Tuple[openwakeword.Model, pyaudio.Stream], 
             stream.close()
         if pa:
             pa.terminate()
-        # OpenWakeWord doesn't need explicit cleanup like Porcupine
 
 
 def wake_word_detection(oww_model: openwakeword.Model, stream: pyaudio.Stream, mic_lights: MicLights) -> None:

@@ -52,7 +52,7 @@ def audio_wake_stream() -> Generator[Tuple[oww_Model, pyaudio.Stream], None, Non
             pa.terminate()
 
 
-def wake_word_detection(oww_model: openwakeword.Model, stream: pyaudio.Stream, mic_lights: MicLights) -> None:
+def wake_word_detection(oww_model: oww_Model, stream: pyaudio.Stream, mic_lights: MicLights) -> None:
     """Listen for wake word and respond when detected"""
     logger.info(f"Listening for wake word... (say '{constraints.WAKE_WORD}')")
     while True:

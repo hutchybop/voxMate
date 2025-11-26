@@ -25,7 +25,7 @@ def audio_wake_stream() -> Generator[Tuple[oww_Model, pyaudio.Stream], None, Non
         pa = pyaudio.PyAudio()
         
         # Initialize OpenWakeWord model
-        oww_model = oww_Model(wakeword_model_paths=[constraints.KEYWORD_PATH])
+        oww_model = oww_Model(wakeword_model_paths=[str(constraints.KEYWORD_PATH)])
 
         try:
             stream = pa.open(

@@ -10,7 +10,7 @@ CHANNELS = 2
 DTYPE = 'int16'
 BLOCKSIZE = 16000
 # WAKE_WORD = 'Hey VoxMate'
-WAKE_WORD = 'hey_jarvis'
+WAKE_WORD = "hey_mycroft"
 
 # Paths
 # Get absolute path to be safe

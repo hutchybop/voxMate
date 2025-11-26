@@ -78,7 +78,7 @@ def wake_word_detection(oww_model: openwakeword.Model, stream: pyaudio.Stream, m
 
             predictions = oww_model.predict(audio_data)
 
-            score = predictions.get(os.getenv("OPENWAKEWORD_KEYWORD_FILE_NAME"), 0.0)
+            score = predictions.get(constraints.WAKE_WORD, 0.0)
 
             # Check if your wake word is detected (threshold typically 0.5-0.8)
             if score > 0.7:  # Adjust threshold as needed

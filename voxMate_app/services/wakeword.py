@@ -66,7 +66,7 @@ def wake_word_detection(oww_model: oww_Model, stream: pyaudio.Stream, mic_lights
                 audio_data = audio_data.reshape(-1, 2).mean(axis=1).astype(np.int16)
 
             predictions = oww_model.predict(audio_data)
-
+            print("Prediction keys:", predictions.keys())
             score = predictions.get(constraints.WAKE_WORD, 0.0)
 
             # Check if your wake word is detected (threshold typically 0.5-0.8)

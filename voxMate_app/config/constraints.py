@@ -10,7 +10,7 @@ CHANNELS = 2
 DTYPE = 'int16'
 BLOCKSIZE = 16000
 # WAKE_WORD = 'Hey VoxMate'
-WAKE_WORD = "hey_mycroft"
+WAKE_WORD = "mycroft"
 OPENWAKEWORD_KEYWORD_FILE_NAME="hey_mycroft_v0.1.onnx"
 
 # Paths

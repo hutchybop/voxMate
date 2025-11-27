@@ -83,3 +83,4 @@ LICENSE.txt
 push.sh
 user_config.json
 por/
+.vscode/

@@ -1,18 +1,22 @@
 # voxMate
 
-
 ##### Change to openwakeword
+- [x] Reasearch openwakeword
+- [x] Implement the change from porcupine to oww
+- [x] Test
+    - [x] Fix Model selection
+    - [x] Stop unwated warnings 
 - [ ] Train a custom model '**hey voxmate**'
 <br>
 
-##### Console logger prints
-- [ ] look at and fix random errors
-- [ ] Align logger more to output **horse-racing-game** has
+##### General
+- [x] Sort out constriant and .env variables
+- [x] Look at run_voxMate.sh
+- [ ] Look at Groq keys and split per application
 <br>
 
-##### General
-- [ ] Sort out constriant and .env variables
-- [ ] Look at run_voxMate.sh
+##### Spotify
+- [ ] Spotify has stopped working investigate
 <br>
 
 ##### Internet search
@@ -140,7 +144,8 @@ They will need their own db anyway.
     - [x] Handle if user specifically asks fro content type
 - [x] Setup state to track Spotify play
     - [x] Enable pause and restart after user asks question
-- [x] Add an ‘action’ service - deals with all the different actionsAdd volume
+- [x] Add an ‘action’ service - deals with all the different actions
+##### Add volume
 - [x] Control app volume
 - [x] Always set Spotify volume to full
 - [x] Set state for current volume to use with up or down
@@ -151,3 +156,7 @@ They will need their own db anyway.
 - [x] Add default volume to db
 - [x] Add default volume to web app
 - [x] Test volume control
+##### Console logger prints
+- [x] look at and fix random errors
+- [x] Align logger more to output **horse-racing-game** has
+<br>

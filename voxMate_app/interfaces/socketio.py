@@ -29,9 +29,8 @@ def on_settings_updated() -> None:
     logger.info("Received updated voxMate settings")
 
     try:
-        global CONFIG, SILENCE_THRESHOLD, SILENCE_DURATION, \
-            VOLUME_DISPLAY, NOISE_REDUCTION_ENABLED, \
-            STT_MODEL, AI_MODEL, DEFAULT_VOLUME
+        global CONFIG, SILENCE_THRESHOLD, SILENCE_DURATION, VOLUME_DISPLAY
+        global NOISE_REDUCTION_ENABLED, STT_MODEL, AI_MODEL, DEFAULT_VOLUME
 
         CONFIG = load_config()
         SILENCE_THRESHOLD = CONFIG["SILENCE_THRESHOLD"]

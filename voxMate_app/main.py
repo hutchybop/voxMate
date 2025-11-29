@@ -102,9 +102,7 @@ def main() -> None:
                 if transcript:
                     # AI response generation
                     try:
-                        response_text, parsed = ai_service.generate_response(
-                            transcript
-                        )
+                        response_text, parsed = ai_service.generate_response(transcript)
                         if not isinstance(response_text, str):
                             response_text = str(response_text)
                     except Exception as e:

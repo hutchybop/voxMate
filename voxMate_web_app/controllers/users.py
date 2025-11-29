@@ -48,9 +48,7 @@ def save_user_config(user_id, email):
     user_settings = current_app.db.appSettings.find_one({"user_id": user_id})
     if not user_settings:
         # If no settings found, create default settings for the user
-        default_settings = current_app.db.appSettings.find_one({
-            "user_id": "default"
-        })
+        default_settings = current_app.db.appSettings.find_one({"user_id": "default"})
 
         # Using get() to either set the defualt_setting value or the value given
         new_user_settings = AppSettings(
@@ -110,10 +108,7 @@ def register():
             {"email": form.email.data, "device_id": device_id}
         )
         if existing_user:
-            flash(
-                "Email already registered for this device. Please log in.",
-                "warning"
-            )
+            flash("Email already registered for this device. Please log in.", "warning")
             return redirect(url_for("users.login"))
 
         # Add the user to the DB but with unverified_user_id set
@@ -147,11 +142,7 @@ def register():
         else:
             flash("Error connecting to the server. Please try again.", "danger")
 
-    return render_template(
-        "users/register.html",
-        title="voxMate - Register",
-        form=form
-        )
+    return render_template("users/register.html", title="voxMate - Register", form=form)
 
 
 @users.route("/register/verify", methods=["GET", "POST"])
@@ -166,9 +157,7 @@ def verify():
         # address by the api server
         user_code = form.code.data
         # Get the user details from the DB
-        user = current_app.db.users.find_one({
-            "unverified_user_id": unverified_user_id
-        })
+        user = current_app.db.users.find_one({"unverified_user_id": unverified_user_id})
         if user is None:
             session.pop("unverified_user_id", None)
             flash("Please register", "warning")

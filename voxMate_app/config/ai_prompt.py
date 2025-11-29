@@ -32,7 +32,7 @@ def ai_prompt(prompt):
                 "\n"
                 'Optional fields (only for "volume"):\n'
                 '- "level": "up" or "down" or "max" or "min" or a value'
-                'between 0 and 100\n'
+                "between 0 and 100\n"
                 "\n"
                 "Example responses:\n"
                 'User: "Play jazz music"\n'

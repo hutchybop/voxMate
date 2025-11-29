@@ -114,8 +114,7 @@ def check_environment(audio_player=None) -> Dict:
             "MONGODB_URI": {
                 "sound": constraints.MONGODB_WARNING_SOUND,
                 "message": (
-                    "Continuing with default configuration "
-                    "(MongoDB not available)"
+                    "Continuing with default configuration " "(MongoDB not available)"
                 ),
             }
         },

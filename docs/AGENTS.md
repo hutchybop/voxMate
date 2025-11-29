@@ -1,48 +1,41 @@
-# voxMate Agent Guidelines
+# voxMate Development Guidelines
 
-## Build/Test Commands
-- **Install dependencies**: `pip install -r requirements.txt`
-- **Run main app**: `cd voxMate_app && python3 main.py` (or use `./run_voxMate.sh`)
-- **Run web app**: `cd voxMate_web_app && flask run` (or use `./start_voxMate_web_app.sh`)
-- **Run single test**: `python3 testing/test_lights.py` (no test framework - direct execution)
-- **Stop apps**: `./stop_voxMate.sh`
+## Build/Lint/Test Commands
+- **Lint**: `flake8 .` (max line length: 88)
+- **Format**: `black .` (line length: 88, target Python 3.8+)
+- **Run single test**: `python testing/test_lights.py`
+- **Run main app**: `python voxMate_app/main.py`
+- **Run web app**: `python voxMate_web_app/app.py`
 
 ## Code Style Guidelines
 
-### Import Organization
-- Standard library imports first (os, sys, time, pathlib, etc.)
-- Third-party imports second (openai, flask, pymongo, gtts, etc.)
-- Local imports last (utils.logging, config.settings, services.*)
-- Use `from pathlib import Path` for file paths
-- Load .env with `load_dotenv()` early in files
-
-### Formatting & Types
-- Use type hints: `def func(param: str) -> Optional[str]:`
-- Maximum line length: ~100 characters
-- Use f-strings for string formatting
-- Constants in UPPER_SNAKE_CASE (DEFAULT_CONFIG, ENV_CHECKS)
-- Use `Path(__file__).resolve().parent` for relative paths
+### Imports & Formatting
+- Standard imports first, then third-party, then local imports
+- Use type hints consistently (see `typing.Tuple`, `typing.Optional`)
+- Line length: 88 characters (Black/Flake8 standard)
+- Use Black formatter with Python 3.8+ compatibility
 
 ### Naming Conventions
-- Classes: PascalCase (`AIService`, `AudioProcessor`, `MicLights`)
-- Functions/variables: snake_case (`transcribe_audio`, `audio_file`)
-- Private methods: prefix with underscore (`_send_frame`, `_private_method`)
-- File names: snake_case
+- Classes: PascalCase (`AIService`, `MicLights`)
+- Functions/variables: snake_case (`transcribe_audio`, `audio_path`)
+- Constants: UPPER_SNAKE_CASE (`GROQ_API_KEY`, `DEFAULT_VOLUME`)
+- Private methods: prefix with underscore (`_send_frame`)
 
 ### Error Handling
-- Use specific exception handling with logging via `utils.logging.logger`
-- Return tuples for success/failure: `(success: bool, message: str)`
-- Critical errors should `sys.exit(1)` after logging
-- Use try/finally for cleanup (temp files, resources)
+- Use try/except blocks with specific exception types
+- Log errors using `utils.logging.logger`
+- Raise exceptions in critical functions, handle in calling code
+- Use `Optional[T]` return types for functions that may return None
 
-### Environment & Config
-- All secrets in .env file, never hardcoded
-- Use `config.settings` module for configuration values
-- Check environment variables with `settings.check_environment()`
-- MongoDB config loaded from both user files and database
+### Type Hints
+- All public methods should have type hints
+- Use `Tuple[bool, Optional[str]]` for action handlers
+- Use `Optional[Dict[str, Any]]` for configuration functions
+- Import from `typing` module consistently
 
 ### Project Structure
-- Main app in `voxMate_app/`, web app in `voxMate_web_app/`
-- Services in `services/`, utilities in `utils/`
-- Configuration in `config/`, actions in `actions/`
-- Models in `models/`, interfaces in `interfaces/`
+- Main app: `voxMate_app/` (voice assistant)
+- Web app: `voxMate_web_app/` (Flask interface)
+- Services in `services/`, handlers in `actions/handlers/`
+- Shared utilities in `utils/`
+- Configuration in `config/`

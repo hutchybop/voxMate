@@ -80,9 +80,9 @@ def index():
     if not token_info:
         auth_url = create_spotify_oauth().get_authorize_url()
         return f"""
-            <p>No Token</p> <br> 
-            <a href='/logout'>logout</a> <br> 
-            <a href='/'>Home</a> <br> 
+            <p>No Token</p> <br>
+            <a href='/logout'>logout</a> <br>
+            <a href='/'>Home</a> <br>
             <a href='{auth_url}'>Login with Spotify</a>
         """
 
@@ -148,7 +148,6 @@ def playback():
             f"<a href='/'>Home</a> <br> "
             f"<a href='{auth_url}'>Login with Spotify</a>"
         )
-    
     access_token = token_info["access_token"]
     try:
         sp = spotipy.Spotify(auth=access_token)
@@ -246,7 +245,7 @@ def logout():
         function logoutFromSpotify() {
             // Open Spotify logout page in a new tab
             window.open(
-                'https://accounts.spotify.com/en/logout', 
+                'https://accounts.spotify.com/en/logout',
                 '_blank',
                 'noopener,noreferrer'
             );

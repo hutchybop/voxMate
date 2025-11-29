@@ -21,7 +21,7 @@ class AIService:
 
     def __init__(self):
         self.client = OpenAI(
-            base_url="https://api.groq.com/openai/v1", 
+            base_url="https://api.groq.com/openai/v1",
             api_key=os.getenv("GROQ_API_KEY")
         )
 

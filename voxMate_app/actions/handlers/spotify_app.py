@@ -143,7 +143,7 @@ class SpotifyPlayer:
         for attempt in range(self.max_retries + 1):
             try:
                 return operation(*args, **kwargs)
-            except Exception as e:
+            except Exception:
                 if attempt == self.max_retries:
                     raise
                 time.sleep(1 * (attempt + 1))
@@ -252,7 +252,8 @@ class SpotifyPlayer:
                     return match
                 if items:  # Fallback to first result
                     logger.info(
-                        f"No strong match - returning best available: {items[0]['name']} [{user_content_type}]"
+                        f"No strong match - returning best available: "
+                        f"{items[0]['name']} [{user_content_type}]"
                     )
                     return user_content_type, items[0]["uri"]
 
@@ -264,7 +265,8 @@ class SpotifyPlayer:
                     return match
                 if items:  # Fallback to first result
                     logger.info(
-                        f"No strong match - returning best available: {items[0]['name']} [{content_type}]"
+                        f"No strong match - returning best available: "
+                        f"{items[0]['name']} [{content_type}]"
                     )
                     return content_type, items[0]["uri"]
         except Exception as e:
@@ -351,7 +353,7 @@ class SpotifyPlayer:
                     self.sp.add_to_queue(uris=[episode_uri])
                     self.sp.next_track()
                     self.sp.start_playback(device_id=device_id)
-                    ####### Play the news only.........
+                    # Play the news only.........
                     return True, None
                 except Exception as e:
                     return (
@@ -410,7 +412,7 @@ class SpotifyPlayer:
                     context_uri="spotify:playlist:37i9dQZF1DXcBWIGoYBM5M",
                 )
                 return True, None
-            except Exception as e:
+            except Exception:
                 return False, "Could not resume or start fallback playlist"
 
     # Simplified playback control methods

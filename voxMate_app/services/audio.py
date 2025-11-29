@@ -108,7 +108,8 @@ class AudioProcessor:
                     wf.writeframes(chunk.tobytes())
 
             logger.debug(
-                f"Recorded {len(audio_data)} chunks (Noise reduction: {'ON' if settings.NOISE_REDUCTION_ENABLED else 'OFF'})"
+                f"Recorded {len(audio_data)} chunks (Noise reduction: "
+                f"{'ON' if settings.NOISE_REDUCTION_ENABLED else 'OFF'})"
             )
             return temp_audio.name
 
@@ -116,5 +117,6 @@ class AudioProcessor:
             logger.error(f"Error: {e}")
             if "temp_audio" in locals() and os.path.exists(temp_audio.name):
                 os.unlink(temp_audio.name)
-            # This function is critical, rase here so main.py handles the error in the except block
+            # This function is critical, raise here so main.py handles
+            # the error in the except block
             raise

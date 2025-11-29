@@ -56,17 +56,10 @@ def main() -> None:
 
     try:
         ai_service = AIService()
-        logger.info(
-            f"Noise reduction: {
-                'ENABLED' if settings.NOISE_REDUCTION_ENABLED else 'DISABLED'
-            }"
-        )
-        logger.info(
-            f"Volume Display: {
-                'ENABLED' if settings.VOLUME_DISPLAY else 'DISABLED'
-            }"
-        )
-
+        noise_status = "ENABLED" if settings.NOISE_REDUCTION_ENABLED else "DISABLED"
+        logger.info(f"Noise reduction: {noise_status}")
+        volume_status = "ENABLED" if settings.VOLUME_DISPLAY else "DISABLED"
+        logger.info(f"Volume Display: {volume_status}")
         # Setting system default volume
         success, message = handle_action(
             {"action": "volume", "level": settings.DEFAULT_VOLUME}

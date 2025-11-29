@@ -9,7 +9,7 @@ from utils.mic_lights import MicLights
 
 def cleanup() -> None:
     """Cleanup resources before exit."""
-    if getattr(cleanup, '_called', False):
+    if getattr(cleanup, "_called", False):
         return
     cleanup._called = True
 
@@ -21,7 +21,7 @@ def cleanup() -> None:
 
         # Stop Spotify playback
         SpotifyPlayer().stop_playback()
-        
+
         # Stop all mpg123 audio
         check = subprocess.run(["pgrep", "mpg123"], capture_output=True, text=True)
         if check.returncode == 0:

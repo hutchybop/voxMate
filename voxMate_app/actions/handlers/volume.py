@@ -23,7 +23,7 @@ def change_volume(level) -> Tuple[bool, Optional[str]]:
         if isinstance(level, str):
             # Standadising the level string
             level = level.lower().strip()
-            if level.endswith('%'):
+            if level.endswith("%"):
                 level = level[:-1]
             # Handling commands
             if level == "up":
@@ -49,7 +49,9 @@ def change_volume(level) -> Tuple[bool, Optional[str]]:
                 logger.error(f"Invalid volume level input: {level}")
                 return False, "Invalid volume level"
         # Set system volume
-        subprocess.run(["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"{new_volume}%"], check=True)
+        subprocess.run(
+            ["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"{new_volume}%"], check=True
+        )
         app_state.set_state("volume", new_volume)
         logger.info(f"Volume now set to: {new_volume}")
         return True, None

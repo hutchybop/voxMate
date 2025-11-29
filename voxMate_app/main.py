@@ -15,6 +15,7 @@ load_dotenv(dotenv_path=env_path)
 
 # Start up logs
 from utils.logging import logger
+
 logger.info("")
 logger.info("=" * 60)
 logger.info("Starting New voxMate App Instance")
@@ -31,6 +32,7 @@ from utils.state import app_state
 from actions.dispatcher import handle_action
 from utils.mic_lights import MicLights
 
+
 def main() -> None:
     """Main execution loop"""
     signal.signal(signal.SIGTERM, lambda s, f: sys.exit(0))
@@ -41,28 +43,37 @@ def main() -> None:
     atexit.register(cleanup)
     mic_lights = MicLights()
 
-    # Check environment variables before proceeding  
+    # Check environment variables before proceeding
     settings.check_environment(audio_player=audio)
 
     # Connect to Socket.IO server (non-blocking)
     try:
-        sio.connect('http://localhost:5000', wait_timeout=10)
+        sio.connect("http://localhost:5000", wait_timeout=10)
         logger.info("Listening for settings updates...")
     except Exception as e:
         # Continue running even if Socket.IO fails
         logger.warning(f"Could not connect to Socket.IO server: {e}")
-        
-    try:    
+
+    try:
         ai_service = AIService()
-        logger.info(f"Noise reduction: {'ENABLED' if settings.NOISE_REDUCTION_ENABLED else 'DISABLED'}")
-        logger.info(f"Volume Display: {'ENABLED' if settings.VOLUME_DISPLAY else 'DISABLED'}")
+        logger.info(
+            f"Noise reduction: {
+                'ENABLED' if settings.NOISE_REDUCTION_ENABLED else 'DISABLED'
+            }"
+        )
+        logger.info(
+            f"Volume Display: {
+                'ENABLED' if settings.VOLUME_DISPLAY else 'DISABLED'
+            }"
+        )
 
         # Setting system default volume
-        success, message = handle_action({"action": "volume", "level": settings.DEFAULT_VOLUME})
+        success, message = handle_action(
+            {"action": "volume", "level": settings.DEFAULT_VOLUME}
+        )
         if not success and message:
             ai_service.text_to_speech(message)
-   
-        
+
         while True:
             try:
 
@@ -84,19 +95,23 @@ def main() -> None:
                     mic_lights.lights_pulsing_processing()
 
                     transcript = ai_service.transcribe_audio(audio_file)
-                
-                else: 
+
+                else:
                     transcript = input("Enter the user question: ")
 
                 if transcript:
                     # AI response generation
                     try:
-                        response_text, parsed = ai_service.generate_response(transcript)
+                        response_text, parsed = ai_service.generate_response(
+                            transcript
+                        )
                         if not isinstance(response_text, str):
                             response_text = str(response_text)
                     except Exception as e:
                         logger.error(f"AI processing failed: {e}")
-                        response_text = "Sorry, I encountered an error processing your request"
+                        response_text = (
+                            "Sorry, I encountered an error processing your request"
+                        )
                         parsed = None
 
                     # Handle the user command and play response
@@ -110,7 +125,7 @@ def main() -> None:
                         else:
                             ai_service.text_to_speech(response_text)
                     except Exception as e:
-                        logger.error(f'Main loop error, processing user command: {e}')
+                        logger.error(f"Main loop error, processing user command: {e}")
 
                 else:
                     # Fall back if no recording
@@ -125,7 +140,7 @@ def main() -> None:
                         if not success and message:
                             ai_service.text_to_speech(message)
                 except Exception as e:
-                    logger.error(f'Error re-starting Spotify: {e}')
+                    logger.error(f"Error re-starting Spotify: {e}")
 
             except KeyboardInterrupt:
                 logger.info("Interrupted by user")

@@ -15,7 +15,7 @@ def handle_action(parsed) -> Tuple[bool, Optional[str]]:
     message = ""
     action = parsed.get("action", "")
 
-    if action == 'spotify_play':
+    if action == "spotify_play":
         # Extracting params
         query = parsed.get("query", "")
         artist = parsed.get("artist", "")
@@ -29,37 +29,39 @@ def handle_action(parsed) -> Tuple[bool, Optional[str]]:
             message = "Error playing Spotify"
         return success, message
 
-    elif action == 'spotify_stop':
+    elif action == "spotify_stop":
         success, message = spotify_player.stop_playback()
         if success:
             app_state.set_state("spotify", "stopped")
         elif not message:
             message = "Error playing Spotify"
         return success, message
-    
-    elif action == 'spotify_skip':
+
+    elif action == "spotify_skip":
         success, message = spotify_player.skip_playback()
         if not success and not message:
             message = "Error skipping Spotify"
         return success, message
-    
-    elif action == 'spotify_repeat':
+
+    elif action == "spotify_repeat":
         repeat = parsed.get("repeat", "").lower().strip()
         success, message = spotify_player.repeat_playback(repeat)
         if not success and not message:
             message = "Error toggling repeat mode"
         return success, message
-    
-    elif action == 'spotify_shuffle':
-        shuffle = {"true": True, "false": False}.get(parsed.get("shuffle", "").lower().strip())
+
+    elif action == "spotify_shuffle":
+        shuffle = {"true": True, "false": False}.get(
+            parsed.get("shuffle", "").lower().strip()
+        )
         success, message = spotify_player.shuffle_playback(shuffle)
         if success:
             app_state.set_state("spotify", "playing")
         elif not message:
             message = "Error toggling shuffle mode"
         return success, message
-    
-    elif action == 'volume':
+
+    elif action == "volume":
         level = parsed.get("level", "")
         if not level:
             return False, "No volume level provided"
@@ -67,8 +69,8 @@ def handle_action(parsed) -> Tuple[bool, Optional[str]]:
         if not success and not message:
             message = "Error setting volume"
         return success, message
-    
-    elif action == 'news':
+
+    elif action == "news":
         params = {"query": "news"}
         success, message = spotify_player.handle_spotify_play(params)
         if not success and not message:

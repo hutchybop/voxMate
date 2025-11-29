@@ -1,9 +1,10 @@
 import spidev
 import time
 
+
 class MicLights:
     """Control ReSpeaker 2-Mic APA102 LEDs via SPI."""
-    
+
     def __init__(self, num_leds=2, bus=0, device=0):
         self.num_leds = num_leds
         self.spi = spidev.SpiDev()
@@ -16,16 +17,12 @@ class MicLights:
         self.spi.xfer2(start_frame + data + end_frame)
 
     def set_color(self, brightness=0x1F, red=0, green=0, blue=0):
-        led_frame = [
-            0xE0 | (brightness & 0x1F),
-            blue & 0xFF,
-            green & 0xFF,
-            red & 0xFF
-        ]
+        led_frame = [0xE0 | (brightness & 0x1F), blue & 0xFF, green & 0xFF, red & 0xFF]
         self._send_frame(led_frame * self.num_leds)
 
     def off(self):
         self.set_color(0, 0, 0, 0)
+
 
 # --- TEST SEQUENCE ---
 

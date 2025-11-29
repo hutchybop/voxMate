@@ -8,7 +8,6 @@ from services.ai import AIService
 from services.audio import AudioProcessor
 
 
-
 def format_for_tts(news_list: str) -> str:
     formatted_items = []
     for i, item in enumerate(news_list, start=1):
@@ -37,7 +36,7 @@ def get_rss_feed() -> str:
         news_list = []
         for entry in feed.entries[:5]:  # First 5 headlines
             headline = entry.title
-            summary = entry.summary if 'summary' in entry else ''
+            summary = entry.summary if "summary" in entry else ""
             news_list.append(f"{headline}. {summary}")
 
         # Format for TTS

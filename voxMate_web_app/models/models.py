@@ -23,8 +23,8 @@ class AppSettings:
     silence_duration: int = 1
     volume_display: bool = False
     noise_reduction: bool = True
-    stt_model: str = 'whisper-large-v3-turbo'
-    ai_model: str = 'mistral-saba-24b'
+    stt_model: str = "whisper-large-v3-turbo"
+    ai_model: str = "mistral-saba-24b"
     default_volume: int = 70
 
 
@@ -35,4 +35,3 @@ class VoxSpotify:
     device_id: Optional[str] = None
     last_updated: Optional[datetime] = None
     user_code: Optional[str] = None
-

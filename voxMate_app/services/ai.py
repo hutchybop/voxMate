@@ -18,12 +18,13 @@ import config.constraints as constraints
 
 class AIService:
     """Handles all AI-related operations"""
+
     def __init__(self):
         self.client = OpenAI(
-            base_url="https://api.groq.com/openai/v1",
+            base_url="https://api.groq.com/openai/v1", 
             api_key=os.getenv("GROQ_API_KEY")
         )
-        
+
     def transcribe_audio(self, audio_path: str) -> Optional[str]:
         """Transcribe audio using Whisper API"""
         AudioProcessor.play_sound(constraints.GENERATING_SOUND)
@@ -33,7 +34,7 @@ class AIService:
                     model=settings.STT_MODEL,
                     file=audio_file,
                     language="en",
-                    response_format="text"
+                    response_format="text",
                 )
             if transcript:
                 logger.info(f"Transcription: {transcript.strip()}")
@@ -41,7 +42,8 @@ class AIService:
             return transcript.strip()
         except Exception as e:
             logger.error(f"Error: {e}")
-            # This function is critical, rase here so main.py handles the error in the except block
+            # This function is critical, rase here so main.py handles the error in
+            # the except block
             raise
         finally:
             try:
@@ -49,7 +51,6 @@ class AIService:
             except Exception as e:
                 # No raise as deleting the temp file with no stop the app
                 logger.error(f"Error deleting temp audio file: {e}")
-
 
     def generate_response(self, prompt: str) -> Tuple[str, Optional[dict]]:
         """Generate AI response using chat completion"""
@@ -64,7 +65,9 @@ class AIService:
 
             # Remove any special formatting tags
             cleaned = re.sub(r"<think>.*?</think>", "", message, flags=re.DOTALL)
-            cleaned = re.sub(r"```(?:json)?\n(.*?)```", r"\1", cleaned, flags=re.DOTALL).strip()
+            cleaned = re.sub(
+                r"```(?:json)?\n(.*?)```", r"\1", cleaned, flags=re.DOTALL
+            ).strip()
 
             try:
                 parsed = json.loads(cleaned)
@@ -87,19 +90,18 @@ class AIService:
             logger.error(f"Failed to generate response: {e}")
             return "Sorry, I encountered an error processing your request.", None
 
-
     def text_to_speech(self, message: str) -> None:
         """Convert text to speech and play it"""
         if not message:
             logger.warning("No message provided for TTS")
-        
+
         try:
-            with tempfile.NamedTemporaryFile(suffix='.mp3', delete=True) as f:
+            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=True) as f:
                 # Clean special characters that might cause TTS issues
                 clean_text = re.sub(r"[_*~]", "", message)
-                gTTS(text=clean_text, lang='en').save(f.name)
+                gTTS(text=clean_text, lang="en").save(f.name)
                 AudioProcessor.play_sound(f.name)
                 return True
-            
+
         except Exception as e:
             logger.error(f"TTS Error: {e}")

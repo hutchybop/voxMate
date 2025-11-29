@@ -3,7 +3,6 @@ import warnings
 import pyaudio
 import numpy as np
 import time
-import os
 from contextlib import contextmanager
 from typing import Tuple, Generator
 
@@ -35,7 +34,7 @@ def audio_wake_stream() -> Generator[Tuple[oww_Model, pyaudio.Stream], None, Non
     stream = None
     try:
         pa = pyaudio.PyAudio()
-        
+
         # Initialize OpenWakeWord model
         oww_model = oww_Model(wakeword_model_paths=[str(constraints.KEYWORD_PATH)])
 
@@ -50,7 +49,7 @@ def audio_wake_stream() -> Generator[Tuple[oww_Model, pyaudio.Stream], None, Non
         except Exception as e:
             logger.error(f"Failed to open audio stream: {e}")
             raise
-    
+
         yield oww_model, stream
 
     except Exception as e:
@@ -64,13 +63,15 @@ def audio_wake_stream() -> Generator[Tuple[oww_Model, pyaudio.Stream], None, Non
             pa.terminate()
 
 
-def wake_word_detection(oww_model: oww_Model, stream: pyaudio.Stream, mic_lights: MicLights) -> None:
+def wake_word_detection(
+    oww_model: oww_Model, stream: pyaudio.Stream, mic_lights: MicLights
+) -> None:
     """Listen for wake word and respond when detected"""
     logger.info(f"Listening for wake word... (say '{constraints.WAKE_WORD}')")
     while True:
         try:
             pcm = stream.read(constraints.FRAME_LENGTH, exception_on_overflow=False)
-            
+
             # Convert to numpy array and handle stereo to mono
             audio_data = np.frombuffer(pcm, dtype=np.int16)
             if constraints.CHANNELS == 2:
@@ -93,11 +94,11 @@ def wake_word_detection(oww_model: oww_Model, stream: pyaudio.Stream, mic_lights
                         logger.info("Spotify paused successfully")
                     else:
                         logger.warning("Failed to pause Spotify")
-                
+
                 time.sleep(0.5)
                 AudioProcessor.play_sound(constraints.GREETING_SOUND)
                 break
-        
+
         except Exception as e:
             logger.error(f"Error: {e}")
             raise

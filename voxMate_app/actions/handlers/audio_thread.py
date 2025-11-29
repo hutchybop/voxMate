@@ -3,6 +3,7 @@ import time
 from utils.logging import logger
 from services.audio import AudioProcessor
 
+
 class AudioPlaybackThread(threading.Thread):
     _instance = None
 

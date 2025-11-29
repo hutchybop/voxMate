@@ -3,6 +3,25 @@ This document chronicles the development history of voxMate, a Python-based AI s
 --- 
 <br>
 
+## Session 29 
+### Thursday November 27th
+<br>
+
+**Summary:** This session focused on documentation refactoring and project organization, including moving documentation files, updating the development log, and improving project structure.
+
+**Git Branch:** openwakeword<br>
+**Git commits:**<br>
+eaf241f, 202de4e, ae93ed5, 2439cf1
+
+**Session git history:** 
+- refactor docs - *Restructured documentation organization*
+- refactor: move docs and update dev log - *Moved documentation files and updated development log*
+- update todo & add dev log - *Updated TODO list and added development log*
+- update git - *Git repository improvements*
+
+---
+<br>
+
 ## Session 28 
 ### Tuesday November 26th
 <br>

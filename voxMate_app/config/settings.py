@@ -22,12 +22,17 @@ DEFAULT_CONFIG = {
     "STT_MODEL": "whisper-large-v3-turbo",
     "AI_MODEL": "qwen/qwen3-32b",
     "MIC_DEVICE_INDEX": None,
-    "DEFAULT_VOLUME": 70
+    "DEFAULT_VOLUME": 70,
 }
+
 
 def load_user() -> Optional[Dict[str, Any]]:
     # Load user config if exists
-    config_path = Path(__file__).resolve().parent.parent.parent / "userConfig" / "user_config.json"
+    config_path = (
+        Path(__file__).resolve().parent.parent.parent
+        / "userConfig"
+        / "user_config.json"
+    )
     user_config = {}
     if config_path.exists():
         with open(config_path, "r") as f:
@@ -37,6 +42,7 @@ def load_user() -> Optional[Dict[str, Any]]:
     else:
         logger.error("Please login to play spotify and customise settings")
         return None
+
 
 def load_mongodb() -> Optional[Database]:
     # Try to connect to MongoDB if URI is available
@@ -48,7 +54,7 @@ def load_mongodb() -> Optional[Database]:
         except Exception as e:
             logger.error(f"Failed to connect to MongoDB: {e}")
             return None
-        
+
 
 def load_config() -> Dict[str, Any]:
     """Load configuration from user file and MongoDB with fallbacks."""
@@ -63,13 +69,23 @@ def load_config() -> Dict[str, Any]:
         logger.info("User config settings loaded")
         # Final merged config
         return {
-            "SILENCE_THRESHOLD": settings.get('silence_threshold', DEFAULT_CONFIG["SILENCE_THRESHOLD"]),
-            "SILENCE_DURATION": settings.get('silence_duration', DEFAULT_CONFIG["SILENCE_DURATION"]),
-            "VOLUME_DISPLAY": settings.get('volume_display', DEFAULT_CONFIG["VOLUME_DISPLAY"]),
-            "NOISE_REDUCTION_ENABLED": settings.get('noise_reduction', DEFAULT_CONFIG["NOISE_REDUCTION_ENABLED"]),
-            "STT_MODEL": settings.get('stt_model', DEFAULT_CONFIG["STT_MODEL"]),
-            "AI_MODEL": settings.get('ai_model', DEFAULT_CONFIG["AI_MODEL"]),
-            "DEFAULT_VOLUME": settings.get('default_volume', DEFAULT_CONFIG["DEFAULT_VOLUME"])
+            "SILENCE_THRESHOLD": settings.get(
+                "silence_threshold", DEFAULT_CONFIG["SILENCE_THRESHOLD"]
+            ),
+            "SILENCE_DURATION": settings.get(
+                "silence_duration", DEFAULT_CONFIG["SILENCE_DURATION"]
+            ),
+            "VOLUME_DISPLAY": settings.get(
+                "volume_display", DEFAULT_CONFIG["VOLUME_DISPLAY"]
+            ),
+            "NOISE_REDUCTION_ENABLED": settings.get(
+                "noise_reduction", DEFAULT_CONFIG["NOISE_REDUCTION_ENABLED"]
+            ),
+            "STT_MODEL": settings.get("stt_model", DEFAULT_CONFIG["STT_MODEL"]),
+            "AI_MODEL": settings.get("ai_model", DEFAULT_CONFIG["AI_MODEL"]),
+            "DEFAULT_VOLUME": settings.get(
+                "default_volume", DEFAULT_CONFIG["DEFAULT_VOLUME"]
+            ),
         }
     except Exception as e:
         logger.error(f"Failed to connect to MongoDB or load config: {e}")
@@ -97,7 +113,7 @@ def check_environment(audio_player=None) -> Dict:
         "warnings": {
             "MONGODB_URI": {
                 "sound": constraints.MONGODB_WARNING_SOUND,
-                "message": "Continuing with default configuration (MongoDB not available)"
+                "message": "Continuing with default configuration (MongoDB not available)",
             }
         },
         "critical": {
@@ -105,10 +121,10 @@ def check_environment(audio_player=None) -> Dict:
             "SECRET_KEY": {},
             "SPOTIFY_CLIENT_ID": {},
             "SPOTIFY_CLIENT_SECRET": {},
-            "_sound": constraints.CRITICAL_ENV_VAR_SOUND
-        }
+            "_sound": constraints.CRITICAL_ENV_VAR_SOUND,
+        },
     }
-    
+
     # Check warnings
     for var, config in ENV_CHECKS["warnings"].items():
         if not os.getenv(var):
@@ -116,13 +132,18 @@ def check_environment(audio_player=None) -> Dict:
             if audio_player:  # Only play sound if player is provided
                 audio_player.play_sound(config["sound"])
             logger.warning(config["message"])
-    
+
     # Check critical
-    missing_keys = [var for var in ENV_CHECKS["critical"] 
-                   if not var.startswith("_") and not os.getenv(var)]
-    
+    missing_keys = [
+        var
+        for var in ENV_CHECKS["critical"]
+        if not var.startswith("_") and not os.getenv(var)
+    ]
+
     if missing_keys:
-        logger.error(f"Missing required environment variables: {', '.join(missing_keys)}")
+        logger.error(
+            f"Missing required environment variables: {', '.join(missing_keys)}"
+        )
         if audio_player:
             audio_player.play_sound(ENV_CHECKS["critical"]["_sound"])
         logger.critical("Exiting due to missing critical environment variables")

@@ -2,7 +2,17 @@
 import os
 import time
 from dataclasses import asdict
-from flask import Blueprint, render_template, current_app, session, redirect, url_for, flash, request, jsonify
+from flask import (
+    Blueprint,
+    render_template,
+    current_app,
+    session,
+    redirect,
+    url_for,
+    flash,
+    request,
+    jsonify,
+)
 from dotenv import load_dotenv
 from spotipy.oauth2 import SpotifyOAuth
 import spotipy
@@ -20,21 +30,24 @@ voxSpotify = Blueprint(
 load_dotenv("../../.env")
 
 # Configuration
-SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
-SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
-REDIRECT_URI = 'https://voxmate.longrunner.co.uk/voxSpotify/callback'
-SCOPES = " ".join([
-    "user-read-currently-playing",
-    "user-modify-playback-state",
-    "user-read-playback-state",
-    "user-library-read",
-    "playlist-read-private",
-    "user-top-read",
-    "user-read-recently-played",
-])
+SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
+SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
+REDIRECT_URI = "https://voxmate.longrunner.co.uk/voxSpotify/callback"
+SCOPES = " ".join(
+    [
+        "user-read-currently-playing",
+        "user-modify-playback-state",
+        "user-read-playback-state",
+        "user-library-read",
+        "playlist-read-private",
+        "user-top-read",
+        "user-read-recently-played",
+    ]
+)
 
 # Disable spotipy's default file cache
-os.environ['SPOTIPY_CACHE'] = ''
+os.environ["SPOTIPY_CACHE"] = ""
+
 
 # Setup spotipy's auth
 def create_spotify_oauth(state=None):
@@ -44,14 +57,17 @@ def create_spotify_oauth(state=None):
         redirect_uri=REDIRECT_URI,
         scope=SCOPES,
         cache_handler=None,
-        state=state
+        state=state,
     )
+
 
 def get_token_and_refresh(user_id=None):
     if user_id:
-        user_token = current_app.db.voxSpotify.find_one({'user_id': user_id})
+        user_token = current_app.db.voxSpotify.find_one({"user_id": user_id})
     else:
-        user_token = current_app.db.voxSpotify.find_one({'user_id': session.get("user_id")})
+        user_token = current_app.db.voxSpotify.find_one(
+            {"user_id": session.get("user_id")}
+        )
 
     token_info = None
 
@@ -61,15 +77,15 @@ def get_token_and_refresh(user_id=None):
         if token_info is None:
             return None  # Safeguard added here
 
-        if time.time() > token_info['expires_at']:
+        if time.time() > token_info["expires_at"]:
             oauth = create_spotify_oauth()
-            new_token_info = oauth.refresh_access_token(token_info['refresh_token'])
+            new_token_info = oauth.refresh_access_token(token_info["refresh_token"])
             if not new_token_info:
                 return None
             else:
                 current_app.db.voxSpotify.update_one(
-                    {'user_id': session.get("user_id")},
-                    {'$set': {'token_info': new_token_info}}
+                    {"user_id": session.get("user_id")},
+                    {"$set": {"token_info": new_token_info}},
                 )
                 return new_token_info
 
@@ -88,32 +104,40 @@ def voxSpotify_index():
         user = current_app.db.users.find_one({"user_id": session.get("user_id")})
         state = user.get("api_token")
         auth_url = create_spotify_oauth(state=state).get_authorize_url()
-        return render_template('voxSpotify/voxSpotify_index.html', title="voxMate - Spotify Login", auth_url=auth_url)
-    
+        return render_template(
+            "voxSpotify/voxSpotify_index.html",
+            title="voxMate - Spotify Login",
+            auth_url=auth_url,
+        )
+
     try:
-        sp = spotipy.Spotify(auth=token_info['access_token'])
+        sp = spotipy.Spotify(auth=token_info["access_token"])
         current_user = sp.current_user()
-        return render_template('voxSpotify/voxSpotify_profile.html', title="voxMate - Spotify Profile", current_user=current_user)
+        return render_template(
+            "voxSpotify/voxSpotify_profile.html",
+            title="voxMate - Spotify Profile",
+            current_user=current_user,
+        )
     except Exception as e:
         # Delete token from DB to force re-auth on next load
-        current_app.db.voxSpotify.delete_one({"user_id": session['user_id']})
+        current_app.db.voxSpotify.delete_one({"user_id": session["user_id"]})
         flash(f"There has been an error: {str(e)} \n Please log in again.", "danger")
-        return redirect(url_for('voxSpotify.voxSpotify_index'))
-    
+        return redirect(url_for("voxSpotify.voxSpotify_index"))
 
-@voxSpotify.route('/voxSpotify/playback')
+
+@voxSpotify.route("/voxSpotify/playback")
 def playback():
 
     token_info = None
 
-    if request.method == 'POST':
+    if request.method == "POST":
         data = request.get_json(silent=True) or {}
         user_id = data.get("user_id")
         if not user_id:
             return jsonify(success=False, message="no user_id")
         else:
             token_info = get_token_and_refresh(user_id)
-    
+
     token_info = get_token_and_refresh()
 
     print("WEB.controllers.voxSpotify.playback: token_info: ", token_info)
@@ -125,16 +149,20 @@ def playback():
         # return redirect(url_for('voxSpotify.voxSpotify_index'))
         return jsonify(success=False, message="no token")
 
-
-    access_token = token_info['access_token']
+    access_token = token_info["access_token"]
     try:
         sp = spotipy.Spotify(auth=access_token)
-        sp.transfer_playback(device_id="b16c033229c6e42b50fcc84989e90f4fc0be26c0", force_play=True)
-        response = sp.start_playback(device_id="b16c033229c6e42b50fcc84989e90f4fc0be26c0")
+        sp.transfer_playback(
+            device_id="b16c033229c6e42b50fcc84989e90f4fc0be26c0", force_play=True
+        )
+        response = sp.start_playback(
+            device_id="b16c033229c6e42b50fcc84989e90f4fc0be26c0"
+        )
         print("Playback response:", response)
     except Exception as e:
         print("Playback error: ", e)
         import traceback
+
         traceback.print_exc()
 
     # flash('Playback started!', "success")
@@ -142,24 +170,25 @@ def playback():
     return jsonify(success=True)
 
 
-
-@voxSpotify.route('/voxSpotify/waiting')
+@voxSpotify.route("/voxSpotify/waiting")
 @isLoggedIn
 def waiting():
-    if request.args.get('waiting') == "true":
-        return render_template('voxSpotify/voxSpotify_waiting.html', title="voxMate - Spotify Waiting")
+    if request.args.get("waiting") == "true":
+        return render_template(
+            "voxSpotify/voxSpotify_waiting.html", title="voxMate - Spotify Waiting"
+        )
     else:
         flash("Please login to Spotify first", "warning")
         return redirect(url_for("voxSpotify.voxSpotify.index"))
 
 
-@voxSpotify.route('/voxSpotify/check_status')
+@voxSpotify.route("/voxSpotify/check_status")
 @isLoggedIn
 def check_status():
     user = current_app.db.users.find_one({"user_id": session.get("user_id")})
     if not user:
         return jsonify({"status": "user"})
-    
+
     state = user.get("api_token")
     payload = {"user_id": session.get("user_id"), "state": state}
     response, error = contact_api_server(payload, "voxSpotify/waiting")
@@ -167,14 +196,18 @@ def check_status():
         if response.get("user_code"):
             user_code = response.get("user_code")
             # Add it to the voxspotify collection
-            user = current_app.db.voxSpotify.find_one({"user_id": session.get("user_id")})
+            user = current_app.db.voxSpotify.find_one(
+                {"user_id": session.get("user_id")}
+            )
             # If the user is already in the db update, if not add new user
             if user:
-                current_app.db.voxSpotify.update_one({"user_id": session.get("user_id")}, {"$set": {"user_code": user_code}})
+                current_app.db.voxSpotify.update_one(
+                    {"user_id": session.get("user_id")},
+                    {"$set": {"user_code": user_code}},
+                )
             else:
                 user_spotify = VoxSpotify(
-                    user_id=session.get("user_id"),
-                    user_code=user_code
+                    user_id=session.get("user_id"), user_code=user_code
                 )
                 current_app.db.voxSpotify.insert_one(asdict(user_spotify))
             return jsonify({"status": "user_code"})
@@ -190,8 +223,7 @@ def check_status():
     return jsonify({"status": "pending"})
 
 
-
-@voxSpotify.route('/voxSpotify/callback')
+@voxSpotify.route("/voxSpotify/callback")
 @isLoggedIn
 def callback():
 
@@ -199,41 +231,47 @@ def callback():
     if not voxSpotify:
         flash("No Spotify login details save. Please try again")
         return redirect(url_for("voxSpotify.voxSpotify_index"))
-    
-    user_code = voxSpotify.get('user_code')
+
+    user_code = voxSpotify.get("user_code")
     if not user_code:
-        flash(f"Login error, no authorisation code received. \n Please try again.", "danger")
-        return redirect(url_for('voxSpotify.voxSpotify_index'))
+        flash(
+            "Login error, no authorisation code received. \n Please try again.",
+            "danger",
+        )
+        return redirect(url_for("voxSpotify.voxSpotify_index"))
 
     try:
         # Creates the user's spotify token and saves it in the db
         oauth = create_spotify_oauth()
         token_info = oauth.get_access_token(user_code)
-        
+
         # More error handling
         if not token_info:
             flash("Error getting login token. \n Please try again.", "danger")
-            return redirect(url_for('voxSpotify.voxSpotify_index'))
-        
-        token_info['expires_at'] = int(time.time()) + token_info['expires_in']
-        
+            return redirect(url_for("voxSpotify.voxSpotify_index"))
+
+        token_info["expires_at"] = int(time.time()) + token_info["expires_in"]
+
         # Store token_info in MongoDB
         current_app.db.voxSpotify.update_one(
-            {'user_id': session.get("user_id")},
-            {"$set": {'token_info': token_info, "user_code": None}}
+            {"user_id": session.get("user_id")},
+            {"$set": {"token_info": token_info, "user_code": None}},
         )
 
-        return redirect(url_for('voxSpotify.voxSpotify_index'))
-    
+        return redirect(url_for("voxSpotify.voxSpotify_index"))
+
     except Exception as e:
         flash(f"There has been an error: {str(e)} \n Please try again.", "danger")
-        return redirect(url_for('voxSpotify.voxSpotify_index'))
+        return redirect(url_for("voxSpotify.voxSpotify_index"))
 
-@voxSpotify.route('/voxSpotify/logout')
+
+@voxSpotify.route("/voxSpotify/logout")
 @isLoggedIn
 def voxSpotify_logout():
     token_info = get_token_and_refresh()
     if token_info:
-        current_app.db.voxSpotify.delete_one({"user_id": session['user_id']})
-    
-    return render_template('voxSpotify/voxSpotify_logout.html', title="voxMate - Spotify Logout")
+        current_app.db.voxSpotify.delete_one({"user_id": session["user_id"]})
+
+    return render_template(
+        "voxSpotify/voxSpotify_logout.html", title="voxMate - Spotify Logout"
+    )

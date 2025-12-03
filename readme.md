@@ -18,7 +18,7 @@
 - 💬 **Conversational AI** with AI models via Groq
 - 🔊 **Text-to-speech** using gTTS (Google Text-to-Speech)
 - 💻 Built entirely in **Python**
-- 🚧 Extensible for future features (Spotify, smart home control, web GUI, etc.)
+- 🎵 **Spotify integration** via librespot for voice-controlled music playback
 
 <br>
 
@@ -28,7 +28,7 @@
 
 voxMate will:
 
-1. Listens for a wake word (via Porcupine)
+1. Listens for a wake word (via OpenWakeWord)
 2. Records speech
 3. Transcribes with Whisper via Groq
 4. Sends transcript to an AI model via Groq
@@ -45,7 +45,6 @@ voxMate will:
 - 🐍 Python 3.9 or higher
 - 🌐 [MongoDB Atlas](https://www.mongodb.com/atlas/database) account and database (or [local MongoDB](https://www.mongodb.com/docs/manual/installation/))
 - 🧠 [Groq API key](https://console.groq.com/keys) for Whisper & AI models
-- 🗣 [Picovoice Porcupine API key](https://console.picovoice.ai/) for wake word detection
 - 🔑 A `SECRET_KEY` for Flask session handling
 - 🧪 Raspberry Pi 4 (tested) running Ubuntu Server 22.04 or higher
 - Internet connection (for gTTS and API calls)
@@ -97,7 +96,6 @@ cp .env.example .env
 |---------------------|-----------------------------------------------------------------|
 | `MONGO_URI`         | Your MongoDB connection URI (Atlas or local)                    |
 | `GROQ_API_KEY`      | API key from [Groq Console](https://console.groq.com/)          |
-| `PORCUPINE_API_KEY` | API key from [Picovoice Console](https://console.picovoice.ai/) |
 | `SECRET_KEY`        | A secret string for Flask session signing                       |
 
 <br>
@@ -125,17 +123,7 @@ cp .env.example .env
   - Set it as `GROQ_API_KEY` in `.env`
 
 
-**Porcupine Wake Word API Key**:
 
-  - Sign up at [Picovoice Console](https://console.picovoice.ai/)
-  - Create a Porcupine access key
-  - Set it as `PORCUPINE_API_KEY` in `.env`
-
-**Add custom Porcupine wake word**:
-
-  - Create a Wake Word from the Start Building section
-  - Download the `.ppn` and `LICENSE.txt` files for your platform (e.g. Raspberry Pi)
-  - Add the files to `voxMate/models/porcupine_keywords`
 
 <br>
 
@@ -235,12 +223,23 @@ Say `<Wake word/phase>` to ask a question
 
 ---
 
+## 📚 Documentation
+
+The `docs/` directory contains comprehensive project documentation:
+
+- **AGENTS.md** - Development guidelines, code style, and build commands
+- **ARCHITECTURE_REFERENCE.md** - Detailed system architecture and component documentation  
+- **DEVELOPMENT_LOG.md** - Complete development history with session-by-session changes
+- **TODOs.md** - Current development roadmap and completed features
+- **librespot_install_guide.md** - Step-by-step librespot installation for Spotify integration
+
 ## 🔮 Future Plans
 
-- 🎵 Spotify voice integration
 - 🧠 Personality modes
 - 🏡 Smart home features
 - 🌐 Improved Web UI
+- ⏰ Timers and alarms
+- 📰 News and weather integration
 
 <br>
 

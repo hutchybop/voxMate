@@ -15,9 +15,10 @@
 - [ ] Look at Groq keys and split per application
 <br>
 
-##### Spotify
-- [ ] Spotify has stopped working investigate
+##### Web App Improvments
+- [ ] Add page for live VoxMate_app logs when running.
 <br>
+
 
 ##### Internet search
 - [ ] Research internet searches with AI for up to date information. 
@@ -159,4 +160,5 @@ They will need their own db anyway.
 ##### Console logger prints
 - [x] look at and fix random errors
 - [x] Align logger more to output **horse-racing-game** has
-<br>
+##### Spotify
+- [x] Spotify has stopped working investigate (librespot)

@@ -34,7 +34,7 @@ def handle_action(parsed) -> Tuple[bool, Optional[str]]:
         if success:
             app_state.set_state("spotify", "stopped")
         elif not message:
-            message = "Error playing Spotify"
+            message = "Error stopping Spotify"
         return success, message
 
     elif action == "spotify_skip":

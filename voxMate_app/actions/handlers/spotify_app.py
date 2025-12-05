@@ -52,7 +52,18 @@ class SpotifyPlayer:
 
         # Return appropriate tuple based on error type
         if isinstance(error, spotipy.SpotifyException):
-            if error.http_status == 403:
+            if error.http_status == 401:
+                # Token expired - try refresh and retry once
+                logger.info("401 error detected, attempting token refresh and retry")
+                if self.initialize_spotify():
+                    logger.info("Token refresh successful, operation may be retried")
+                    return False, "TOKEN_REFRESH_REQUIRED"
+                else:
+                    return (
+                        False,
+                        "Authentication failed - please login to Spotify again",
+                    )
+            elif error.http_status == 403:
                 return False, "Permission denied - please check your Spotify account"
             elif error.http_status == 404:
                 return False, "Resource not found"
@@ -116,8 +127,11 @@ class SpotifyPlayer:
                 logger.warning("No token available, please login to Spotify")
                 return None
 
-            if time.time() > doc.token_info["expires_at"]:
-                logger.info("Refreshing expired token")
+            # Check if token expires within next 5 minutes (300 seconds)
+            current_time = time.time()
+            expires_at = doc.token_info["expires_at"]
+            if current_time > expires_at - 300:
+                logger.info(f"Token expires soon (at {expires_at}), refreshing now")
                 if (oauth := self.create_spotify_oauth()) is None:
                     return None
 
@@ -132,6 +146,10 @@ class SpotifyPlayer:
                 doc.token_info = new_token_info
                 if not self.save_spotify_doc(doc):
                     logger.error("Failed to save refreshed token")
+                logger.info(
+                    "Token refreshed successfully, new expiry: %s",
+                    new_token_info.get("expires_at"),
+                )
                 return new_token_info
             return doc.token_info
         except Exception as e:
@@ -314,8 +332,8 @@ class SpotifyPlayer:
     def handle_spotify_play(self, params: Dict) -> Tuple[bool, Optional[str]]:
         """Main method to handle Spotify playback with consistent error handling"""
         try:
-            # Initialize Spotify
-            if not self.sp and not self.initialize_spotify():
+            # Initialize Spotify (handles token validation and refresh)
+            if not self.initialize_spotify():
                 return False, "Spotify initialization failed"
 
             # Get device ID
@@ -383,21 +401,166 @@ class SpotifyPlayer:
             return self._handle_spotify_error("playback", e, "Failed to start playback")
 
     def _handle_track_playback(self, device_id: str, uri: str = None) -> None:
-        """Handle track playback with queue management"""
+        """
+        Handle track playback with queue or context preservation
+            Unified playback logic handling all 4 cases:
+        1. Context active, no queue:
+            Insert new track at front + remaining context
+        2. No context, queue exists:
+            Replace queue with [newTrack] + oldQueue
+        3. Context active & queue exists:
+            Recreate context, then rebuild queue as [newTrack] + oldQueue
+        4. No context, no queue:
+            Play the new track (Spotify will auto-radio)
+        """
         try:
-            has_queue = bool(self.sp.queue().get("queue"))
+            playback = self.sp.current_playback()
+            context = playback.get("context") if playback else None
+            queue_items = self.sp.queue().get("queue", [])
+
+            has_context = bool(context)
+            has_queue = bool(queue_items)
+
+            # Extract URIs from queue
+            old_queue = [item["uri"] for item in queue_items]
+
+            # ---------------------------------------------------------
+            # CASE 1 — CONTEXT ACTIVE, NO QUEUE
+            # ---------------------------------------------------------
+            if has_context and not has_queue:
+                logger.info(
+                    "CASE 1: Context active, no queue — inserting track before context"
+                )
+                remaining_context_tracks = self._extract_context_tracks(context)
+                remaining_context_tracks = self._remove_recently_played(
+                    remaining_context_tracks
+                )
+
+                final_list = [uri] + remaining_context_tracks
+
+                self.sp.start_playback(device_id=device_id, uris=final_list)
+                return
+
+            # ---------------------------------------------------------
+            # CASE 2 — NO CONTEXT, QUEUE EXISTS
+            # Replace queue with [uri] + oldQueue
+            # ---------------------------------------------------------
+            elif not has_context and has_queue:
+                logger.info(
+                    "CASE 2: No context, queue exists "
+                    "— rebuilding queue with new track first"
+                )
+
+                # Play track immediately (clears/ignores existing queue)
+                self.sp.start_playback(device_id=device_id, uris=[uri])
+
+                # Restore queue
+                self._restore_queue(old_queue, device_id)
+                return
+
+            # ---------------------------------------------------------
+            # CASE 3 — CONTEXT ACTIVE AND QUEUE EXISTS
+            # Recreate context, then rebuild queue
+            # ---------------------------------------------------------
+            elif has_context and has_queue:
+                logger.info("CASE 3: Context + Queue — rebuilding both")
+
+                remaining_context_tracks = self._extract_context_tracks(context)
+                remaining_context_tracks = self._remove_recently_played(
+                    remaining_context_tracks
+                )
+
+                final_list = [uri] + remaining_context_tracks
+
+                # Recreate context playback
+                self.sp.start_playback(device_id=device_id, uris=final_list)
+
+                # Restore queue after playback starts
+                self._restore_queue(old_queue, device_id)
+                return
+
+            # ---------------------------------------------------------
+            # CASE 4 — NO CONTEXT, NO QUEUE
+            # ---------------------------------------------------------
+            else:
+                logger.info("CASE 4: No context, no queue — playing track normally")
+                self.sp.start_playback(device_id=device_id, uris=[uri])
+                return
+
+        except Exception as e:
+            logger.exception(f"Error in handle_track_playback: {e}")
+            raise
+
+    def _extract_context_tracks(self, context: dict) -> list[str]:
+        """Fetches all tracks from the current Spotify context."""
+        context_uri = context.get("uri")
+        context_type = context.get("type")
+        context_id = context_uri.split(":")[-1]
+
+        logger.debug(f"Extracting context tracks from {context_type} {context_id}")
+
+        tracks = []
+
+        try:
+            # ---------------- PLAYLIST ----------------
+            if context_type == "playlist":
+                results = self.sp.playlist_items(context_id)
+                while True:
+                    for item in results.get("items", []):
+                        track = item.get("track")
+                        if track and track.get("uri"):
+                            tracks.append(track["uri"])
+
+                    if results.get("next"):
+                        results = self.sp.next(results)
+                    else:
+                        break
+
+            # ---------------- ALBUM ----------------
+            elif context_type == "album":
+                results = self.sp.album_tracks(context_id)
+                while True:
+                    for item in results.get("items", []):
+                        if item.get("uri"):
+                            tracks.append(item["uri"])
+
+                    if results.get("next"):
+                        results = self.sp.next(results)
+                    else:
+                        break
+
+            # ---------------- ARTIST ----------------
+            elif context_type == "artist":
+                top = self.sp.artist_top_tracks(context_id).get("tracks", [])
+                tracks = [t["uri"] for t in top if t.get("uri")]
+
+        except Exception as e:
+            logger.warning(f"Failed extracting context tracks: {e}")
+
+        return tracks
+
+    def _remove_recently_played(self, uris: list[str]) -> list[str]:
+        """Filters out tracks played recently so they don't repeat."""
+        try:
+            recent = self.sp.current_user_recently_played(limit=50)
+            played = {
+                item["track"]["uri"]
+                for item in recent.get("items", [])
+                if item.get("track")
+            }
+
+            return [uri for uri in uris if uri not in played]
+
         except Exception:
-            has_queue = False
+            return uris  # fail-safe
 
-        if uri:
-            self.sp.add_to_queue(uri, device_id=device_id)
-            if has_queue:
-                self.sp.next_track()
-
-        if not has_queue:
-            self._build_fallback_queue(device_id)
-
-        self.sp.start_playback(device_id=device_id)
+    def _restore_queue(self, uris: list[str], device_id: str) -> None:
+        """Rebuilds queue safely and logs failures."""
+        for q_uri in uris:
+            try:
+                self.sp.add_to_queue(q_uri, device_id=device_id)
+            except Exception as e:
+                logger.warning(f"Failed to re-add {q_uri} to queue: {e}")
 
     def _start_fallback_playback(self, device_id: str) -> Tuple[bool, str]:
         """Start fallback playback with top tracks or default playlist"""
@@ -420,7 +583,8 @@ class SpotifyPlayer:
         self, operation: str, success_msg: str = None, error_msg: str = None
     ) -> Tuple[bool, Optional[str]]:
         """Generic method for basic playback controls with consistent returns"""
-        if not self.sp and not self.initialize_spotify():
+        # Initialize Spotify (handles token validation and refresh)
+        if not self.initialize_spotify():
             return False, "Spotify initialization failed"
 
         try:
@@ -430,7 +594,22 @@ class SpotifyPlayer:
             getattr(self.sp, operation)()
             return True, success_msg
         except Exception as e:
-            return self._handle_spotify_error(operation, e, error_msg)
+            success, message = self._handle_spotify_error(operation, e, error_msg)
+            # If token refresh was successful, retry the operation once
+            if message == "TOKEN_REFRESH_REQUIRED":
+                try:
+                    logger.info(f"Retrying {operation} after token refresh")
+                    if not (playback := self.sp.current_playback()) or not playback.get(
+                        "item"
+                    ):
+                        return False, "No active playback"
+                    getattr(self.sp, operation)()
+                    return True, success_msg
+                except Exception as retry_e:
+                    return self._handle_spotify_error(
+                        f"{operation} (retry)", retry_e, error_msg
+                    )
+            return success, message
 
     def stop_playback(self) -> Tuple[bool, Optional[str]]:
         return self._basic_playback_control(
@@ -443,10 +622,11 @@ class SpotifyPlayer:
         )
 
     def repeat_playback(self, repeat) -> Tuple[bool, Optional[str]]:
-        try:
-            if not self.sp and not self.initialize_spotify():
-                return False, "Spotify initialization failed"
+        # Initialize Spotify (handles token validation and refresh)
+        if not self.initialize_spotify():
+            return False, "Spotify initialization failed"
 
+        try:
             self.sp.repeat(state=repeat)
             return True, None
         except Exception as e:
@@ -455,10 +635,11 @@ class SpotifyPlayer:
             )
 
     def shuffle_playback(self, shuffle) -> Tuple[bool, Optional[str]]:
-        try:
-            if not self.sp and not self.initialize_spotify():
-                return False, "Spotify initialization failed"
+        # Initialize Spotify (handles token validation and refresh)
+        if not self.initialize_spotify():
+            return False, "Spotify initialization failed"
 
+        try:
             self.sp.shuffle(state=shuffle)
             return True, None
         except spotipy.SpotifyException as e:

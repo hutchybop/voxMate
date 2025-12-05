@@ -35,6 +35,7 @@ class SpotifyPlayer:
         return cls._instance
 
     def __init__(self, max_retries: int = 2) -> None:
+        logger.info("Initializing SpotifyPlayer")
         self.SPOTIFY_CLIENT_ID = constraints.SPOTIFY_CLIENT_ID
         self.SPOTIFY_CLIENT_SECRET = constraints.SPOTIFY_CLIENT_SECRET
         self.user_id = load_user().get("user_id")
@@ -42,6 +43,10 @@ class SpotifyPlayer:
         self.memory_cache = {"device_id": None, "last_updated": None}
         self.sp = None
         self._initialized = True
+        logger.info(
+            f"SpotifyPlayer initialized with user_id: {self.user_id}, "
+            f"max_retries: {self.max_retries}"
+        )
 
     def _handle_spotify_error(
         self, operation: str, error: Exception, default_msg: str = None
@@ -49,6 +54,7 @@ class SpotifyPlayer:
         """Centralized error handling that always returns (bool, str) tuple"""
         error_msg = f"Spotify {operation} failed: {str(error)}"
         logger.error(error_msg)
+        logger.info(f"Error type: {type(error).__name__}, Details: {error}")
 
         # Return appropriate tuple based on error type
         if isinstance(error, spotipy.SpotifyException):
@@ -75,12 +81,14 @@ class SpotifyPlayer:
 
     def initialize_spotify(self) -> bool:
         """Initialize Spotify client with consistent error handling"""
+        logger.info("Attempting to initialize Spotify client")
         try:
             token_info = self.load_spotify_token()
             if not token_info or "access_token" not in token_info:
-                logger.error("No valid token available")
+                logger.error("No valid token available for Spotify initialization")
                 return False
 
+            logger.info("Creating Spotify client with token")
             self.sp = spotipy.Spotify(
                 auth=token_info["access_token"],
                 requests_timeout=10,
@@ -89,10 +97,16 @@ class SpotifyPlayer:
             )
 
             # Verify connection
-            self.sp.me()
+            logger.info("Verifying Spotify connection with me() call")
+            user_info = self.sp.me()
+            logger.info(
+                f"Spotify client initialized successfully for user: "
+                f"{user_info.get('id', 'unknown')}"
+            )
             return True
         except Exception as e:
             self.sp = None
+            logger.error("Spotify initialization failed")
             return self._handle_spotify_error("initialization", e)
 
     def create_spotify_oauth(self) -> Optional[SpotifyOAuth]:
@@ -198,28 +212,42 @@ class SpotifyPlayer:
         self, preferred_device_name: str = "voxMate Pi"
     ) -> Optional[str]:
         """Get a valid device ID with fallback logic"""
+        logger.info(f"Getting valid device ID, preferred: {preferred_device_name}")
+
         if not self.sp and not self.initialize_spotify():
+            logger.error("Cannot get device ID - Spotify client not initialized")
             return None
 
         # Check memory cache first
+        logger.info("Checking memory cache for device ID")
         if active_device := self.refresh_device_cache():
+            logger.info(f"Using active device from cache: {active_device}")
             return active_device
 
         # Try to find device by name
+        logger.info(f"Searching for device by name: {preferred_device_name}")
         new_id, new_name = self.find_device_id_by_name(preferred_device_name)
         if new_id:
-            self.memory_cache.update({"device_id": new_id, "last_updated": time.time()})
+            self.memory_cache["device_id"] = new_id
+            self.memory_cache["last_updated"] = time.time()
             self.update_cached_device_id_in_db(new_id)
-            logger.info(f"Found active device: {new_name}")
+            logger.info(f"Found and cached active device: {new_name} (ID: {new_id})")
             return new_id
 
         # Fall back to database cache
+        logger.info("Checking database cache for device ID")
         if db_id := self.load_cached_device_id_from_db():
-            self.memory_cache.update({"device_id": db_id, "last_updated": time.time()})
-            logger.warning("Using database-cached device ID - device may not be active")
+            self.memory_cache["device_id"] = db_id
+            self.memory_cache["last_updated"] = time.time()
+            logger.warning(
+                f"Using database-cached device ID: {db_id} - device may not be active"
+            )
             return db_id
 
-        logger.error("No usable device found")
+        logger.error(
+            "No usable device found - checked memory cache, device search, "
+            "and database cache"
+        )
         return None
 
     def _match_spotify_item(
@@ -248,7 +276,13 @@ class SpotifyPlayer:
         self, query: str, artist: str, user_content_type: Optional[str] = None
     ) -> Tuple[Optional[str], Optional[str]]:
         """Determine if the query is a song, album, artist, playlist, or podcast"""
+        logger.info(
+            f"Detecting Spotify type for query: '{query}', artist: '{artist}', "
+            f"user_type: '{user_content_type}'"
+        )
+
         if not self.sp and not self.initialize_spotify():
+            logger.error("Cannot detect type - Spotify client not initialized")
             return None, None
 
         query_lower = query.strip().lower()
@@ -258,15 +292,20 @@ class SpotifyPlayer:
             if artist_lower
             else query_lower
         )
+        logger.info(f"Search query constructed: '{q}'")
 
         try:
             # Try user-specified type first
             if user_content_type in ["track", "playlist", "album", "artist"]:
+                logger.info(f"Searching for user-specified type: {user_content_type}")
                 results = self.sp.search(q=q, type=user_content_type, limit=5)
                 items = results.get(f"{user_content_type}s", {}).get("items", [])
+                logger.info(f"Found {len(items)} items for type {user_content_type}")
+
                 if match := self._match_spotify_item(
                     query_lower, items, user_content_type
                 ):
+                    logger.info(f"Found match for user-specified type: {match}")
                     return match
                 if items:  # Fallback to first result
                     logger.info(
@@ -276,10 +315,15 @@ class SpotifyPlayer:
                     return user_content_type, items[0]["uri"]
 
             # Fallback: Try all types
+            logger.info("No user-specified type or no match - trying all types")
             results = self.sp.search(q=q, type="track,album,artist,playlist", limit=5)
+
             for content_type in ["album", "artist", "track", "playlist"]:
                 items = results.get(f"{content_type}s", {}).get("items", [])
+                logger.info(f"Checking {content_type}: {len(items)} items found")
+
                 if match := self._match_spotify_item(query_lower, items, content_type):
+                    logger.info(f"Found match for type {content_type}: {match}")
                     return match
                 if items:  # Fallback to first result
                     logger.info(
@@ -290,6 +334,7 @@ class SpotifyPlayer:
         except Exception as e:
             self._handle_spotify_error("type detection", e)
 
+        logger.warning(f"No matches found for query: '{query}'")
         return None, None
 
     def transfer_playback(self, device_id: str) -> bool:
@@ -331,33 +376,51 @@ class SpotifyPlayer:
 
     def handle_spotify_play(self, params: Dict) -> Tuple[bool, Optional[str]]:
         """Main method to handle Spotify playback with consistent error handling"""
+        logger.info("=== STARTING SPOTIFY PLAYBACK ===")
+        logger.info(f"Playback params: {params}")
+
         try:
             # Initialize Spotify (handles token validation and refresh)
+            logger.info("Step 1: Initializing Spotify client")
             if not self.initialize_spotify():
+                logger.error("Spotify initialization failed - aborting playback")
                 return False, "Spotify initialization failed"
 
             # Get device ID
+            logger.info("Step 2: Getting valid device ID")
             if not (device_id := self.get_valid_device_id()):
+                logger.error("No valid playback device found - aborting playback")
                 return False, "No valid playback device available"
 
             # Transfer playback
+            logger.info(f"Step 3: Transferring playback to device {device_id}")
             if not self.transfer_playback(device_id):
+                logger.error("Failed to transfer playback - aborting")
                 return False, "Failed to transfer playback"
 
             if not self._verify_playback_transfer(device_id):
+                logger.error("Playback transfer verification timed out")
                 return False, "Playback transfer verification timed out"
 
-            # Set volume and handle playback
+            logger.info("Step 4: Setting volume to 100%")
             self.sp.volume(100, device_id=device_id)
+
             query = params.get("query", "")
             artist = params.get("artist", "")
             user_content_type = params.get("type", "")
+            logger.info(
+                f"Playback request - Query: '{query}', Artist: '{artist}', "
+                f"Type: '{user_content_type}'"
+            )
 
             if not query:  # Resume playback if no query
+                logger.info("No query provided - attempting to resume playback")
                 try:
                     self._handle_track_playback(device_id=device_id)
+                    logger.info("Playback resumed successfully")
                     return True, None
-                except Exception:
+                except Exception as e:
+                    logger.warning(f"Resume playback failed, trying fallback: {e}")
                     return self._start_fallback_playback(device_id)
 
             if query == "news":
@@ -497,7 +560,7 @@ class SpotifyPlayer:
         context_type = context.get("type")
         context_id = context_uri.split(":")[-1]
 
-        logger.debug(f"Extracting context tracks from {context_type} {context_id}")
+        logger.info(f"Extracting context tracks from {context_type} {context_id}")
 
         tracks = []
 

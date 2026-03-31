@@ -1,3 +1,18 @@
+# ⚠️ Archived Project
+
+### This repository has been archived and is no longer actively maintained.
+
+- No new features or bug fixes will be added
+- Issues and pull requests are no longer monitored
+- If you’d like to continue development, feel free to fork the project.
+
+Last maintained: 20260331
+
+Superseded by: longrunner-platform (monrepo project)
+
+---
+---
+
 <p>
   <img src="voxMate_web_app/static/images/voxMate.png" alt="voxMate Logo" width="40" style="vertical-align: middle; border-radius: 50%; margin-right: 10px;">
   <span style="font-size: 2em; font-weight: bold; vertical-align: middle;">voxMate</span>

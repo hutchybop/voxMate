@@ -8,8 +8,6 @@
 
 Last maintained: 20260331
 
-Superseded by: longrunner-platform (monrepo project)
-
 ---
 ---
 

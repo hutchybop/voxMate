@@ -1,0 +1,34 @@
+{
+  "name": "voxmate",
+  "version": "1.0.0",
+  "description": "smart speaker api",
+  "license": "ISC",
+  "author": "Chris Hutch",
+  "type": "commonjs",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "ejs-mate": "^4.0.0",
+    "express": "^5.2.1",
+    "express-mongo-sanitize": "^2.2.0",
+    "helmet": "^8.1.0",
+    "mongoose": "^9.2.3",
+    "nodemailer": "^8.0.1",
+    "path": "^0.12.7",
+    "serve-favicon": "^2.5.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^10.0.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-mocha-no-only": "^1.2.0",
+    "eslint-plugin-prettier": "^5.5.5",
+    "globals": "^17.3.0",
+    "prettier": "^3.8.1"
+  }
+}
